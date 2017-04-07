@@ -3,6 +3,6 @@ This repository serves the purpose of containing the code for the Integration Pr
 
 # Contributors
 - Casper Plentinger (s1864335)
-- Daan Kooij
+- Daan Kooij (s1839047)
 - Tim van Brederode
 - Justin Praas (s1782215)
