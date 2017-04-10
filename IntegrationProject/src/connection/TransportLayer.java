@@ -1,8 +1,18 @@
 package connection;
 
+import chat.Message;
+
+/**
+ * 
+ * The TransportLayer class 
+ * @author Tim
+ *
+ */
+
 public class TransportLayer {
 	
-	public void sendMessage(String msg, int senderID, int receiverID) {
+	
+	public void sendMessage(Message msg, int senderID, int receiverID) {
 		
 	}
 	
