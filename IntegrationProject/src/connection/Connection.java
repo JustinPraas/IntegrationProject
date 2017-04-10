@@ -7,12 +7,14 @@ import java.net.UnknownHostException;
 
 public class Connection {
 	
-	public MulticastSocket socket;
+	public MulticastSocket sendSocket;
+	public MulticastSocket receiveSocket;
 	public InetAddress group;
 	
 	public Connection() {
 		try {
-			socket = new MulticastSocket();
+			sendSocket = new MulticastSocket();
+			receiveSocket = new MulticastSocket();
 			this.joinGroup("default");
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -23,10 +25,12 @@ public class Connection {
 		try {
 			if (address.equals("default")) {
 				group = InetAddress.getByName("224.0.0.0");
-				socket.joinGroup(group);
+				sendSocket.joinGroup(group);
+				receiveSocket.joinGroup(group);
 			} else {
 				group = InetAddress.getByName(address);
-				socket.joinGroup(group);
+				sendSocket.joinGroup(group);
+				receiveSocket.joinGroup(group);
 			}
 		} catch (UnknownHostException e) {
 			System.out.println("Not a valid multicast address");
@@ -38,7 +42,8 @@ public class Connection {
 	}
 	
 	public void close() {
-		socket.close();
+		receiveSocket.close();
+		sendSocket.close();
 	}
 	
 }
