@@ -1,6 +1,7 @@
 package connection;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
@@ -9,22 +10,30 @@ public class Connection {
 	
 	public MulticastSocket sendSocket;
 	public MulticastSocket receiveSocket;
+	public Sender sender;
+	public Receiver receiver;
+	public TransportLayer transportLayer;
+	public PulseHandler pulseHandler;
 	public InetAddress group;
 	
 	public Connection() {
 		try {
-			sendSocket = new MulticastSocket();
-			receiveSocket = new MulticastSocket();
+			this.sendSocket = new MulticastSocket();
+			this.receiveSocket = new MulticastSocket();
 			this.joinGroup("default");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		this.sender = new Sender(this);
+		this.receiver = new Receiver(this);
+		this.transportLayer = new TransportLayer();
 	}
 	
 	public void joinGroup(String address) {
 		try {
 			if (address.equals("default")) {
-				group = InetAddress.getByName("224.0.0.0");
+				group = InetAddress.getByName("224.0.0.5");
 				sendSocket.joinGroup(group);
 				receiveSocket.joinGroup(group);
 			} else {
@@ -44,6 +53,14 @@ public class Connection {
 	public void close() {
 		receiveSocket.close();
 		sendSocket.close();
+	}
+
+	public Sender getSender() {
+		return sender;
+	}
+
+	public MulticastSocket getSendSocket() {
+		return sendSocket;
 	}
 	
 }

@@ -1,14 +1,22 @@
 package connection;
 
+import java.io.IOException;
+
+import packet.Packet;
+
 public class Sender {
 	
 	public Connection connection;
 	
-	public Sender(Connection c) {
-		connection = c;
+	public Sender(Connection connection) {
+		this.connection = connection;
 	}
 	
-	public void send(String message) {
-		
+	public void send(Packet packet) {
+		try {
+			connection.getSendSocket().send(packet.getDatagramPacket());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
