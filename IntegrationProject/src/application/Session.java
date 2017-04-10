@@ -14,18 +14,18 @@ public class Session {
 	private String name;
 	private int ID;
 	private Connection connection;
-	private ArrayList<Person> knownPersons;
-	private Map<Person, ArrayList<Message>> chatMessages;
+	public ArrayList<Person> knownPersons; // TODO: change back to private
+	public Map<Person, ArrayList<Message>> chatMessages; // TODO: change back to private
 	private int seq;
 
 	public Session(String name) {
 		this.name = name;
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
-		this.connection = new Connection();
+//		this.connection = new Connection(); TODO: uncomment
 		this.knownPersons = new ArrayList<>();
 		this.chatMessages = new HashMap<>();
 		this.seq = 0;
-		new PulseHandler(this);		
+//		new PulseHandler(this); TODO: uncomment
 	}
 
 	public String getName() {
@@ -56,4 +56,5 @@ public class Session {
 		seq++;
 		return seq;
 	}
+	
 }

@@ -37,5 +37,13 @@ public class Person {
 		this.ID = ID;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
+	public int getID() {
+		return ID;
+	}
+	
 	
 }
