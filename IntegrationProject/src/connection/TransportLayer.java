@@ -84,7 +84,7 @@ public class TransportLayer {
 	public void handlePulse(Packet packet) {
 		Pulse payload = (Pulse) packet.getPayload();
 		Person person = new Person(payload.getName(), packet.getSenderID());	
-		if (!session.getKnownPersons().contains(person)) {
+		if (!session.getKnownPersons().con) {
 			person.setTimeToLive(PULSE_TTL);
 			session.getKnownPersons().add(person);
 		}		
