@@ -182,6 +182,7 @@ public class GUI extends Application {
 			GUIHandler.username = input;
 			window.hide();
 			window.setScene(chatScreen);
+			window.setTitle(GUIHandler.username + " - " + GUIHandler.getApplicationName());
 			window.show();
 		}
 	}
