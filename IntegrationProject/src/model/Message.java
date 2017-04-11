@@ -1,6 +1,7 @@
 package model;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class Message {
 
@@ -10,11 +11,11 @@ public class Message {
 	private long timestamp;
 	private String text;
 	
-	public Message(int senderID, int receiverID, int messageID, int timestamp, String text) {
+	public Message(int senderID, int receiverID, int messageID, String text) {
 		this.senderID = senderID;
 		this.receiverID = receiverID;
 		this.messageID = messageID;
-		this.timestamp = timestamp;
+		timestamp = new Date().getTime();
 		this.text = text;
 	}
 	
@@ -27,8 +28,7 @@ public class Message {
 	}
 	
 	public String getTimestampString() {
-		SimpleDateFormat timestampFormat = new SimpleDateFormat("HH:mm");
-		return timestampFormat.format(timestamp);
+		return new SimpleDateFormat("HH:mm").format(timestamp);
 	}
 
 }
