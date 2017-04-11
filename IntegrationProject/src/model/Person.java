@@ -11,6 +11,7 @@ public class Person {
 	// Person data
 	public String name;
 	public int ID;
+	private int timeToLive;
 	
 	// Diffie-Hellman data
 	private int secretInteger;
@@ -35,6 +36,14 @@ public class Person {
 	public Person(String name, int ID) {
 		this.name = name;
 		this.ID = ID;
+	}
+	
+	public int getTimeToLive() {
+		return this.timeToLive;
+	}
+	
+	public void setTimeToLive(int ttl) {
+		this.timeToLive = ttl;
 	}
 	
 	

@@ -49,4 +49,20 @@ public class EncryptedMessage implements Payload {
 		
 		return result;
 	}
+
+	public int getSenderID() {
+		return senderID;
+	}
+
+	public int getReceiverID() {
+		return receiverID;
+	}
+
+	public int getMessageID() {
+		return messageID;
+	}
+
+	public String getEncryptedMessage() {
+		return encryptedMessage;
+	}
 }

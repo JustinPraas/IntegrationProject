@@ -42,4 +42,9 @@ public class Acknowledgement implements Payload {
 		
 		return result;
 	}
+
+	@Override
+	public int getReceiverID() {
+		return receiverID;
+	}
 }

@@ -1,22 +1,25 @@
 package connection;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
+
+import application.Session;
 
 public class Connection {
 	
 	public MulticastSocket sendSocket;
 	public MulticastSocket receiveSocket;
+	
 	public Sender sender;
 	public Receiver receiver;
+	
 	public TransportLayer transportLayer;
 	public PulseHandler pulseHandler;
 	public InetAddress group;
 	
-	public Connection() {
+	public Connection(Session session) {
 		try {
 			this.sendSocket = new MulticastSocket();
 			this.receiveSocket = new MulticastSocket();
@@ -27,7 +30,7 @@ public class Connection {
 		
 		this.sender = new Sender(this);
 		this.receiver = new Receiver(this);
-		this.transportLayer = new TransportLayer();
+		this.transportLayer = new TransportLayer(session);
 	}
 	
 	public void joinGroup(String address) {

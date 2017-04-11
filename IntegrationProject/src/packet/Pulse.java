@@ -35,4 +35,17 @@ public class Pulse implements Payload {
 		
 		return result;		
 	}
+
+	public int getSenderID() {
+		return senderID;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	@Override
+	public int getReceiverID() {
+		return 0;
+	}
 }

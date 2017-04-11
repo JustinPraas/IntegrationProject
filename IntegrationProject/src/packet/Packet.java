@@ -5,6 +5,8 @@ import java.util.Arrays;
 
 public class Packet {
 
+	private int senderID;
+	private int receiverID;
 	private int sequenceNumber;
 	private byte identifier;
 	private Payload payload;

@@ -1,6 +1,7 @@
 package connection;
 
 import application.Session;
+import model.Person;
 import packet.Packet;
 import packet.Pulse;
 
@@ -27,5 +28,14 @@ public class PulseHandler extends Thread {
 		Pulse pulse = new Pulse(session.getID(), session.getName()); 
 		Packet packet = new Packet(0, session.getNextSeq(), pulse);
 		session.getConnection().getSender().send(packet);
+	}
+	
+	public void decreaseTimeToLive() {
+		for (Person person : session.getKnownPersons()) {
+			int ttl = person.getTimeToLive();
+			if (ttl > 0) {
+				person.setTimeToLive(ttl - 1);
+			}
+		}
 	}
 }

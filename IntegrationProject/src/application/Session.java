@@ -21,7 +21,7 @@ public class Session {
 	public Session(String name) {
 		this.name = name;
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
-		this.connection = new Connection();
+		this.connection = new Connection(this);
 		this.knownPersons = new ArrayList<>();
 		this.chatMessages = new HashMap<>();
 		this.seq = 0;
