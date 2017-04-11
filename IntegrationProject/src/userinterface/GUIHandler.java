@@ -11,6 +11,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import model.Message;
@@ -111,7 +112,7 @@ public class GUIHandler {
 			}
 			
 			// Append this message to ChatBox String
-			chatBoxString += messageSender + " (" + message.getTimestampString()
+			chatBoxString += "  " + messageSender + " (" + message.getTimestampString()
 					+ "): " + message.getText() + "\n";
 		}
 		
@@ -140,7 +141,7 @@ public class GUIHandler {
 		
 		// Store link between Person object and Button object
 		personUnreadMessages.put(person, false);
-		personToButton.get(person).setFont(Font.font(null, FontWeight.NORMAL, 13));
+		personToButton.get(person).setFont(Font.font(null, FontWeight.NORMAL, 14.5));
 	}
 	
 	
@@ -178,12 +179,23 @@ public class GUIHandler {
 		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
 			Person person = entry.getValue();
 			
+			String buttonText = "";
+			
 			Button button = new Button(person.getName());
 			
 			// Check if the Button should be marked as containing unread messages
 			if (personUnreadMessages.containsKey(person) && personUnreadMessages.get(person) 
 					&& currentPerson != person) {
-				button.setFont(Font.font(null, FontWeight.BOLD, 13));
+				button.setFont(Font.font(null, FontWeight.BOLD, 14.5));
+			} else {
+				button.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
+			}
+			
+			// Mark Person as online or offline
+			if (person.getTimeToLive() > 0) {
+				button.setTextFill(Color.GREEN);
+			} else {
+				button.setTextFill(Color.RED);
 			}
 			
 			// Put the link between the Person object and the Button object in the new map
@@ -232,7 +244,7 @@ public class GUIHandler {
 		} else {
 			// If not, mark chat with this Person as containing unread messages
 			personUnreadMessages.put(person, true);
-			personToButton.get(person).setFont(Font.font(null, FontWeight.BOLD, 13));
+			personToButton.get(person).setFont(Font.font(null, FontWeight.BOLD, 14.5));
 		}
 	}
 	
