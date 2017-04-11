@@ -105,7 +105,7 @@ public class GUIHandler {
 			
 			// Set sender of message to actual sender
 			String messageSender;
-			if (message.getMessageID() == session.getID()) {
+			if (message.getSenderID() == session.getID()) {
 				messageSender = username;
 			} else {
 				messageSender = person.getName();

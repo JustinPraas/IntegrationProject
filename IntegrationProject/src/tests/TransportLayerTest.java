@@ -62,8 +62,7 @@ public class TransportLayerTest {
 	
 	@Test
 	public void getMessageIDTest() {
-		assertEquals(0, TransportLayer.getMessageID(pulsePacket.getDatagramPacket().getData()));
-		assertEquals(1, TransportLayer.getMessageID(encrMsgPacket.getDatagramPacket().getData()));
-		assertEquals(2, TransportLayer.getMessageID(ackPacket.getDatagramPacket().getData()));
+		assertEquals(20, TransportLayer.getMessageID(encrMsgPacket.getDatagramPacket().getData()));
+		assertEquals(20, TransportLayer.getMessageID(ackPacket.getDatagramPacket().getData()));
 	}
 }

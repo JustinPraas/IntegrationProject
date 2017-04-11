@@ -64,18 +64,17 @@ public class TransportLayer {
 		addPacketToSeenPackets(receivedPacket);
 		
 		// TODO: First check if we've seen this packet before, otherwise process the packet
-		if (receivedPacket.getReceiverID() != session.getID()) {
+		if (typeIdentifier != PayloadType.PULSE.getType() && receivedPacket.getReceiverID() != session.getID()) {
 			forwardPacket(receivedPacket);
 		} else {	
-			int type = receivedPacket.getTypeIdentifier();
-			
-			if (PayloadType.PULSE.getType() == type) {
+			if (PayloadType.PULSE.getType() == typeIdentifier) {
+				forwardPacket(receivedPacket);
 				handlePulse(receivedPacket);
-			} else if (PayloadType.ENCRYPTED_MESSAGE.getType() == type) {
+			} else if (PayloadType.ENCRYPTED_MESSAGE.getType() == typeIdentifier) {
 				handleEncryptedMessage(receivedPacket);
-			} else if (PayloadType.ACKNOWLEDGEMENT.getType() == type) {
+			} else if (PayloadType.ACKNOWLEDGEMENT.getType() == typeIdentifier) {
 				handleAcknowledgement(receivedPacket);
-			} else if (PayloadType.ENCRYPTION_PAIR.getType() == type) {
+			} else if (PayloadType.ENCRYPTION_PAIR.getType() == typeIdentifier) {
 				// TODO: handleEncryptionPair(receivedPacket);
 			} else {
 				System.err.println("Something went wrong...");
@@ -151,11 +150,12 @@ public class TransportLayer {
 		Person person = new Person(payload.getName(), receivedPacket.getSenderID());
 		
 		if (!session.getKnownPersons().containsKey(person.getID())) {
+			session.getKnownPersons().put(person.getID(), person);
 			GUIHandler.changedPersonList();
 		} 
-		
+		//TODO
 		person.setTimeToLive(PULSE_TTL);
-		session.getKnownPersons().put(person.getID(), person);
+		
 	}
 	
 	private void handleEncryptedMessage(Packet receivedPacket) {
@@ -311,6 +311,7 @@ public class TransportLayer {
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
+		System.out.println(name);
 		return name;
 	}
 
