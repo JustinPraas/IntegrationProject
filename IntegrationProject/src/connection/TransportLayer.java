@@ -101,6 +101,26 @@ public class TransportLayer {
 		}
 	}
 	
+	public void sendMessageFromGUI(String msg, Person receiver) {
+		int nextMessageID = receiver.getNextMessageID();
+		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msg); // TODO: Encrypt
+		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
+		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), PayloadType.ENCRYPTED_MESSAGE.getType(), EncryptedMessage);
+		session.getConnection().getSender().send(packet);
+
+		// TODO SYNCHRONIZE
+		// Add it to the chatmessages map
+		if (!session.getChatMessages().containsKey(receiver)) {
+			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
+		} else {
+			ArrayList<Message> currentMessageList = session.getChatMessages().get(receiver);
+			currentMessageList.add(message);
+			session.getChatMessages().put(receiver, currentMessageList);
+		}
+		
+		GUIHandler.messagePutInMap(receiver);
+	}
+	
 	/**
 	 * Processes a received <code>Packet</code> object.
 	 * @param receivedPacket the packet that has been received
@@ -127,6 +147,7 @@ public class TransportLayer {
 		// The person that sent the message
 		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
 		
+		// TODO SYNCHRONIZE
 		// Add it to the chatmessages map
 		if (!session.getChatMessages().containsKey(person)) {
 			session.getChatMessages().put(person, new ArrayList<>(Arrays.asList(new Message[]{message})));
