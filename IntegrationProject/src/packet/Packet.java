@@ -1,8 +1,11 @@
 package packet;
 
 import java.net.DatagramPacket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import connection.Connection;
 
 public class Packet {
 	
@@ -58,7 +61,7 @@ public class Packet {
 			packetArray[i] = packetList.get(i);
 		}
 		
-		return new DatagramPacket(packetArray, packetList.size());		
+		return new DatagramPacket(packetArray, packetList.size(), Connection.group, Connection.port);		
 	}
 	
 	public byte[] getDatagramPacketData() {

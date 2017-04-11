@@ -17,12 +17,13 @@ public class Connection {
 	
 	public TransportLayer transportLayer;
 	public PulseHandler pulseHandler;
-	public InetAddress group;
+	public static InetAddress group;
+	public static final int port = 12345;
 	
 	public Connection(Session session) {
 		try {
-			this.sendSocket = new MulticastSocket();
-			this.receiveSocket = new MulticastSocket();
+			this.sendSocket = new MulticastSocket(port);
+			this.receiveSocket = new MulticastSocket(port);
 			this.joinGroup("default");
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -36,7 +37,7 @@ public class Connection {
 	public void joinGroup(String address) {
 		try {
 			if (address.equals("default")) {
-				group = InetAddress.getByName("224.0.0.5");
+				group = InetAddress.getByName("224.0.0.0");
 				sendSocket.joinGroup(group);
 				receiveSocket.joinGroup(group);
 			} else {
