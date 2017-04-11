@@ -48,6 +48,7 @@ public class TransportLayer {
 	 */
 	public void handlePacket(DatagramPacket datagramPacket) {
 		byte[] datagramContents = shortenDatagramPacket(datagramPacket.getData());
+		System.out.println(Arrays.asList("Content data: " + datagramContents));
 		
 		int senderID = getSenderID(datagramContents);
 		int receiverID = getReceiverID(datagramContents);
@@ -311,7 +312,6 @@ public class TransportLayer {
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-		System.out.println(name);
 		return name;
 	}
 
@@ -323,7 +323,7 @@ public class TransportLayer {
 		nameLengthArray = Arrays.copyOfRange(pulsePayloadData, start, end);		
 		ByteBuffer nameLengthBytebuffer = ByteBuffer.wrap(nameLengthArray);
 		
-		int nameLength = nameLengthBytebuffer.getShort();
+		int nameLength = nameLengthBytebuffer.get();
 		return nameLength;
 	}
 
@@ -373,7 +373,7 @@ public class TransportLayer {
 		messageLengthArray = Arrays.copyOfRange(encryptedPayloadData, start, end);		
 		ByteBuffer messageLengthBytebuffer = ByteBuffer.wrap(messageLengthArray);
 		
-		int messageLength = messageLengthBytebuffer.getShort();
+		int messageLength = messageLengthBytebuffer.get();
 		return messageLength;
 	}
 
