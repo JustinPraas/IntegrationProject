@@ -24,10 +24,12 @@ public class Receiver extends Thread {
 		DatagramPacket packet = new DatagramPacket(buf, buf.length);
 		while (!connection.receiveSocket.isClosed()) {
 			try {
-				connection.receiveSocket.receive(packet);
+				System.out.println("---------------------------------");
 				System.out.println(Arrays.toString(packet.getData()));
+				System.out.println("---------------------------------");
+				connection.receiveSocket.receive(packet);
 				transportLayer.handlePacket(packet);
-				packet = new DatagramPacket(buf, buf.length);
+				packet = new DatagramPacket(new byte[160], buf.length);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
