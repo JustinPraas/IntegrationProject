@@ -196,12 +196,22 @@ public class TransportLayer {
 		seenPackets.add(receivedPacket);
 	}
 	
+	/**
+	 * Forwards a packet to all reachable nodes if this packet has not 
+	 * been seen before.
+	 * @param receivedPacket the packet that has been received
+	 */
 	public void forwardPacket(Packet receivedPacket) {
 		if (!seenPackets.contains(receivedPacket)) {
 			session.getConnection().getSender().send(receivedPacket);
 		}
 	}
 
+	/**
+	 * Sends an acknowledgement to the originator of the <code>message</code>.
+	 * @param receivedPacket the packet that contains the message that needs acknowledgement
+	 * @param message the message that needs acknowledgement
+	 */
 	private void sendAcknowledgement(Packet receivedPacket, Message message) {
 		// Prepare an acknowledgement
 		Acknowledgement acknowledgement = new Acknowledgement(message.getMessageID());
@@ -216,6 +226,12 @@ public class TransportLayer {
 		session.getConnection().getSender().send(packet);
 	}
 	
+	/**
+	 * Sends a message that was entered through the GUI to the <code>receiver</code>. Also
+	 * updates the chatMessages map.
+	 * @param msg the message to be sent
+	 * @param receiver the destination person
+	 */
 	public void sendMessageFromGUI(String msg, Person receiver) {
 		int msgLength = msg.length();
 		int nextMessageID = receiver.getNextMessageID();
@@ -234,8 +250,11 @@ public class TransportLayer {
 			session.getChatMessages().put(receiver, currentMessageList);
 		}
 		
+		// Update the GUI
 		GUIHandler.messagePutInMap(receiver);
 	}
+	
+	// TODO: LEFT OFF HERE
 	
 	/**
 	 * Creates a <code>Packet</code> object from datagram contents.
