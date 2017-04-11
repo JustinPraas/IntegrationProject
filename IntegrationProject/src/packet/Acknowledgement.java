@@ -6,8 +6,8 @@ public class Acknowledgement implements Payload {
 	
 	private int messageID;
 
-	public Acknowledgement(int messageSeq) {
-		this.messageID = messageSeq;
+	public Acknowledgement(int messageID) {
+		this.messageID = messageID;
 	}
 
 	@Override

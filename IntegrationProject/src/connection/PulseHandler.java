@@ -1,9 +1,12 @@
 package connection;
 
+import java.util.Map;
+
 import application.Session;
 import model.Person;
 import packet.Packet;
 import packet.Pulse;
+import userinterface.GUIHandler;
 
 public class PulseHandler extends Thread {
 	
@@ -31,10 +34,17 @@ public class PulseHandler extends Thread {
 	}
 	
 	public void decreaseTimeToLive() {
-		for (Person person : session.getKnownPersons()) {
+		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
+			Person person = entry.getValue();
+			
+			// Change TTL
 			int ttl = person.getTimeToLive();
-			if (ttl > 0) {
-				person.setTimeToLive(ttl - 1);
+			person.setTimeToLive(ttl - 1);
+			session.getKnownPersons().put(person.getID(), person);
+			
+			// Update GUI
+			if (ttl == 0) {
+				GUIHandler.changedPersonList();
 			}
 		}
 	}

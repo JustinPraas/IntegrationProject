@@ -3,12 +3,18 @@ package connection;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+
+import com.sun.javafx.runtime.async.AsyncOperationListener;
+
+import java.time;
 
 import application.Session;
 import model.Message;
 import model.Person;
 import packet.*;
+import userinterface.GUIHandler;
 
 public class TransportLayer {
 	
@@ -17,6 +23,7 @@ public class TransportLayer {
 
 	// Used objects
 	private Session session;
+	private ArrayList<Packet> seenPackets = new ArrayList<>();
 
 	/**
 	 * Creates a <code>TransportLayer</code> object that acts on a sessions.
@@ -54,9 +61,15 @@ public class TransportLayer {
 		
 		Packet receivedPacket = new Packet(senderID, receiverID, sequenceNumber, typeIdentifier, payload);
 		
+		if (seenPackets.contains(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
+			return;
+		}
+		
+		addPacketToSeenPackets(receivedPacket);
+		
 		// TODO: First check if we've seen this packet before, otherwise process the packet
 		if (receivedPacket.getReceiverID() != session.getID()) {
-			forwardPacket(datagramContents);
+			forwardPacket(receivedPacket);
 		} else {
 			switch (receivedPacket.getTypeIdentifier()) { 
 			case PayloadType.PULSE.getType():
@@ -76,19 +89,74 @@ public class TransportLayer {
 			}	
 		}			
 	}
+
+	private void handleAcknowledgement(Packet receivedPacket) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void addPacketToSeenPackets(Packet receivedPacket) {
+		if (seenPackets.size() == 300) {
+			seenPackets.remove(0);
+		}			
+		seenPackets.add(receivedPacket);
+	}
+	
+	public void forwardPacket(Packet receivedPacket) {
+		if (!seenPackets.contains(receivedPacket)) {
+			session.getConnection().getSender().send(receivedPacket);
+		}
+	}
 	
 	/**
 	 * Processes a received <code>Packet</code> object.
-	 * @param packet the packet that has been received
+	 * @param receivedPacket the packet that has been received
 	 */
-	public void handlePulse(Packet packet) {
-		Pulse payload = (Pulse) packet.getPayload();
-		Person person = new Person(payload.getName(), packet.getSenderID());	
-		if (!session.getKnownPersons().con) {
-			person.setTimeToLive(PULSE_TTL);
-			session.getKnownPersons().add(person);
-		}		
+	public void handlePulse(Packet receivedPacket) {
+		Pulse payload = (Pulse) receivedPacket.getPayload();
+		Person person = new Person(payload.getName(), receivedPacket.getSenderID());
+		
+		if (!session.getKnownPersons().containsKey(person.getID())) {
+			GUIHandler.changedPersonList();
+		} 
+		
+		person.setTimeToLive(PULSE_TTL);
+		session.getKnownPersons().put(person.getID(), person);
+	}
+	
+	private void handleEncryptedMessage(Packet receivedPacket) {
+		EncryptedMessage payload = (EncryptedMessage) receivedPacket.getPayload();
+		
+		Message message = new Message(receivedPacket.getSenderID(), 
+				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getEncryptedMessage(), false);
+		
+		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
+		
+		if (!session.getChatMessages().containsKey(person)) {
+			session.getChatMessages().put(person, new ArrayList<>(Arrays.asList(new Message[]{message})));
+		} else {
+			ArrayList<Message> currentMessageList = session.getChatMessages().get(person);
+			ArrayList<Message> newMessageList = insertMessage(currentMessageList, message);
+			session.getChatMessages().put(person, newMessageList);
+		}
+		
+		Acknowledgement acknowledgement = new Acknowledgement(message.getMessageID());
+		
+		int senderID = receivedPacket.getReceiverID();
+		int receiverID = receivedPacket.getSenderID();
+		int sequenceNum = session.getNextSeq();
+		int type = PayloadType.ACKNOWLEDGEMENT.getType();
+		
+		Packet packet = new Packet(senderID, receiverID, sequenceNum, type, acknowledgement);
+		session.getConnection().getSender().send(packet);		
 	}	
+
+	private ArrayList<Message> insertMessage(ArrayList<Message> currentMessageList, Message message) {
+		for (Message m : currentMessageList) {
+			
+		}
+		return null;
+	}
 
 	/**
 	 * Processes a received <code>EncryptedMessage</code> packet.
@@ -189,7 +257,8 @@ public class TransportLayer {
 		byte[] seqNumArray = new byte[Packet.SEQUENCE_NUM_LENGTH];
 		seqNumArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer seqNumByteBuffer = ByteBuffer.wrap(seqNumArray);
-		int seqNum = seqNumByteBuffer.getShort();
+		
+		int seqNum = seqNumByteBuffer.getInt();
 		return seqNum;
 	}
 	
@@ -206,7 +275,7 @@ public class TransportLayer {
 		typeIdentifierArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer typeIdentifierBuffer = ByteBuffer.wrap(typeIdentifierArray);
 		
-		int typeIdentifier = typeIdentifierBuffer.get();
+		int typeIdentifier = typeIdentifierBuffer.getInt();
 		return typeIdentifier;
 	}
 
@@ -217,7 +286,8 @@ public class TransportLayer {
 	 */
 	public static String getName(byte[] pulsePayloadData) {
 		byte[] nameArray = new byte[pulsePayloadData.length - 4];
-		nameArray = Arrays.copyOfRange(pulsePayloadData, 11, pulsePayloadData.length);
+		nameArray = Arrays.copyOfRange(pulsePayloadData, 4, pulsePayloadData.length);
+		
 		String name = "";
 		try {
 			name = new String(nameArray, "UTF-8");
@@ -253,10 +323,10 @@ public class TransportLayer {
 	 */
 	public static int getMessageID(byte[] payloadData) {
 		byte[] messageIdArray = new byte[2];
-		messageIdArray = Arrays.copyOfRange(payloadData, 10, 11);
+		messageIdArray = Arrays.copyOfRange(payloadData, 8, 10);
 		ByteBuffer messageIdByteBuffer = ByteBuffer.wrap(messageIdArray);
 		
-		int messageID = messageIdByteBuffer.get();
+		int messageID = messageIdByteBuffer.getInt();
 		return messageID;
 	}
 

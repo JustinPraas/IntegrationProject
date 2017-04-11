@@ -11,12 +11,13 @@ public class Message {
 	private long timestamp;
 	private String text;
 	
-	public Message(int senderID, int receiverID, int messageID, String text) {
+	public Message(int senderID, int receiverID, int messageID, String text, boolean myMessage) {
 		this.senderID = senderID;
 		this.receiverID = receiverID;
 		this.messageID = messageID;
 		timestamp = new Date().getTime();
 		this.text = text;
+		
 	}
 	
 	public String getText() {
