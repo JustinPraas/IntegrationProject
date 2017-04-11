@@ -30,7 +30,7 @@ public class TransportLayer {
 	}
 	
 	public static void main(String[] args) {
-		Pulse p = new Pulse("Justin");
+		Pulse p = new Pulse(6, "Justin");
 		Packet packet = new Packet (1, 2, PayloadType.PULSE.getType(), 0, p);
 		
 		Payload payload = getPayload(packet.getDatagramPacket().getData(), 0);
@@ -47,7 +47,7 @@ public class TransportLayer {
 	 * @param datagramPacket the received packet
 	 */
 	public void handlePacket(DatagramPacket datagramPacket) {
-		byte[] datagramContents = datagramPacket.getData();
+		byte[] datagramContents = shortenDatagramPacket(datagramPacket.getData());
 		
 		int senderID = getSenderID(datagramContents);
 		int receiverID = getReceiverID(datagramContents);
@@ -83,6 +83,26 @@ public class TransportLayer {
 		}			
 	}
 
+	private byte[] shortenDatagramPacket(byte[] datagramArray) {
+		int length = 0;
+		length += Packet.HEADER_LENGTH;
+		
+		int type = getTypeIdentifier(datagramArray);
+		if (type == PayloadType.PULSE.getType()) { 
+			length += getNameLength(getPayload(datagramArray, type).getPayloadData());
+		} else if (type == PayloadType.ENCRYPTED_MESSAGE.getType()) {
+			length += getMessageLength(getPayload(datagramArray, type).getPayloadData());
+		} else if (type == PayloadType.ACKNOWLEDGEMENT.getType()) {
+			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
+		} else if (type == PayloadType.ENCRYPTION_PAIR.getType()) {
+			// TODO: Implement encryption pair
+		}
+		
+		byte[] datagramContents = Arrays.copyOfRange(datagramArray, 0, length);
+		
+		return datagramContents;
+	}
+
 	private void handleAcknowledgement(Packet receivedPacket) {
 		// TODO Auto-generated method stub
 		
@@ -102,8 +122,9 @@ public class TransportLayer {
 	}
 	
 	public void sendMessageFromGUI(String msg, Person receiver) {
+		int msgLength = msg.length();
 		int nextMessageID = receiver.getNextMessageID();
-		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msg); // TODO: Encrypt
+		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msgLength, msg); // TODO: Encrypt
 		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
 		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), PayloadType.ENCRYPTED_MESSAGE.getType(), EncryptedMessage);
 		session.getConnection().getSender().send(packet);
@@ -184,12 +205,14 @@ public class TransportLayer {
 		byte[] payloadData = Arrays.copyOfRange(datagramContents, Packet.HEADER_LENGTH, datagramContents.length);
 		
 		if (PayloadType.PULSE.getType() == typeIdentifier) {
+			int nameLength = getNameLength(payloadData);
 			String name = getName(payloadData);
-			return new Pulse(name);
+			return new Pulse(nameLength, name);
 		} else if (PayloadType.ENCRYPTED_MESSAGE.getType() == typeIdentifier) {
 			String message = getMessage(payloadData);
 			int messageID = getMessageID(payloadData);
-			return new EncryptedMessage(messageID, message);
+			int messageLength = getMessageLength(payloadData);
+			return new EncryptedMessage(messageID, messageLength, message);
 		} else if (PayloadType.ACKNOWLEDGEMENT.getType() == typeIdentifier) {
 			int messageID = getMessageID(payloadData);
 			return new Acknowledgement(messageID);
@@ -208,7 +231,7 @@ public class TransportLayer {
 	 */
 	public static int getSenderID(byte[] datagramContents) {
 		int start = 0;
-		int end = Packet.SENDER_LENGTH;
+		int end = start + Packet.SENDER_LENGTH;
 		
 		byte[] senderIdArray = new byte[Packet.SENDER_LENGTH];
 		senderIdArray = Arrays.copyOfRange(datagramContents, start, end);
@@ -225,7 +248,7 @@ public class TransportLayer {
 	 */
 	public static int getReceiverID(byte[] datagramContents) {
 		int start = Packet.RECEIVER_LENGTH;
-		int end = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH;
+		int end = start + Packet.RECEIVER_LENGTH;
 		
 		byte[] receiverIdArray = new byte[Packet.RECEIVER_LENGTH];
 		receiverIdArray = Arrays.copyOfRange(datagramContents, start, end);
@@ -242,7 +265,7 @@ public class TransportLayer {
 	 */
 	public static int getSequenceNumber(byte[] datagramContents) {
 		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH;
-		int end = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH + Packet.SEQUENCE_NUM_LENGTH;
+		int end = start + Packet.SEQUENCE_NUM_LENGTH;
 		
 		byte[] seqNumArray = new byte[Packet.SEQUENCE_NUM_LENGTH];
 		seqNumArray = Arrays.copyOfRange(datagramContents, start, end);
@@ -259,7 +282,7 @@ public class TransportLayer {
 	 */
 	public static int getTypeIdentifier(byte[] datagramContents) {
 		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH + Packet.SEQUENCE_NUM_LENGTH;
-		int end = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH + Packet.SEQUENCE_NUM_LENGTH + Packet.TYPE_LENGTH;
+		int end = start + Packet.TYPE_LENGTH;
 		
 		byte[] typeIdentifierArray = new byte[Packet.SEQUENCE_NUM_LENGTH];
 		typeIdentifierArray = Arrays.copyOfRange(datagramContents, start, end);
@@ -275,8 +298,12 @@ public class TransportLayer {
 	 * @return the name of the source
 	 */
 	public static String getName(byte[] pulsePayloadData) {
-		byte[] nameArray = new byte[pulsePayloadData.length - 4];
-		nameArray = Arrays.copyOfRange(pulsePayloadData, 4, pulsePayloadData.length);
+		int length = getNameLength(pulsePayloadData);
+		int start = Pulse.NAME_LENGTH_LENGTH;
+		int end = start + length;
+		
+		byte[] nameArray = new byte[length];
+		nameArray = Arrays.copyOfRange(pulsePayloadData, start, end);
 		
 		String name = "";
 		try {
@@ -287,14 +314,29 @@ public class TransportLayer {
 		return name;
 	}
 
+	private static int getNameLength(byte[] pulsePayloadData) {
+		int start = 0;
+		int end = start + Pulse.NAME_LENGTH_LENGTH;
+		
+		byte[] nameLengthArray = new byte[Pulse.NAME_LENGTH_LENGTH];
+		nameLengthArray = Arrays.copyOfRange(pulsePayloadData, start, end);		
+		ByteBuffer nameLengthBytebuffer = ByteBuffer.wrap(nameLengthArray);
+		
+		int nameLength = nameLengthBytebuffer.getShort();
+		return nameLength;
+	}
+
 	/**
 	 * Returns the (encrypted) message from an encrypted message packet.
 	 * @param encryptedPayloadData the payload data of the encrypted message packet
 	 * @return the (encrypted) message of a encrypted message packet
 	 */
 	public static String getMessage(byte[] encryptedPayloadData) {
-		byte[] messageArray = new byte[encryptedPayloadData.length - 10];
-		messageArray = Arrays.copyOfRange(encryptedPayloadData, 4, encryptedPayloadData.length);
+		int length = getMessageLength(encryptedPayloadData);
+		int start = Packet.HEADER_LENGTH + EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+		int end = start + length;
+		byte[] messageArray = new byte[length];
+		messageArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
 		
 		String message = "";
 		try {
@@ -308,16 +350,30 @@ public class TransportLayer {
 
 	/**
 	 * Returns the messageID of an encrypted message packet.
-	 * @param payloadData the payload data of the packet
+	 * @param encryptedPayloadData the payload data of the packet
 	 * @return the messageID of the encrypted message
 	 */
-	public static int getMessageID(byte[] payloadData) {
-		byte[] messageIdArray = new byte[2];
-		messageIdArray = Arrays.copyOfRange(payloadData, 8, 10);
+	public static int getMessageID(byte[] encryptedPayloadData) {
+		int start = 0;
+		int end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
+		byte[] messageIdArray = new byte[EncryptedMessage.MESSAGE_ID_LENGTH];
+		messageIdArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
 		ByteBuffer messageIdByteBuffer = ByteBuffer.wrap(messageIdArray);
 		
-		int messageID = messageIdByteBuffer.getInt();
+		int messageID = messageIdByteBuffer.getShort();
 		return messageID;
+	}
+
+	private static int getMessageLength(byte[] encryptedPayloadData) {
+		int start = EncryptedMessage.MESSAGE_ID_LENGTH;
+		int end = start + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+		
+		byte[] messageLengthArray = new byte[EncryptedMessage.MESSAGE_LENGTH_LENGTH];
+		messageLengthArray = Arrays.copyOfRange(encryptedPayloadData, start, end);		
+		ByteBuffer messageLengthBytebuffer = ByteBuffer.wrap(messageLengthArray);
+		
+		int messageLength = messageLengthBytebuffer.getShort();
+		return messageLength;
 	}
 
 }

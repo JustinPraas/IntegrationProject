@@ -20,11 +20,12 @@ public class Receiver extends Thread {
 	}
 
 	private void receive() {
-		byte buf[] = new byte[65535];
+		byte buf[] = new byte[160];
 		DatagramPacket pkt = new DatagramPacket(buf, buf.length);
 		while (!connection.receiveSocket.isClosed()) {
 			try {
 				connection.receiveSocket.receive(pkt);
+				System.out.println(Arrays.toString(pkt.getData()));
 				transportLayer.handlePacket(pkt);
 				System.out.println(Arrays.toString(pkt.getData()));
 			} catch (IOException e) {
