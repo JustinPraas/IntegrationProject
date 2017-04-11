@@ -13,7 +13,7 @@ import packet.*;
 public class TransportLayer {
 	
 	// Constants
-	public static final int TTL = 5;
+	public static final int PULSE_TTL = 5;
 
 	// Used objects
 	private Session session;
@@ -27,8 +27,8 @@ public class TransportLayer {
 	}
 	
 	public static void main(String[] args) {
-		Pulse p = new Pulse(2, "Justin");
-		Packet packet = new Packet (12, 0, p);
+		Pulse p = new Pulse("Justin");
+		Packet packet = new Packet (1, 2, 12, 0, p);
 		
 		Payload payload = getPayload(packet.getDatagramPacket().getData(), 0);
 		
@@ -46,10 +46,13 @@ public class TransportLayer {
 	public void handlePacket(DatagramPacket datagramPacket) {
 		byte[] datagramContents = datagramPacket.getData();
 		
+		int senderID = getSenderID(datagramContents);
+		int receiverID = getReceiverID(datagramContents);
 		int sequenceNumber = getSequenceNumber(datagramContents);
-		int typeIdentifier = getTypeIdentifier(datagramContents);
-		
+		int typeIdentifier = getTypeIdentifier(datagramContents);		
 		Payload payload = getPayload(datagramContents, typeIdentifier);
+		
+		Packet p = new Packet(senderID, receiverID, sequenceNumber, typeIdentifier, payload);
 		
 		// TODO: First check if we've seen this packet before, otherwise process the packet
 		if (payload.getReceiverID() != session.getID()) {
@@ -94,7 +97,7 @@ public class TransportLayer {
 	public void handlePulse(Pulse payload) {
 		Person person = new Person(payload.getName(), payload.getSenderID());	
 		if (!session.getKnownPersons().contains(person)) {
-			person.setTimeToLive(TTL);
+			person.setTimeToLive(PULSE_TTL);
 			session.getKnownPersons().add(person);
 		}		
 	}	
@@ -172,12 +175,12 @@ public class TransportLayer {
 
 	/**
 	 * Returns the receiverID of the destination node.
-	 * @param payloadData the payload data of the packet
-	 * @return
+	 * @param datagramContents the contents of the packet
+	 * @return receiverID the receiverID of the destination node
 	 */
-	public static int getReceiverID(byte[] payloadData) {
+	public static int getReceiverID(byte[] datagramContents) {
 		byte[] receiverIdArray = new byte[4];
-		receiverIdArray = Arrays.copyOfRange(payloadData, 0, 4);
+		receiverIdArray = Arrays.copyOfRange(datagramContents, 0, 4);
 		ByteBuffer receiverIdByteBuffer = ByteBuffer.wrap(receiverIdArray);
 		
 		int receiverID = receiverIdByteBuffer.getInt();

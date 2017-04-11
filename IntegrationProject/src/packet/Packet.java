@@ -1,35 +1,69 @@
 package packet;
 
 import java.net.DatagramPacket;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Packet {
+	
+	// Header length in bytes
+	public static final int HEADER_LENGTH = 11;
+	public static final int SENDER_LENGTH = 4;
+	public static final int RECEIVER_LENGTH = 4;
+	public static final int SEQUENCE_NUM_LENGTH = 2;
+	public static final int TYPE_LENGTH = 1;
 
 	private int senderID;
 	private int receiverID;
 	private int sequenceNumber;
-	private byte identifier;
+	private byte typeIdentifier;
 	private Payload payload;
 
-	public Packet(int sequenceNumber, int identifier, Payload payload) {
+	public Packet(int senderID, int receiverID, int sequenceNumber, int typeIdentifier, Payload payload) {
+		this.senderID = senderID;
+		this.receiverID = receiverID;
 		this.sequenceNumber = sequenceNumber;
-		this.identifier = (byte) identifier;
+		this.typeIdentifier = (byte) typeIdentifier;
 		this.payload = payload;
 	}
 	
 	public DatagramPacket getDatagramPacket() {
-		byte[] packet = new byte[3 + payload.getPayload().length];
-		System.arraycopy(payload.getPayload(), 0, packet, 3, payload.getPayload().length);
-		packet[0] = (byte) (sequenceNumber >> 8);
-		packet[1] = (byte) sequenceNumber;
-		packet[2] = identifier;
+		//byte[] packet = new byte[HEADER_LENGTH + payload.getPayload().length];
+		ArrayList<Byte> packetList = new ArrayList<>();
 		
-		return new DatagramPacket(packet, packet.length);		
+		for (int i = (SENDER_LENGTH - 1) * 8; i >= 0; i -= 8) {
+			packetList.add((byte) (senderID >> i));
+		}
+		
+		for (int i = (RECEIVER_LENGTH - 1) * 8; i >= 0; i -= 8) {
+			packetList.add((byte) (receiverID >> i));
+		}
+		
+		for (int i = (SEQUENCE_NUM_LENGTH - 1) * 8; i >= 0; i -= 8) {
+			packetList.add((byte) (sequenceNumber >> i));
+		}
+		
+		for (int i = (TYPE_LENGTH - 1) * 8; i >= 0; i -= 8) {
+			packetList.add((byte) (typeIdentifier >> i));
+		}
+		
+		// Add the payload data to the packetList
+		for (byte b: payload.getPayload()) {
+			packetList.add(b);
+		}
+		
+		// Add all the contents of the packetList to packetArray
+		byte[] packetArray = new byte[packetList.size()];		
+		for (int i = 0; i < packetList.size(); i++) {
+			packetArray[i] = packetList.get(i);
+		}
+		
+		return new DatagramPacket(packetArray, packetList.size());		
 	}
 	
 	public static void main(String[] args) {
-		Pulse p = new Pulse(2, "Justin");
-		Packet packet = new Packet (12, 0, p);
+		Pulse p = new Pulse("Justin");
+		Packet packet = new Packet (10, 12, 1, 2, p);
 		System.out.println(Arrays.toString(p.getPayload()));
 		System.out.println(Arrays.toString(packet.getDatagramPacket().getData()));
 	}

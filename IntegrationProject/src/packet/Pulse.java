@@ -4,23 +4,15 @@ import java.util.ArrayList;
 
 public class Pulse implements Payload {
 	
-	private int senderID;
 	private String name;
 
-	public Pulse(int senderID, String name) {
-		this.senderID = senderID;
+	public Pulse(String name) {
 		this.name = name;	
 	}
 
 	@Override
 	public byte[] getPayload() {
 		ArrayList<Byte> resultList = new ArrayList<>();
-		
-		// Sender ID to binary
-		resultList.add((byte) (senderID >> 24));
-		resultList.add((byte) (senderID >> 16));
-		resultList.add((byte) (senderID >> 8));
-		resultList.add((byte) senderID);
 		
 		// Name to binary
 		for (int i = 0; i < name.length(); i++) {
@@ -36,16 +28,7 @@ public class Pulse implements Payload {
 		return result;		
 	}
 
-	public int getSenderID() {
-		return senderID;
-	}
-
 	public String getName() {
 		return name;
-	}
-
-	@Override
-	public int getReceiverID() {
-		return 0;
 	}
 }

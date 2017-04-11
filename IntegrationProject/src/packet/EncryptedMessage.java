@@ -4,14 +4,10 @@ import java.util.ArrayList;
 
 public class EncryptedMessage implements Payload {
 	
-	private int senderID;
-	private int receiverID;
 	private int messageID;
 	private String encryptedMessage;
 
-	public EncryptedMessage(int senderID, int receiverID, int messageID, String encryptedMessage) {
-		this.senderID = senderID;
-		this.receiverID = receiverID;
+	public EncryptedMessage(int messageID, String encryptedMessage) {
 		this.messageID = messageID;
 		this.encryptedMessage = encryptedMessage;
 	}
@@ -19,18 +15,6 @@ public class EncryptedMessage implements Payload {
 	@Override
 	public byte[] getPayload() {
 		ArrayList<Byte> resultList = new ArrayList<>();
-		
-		// Sender ID to binary
-		resultList.add((byte) (senderID >> 24));
-		resultList.add((byte) (senderID >> 16));
-		resultList.add((byte) (senderID >> 8));
-		resultList.add((byte) senderID);
-		
-		// Receiver ID to binary
-		resultList.add((byte) (receiverID >> 24));
-		resultList.add((byte) (receiverID >> 16));
-		resultList.add((byte) (receiverID >> 8));
-		resultList.add((byte) receiverID);
 		
 		// Message sequence number to binary
 		resultList.add((byte) (messageID >> 8));
@@ -48,14 +32,6 @@ public class EncryptedMessage implements Payload {
 		}
 		
 		return result;
-	}
-
-	public int getSenderID() {
-		return senderID;
-	}
-
-	public int getReceiverID() {
-		return receiverID;
 	}
 
 	public int getMessageID() {
