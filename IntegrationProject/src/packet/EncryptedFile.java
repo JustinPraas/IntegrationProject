@@ -5,11 +5,11 @@ import java.io.File;
 public class EncryptedFile implements Payload {
 	
 	private int messageID;
-	private File file;
+	private File encryptedFile;
 	
-	public EncryptedFile(int messageID, File file) {
+	public EncryptedFile(int messageID, File encryptedFile) {
 		this.messageID = messageID;
-		this.file = file;
+		this.encryptedFile = encryptedFile;
 	}
 
 	@Override
