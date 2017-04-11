@@ -189,8 +189,7 @@ public class TransportLayer {
 		byte[] seqNumArray = new byte[Packet.SEQUENCE_NUM_LENGTH];
 		seqNumArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer seqNumByteBuffer = ByteBuffer.wrap(seqNumArray);
-		
-		int seqNum = seqNumByteBuffer.getInt();
+		int seqNum = seqNumByteBuffer.getShort();
 		return seqNum;
 	}
 	
@@ -207,7 +206,7 @@ public class TransportLayer {
 		typeIdentifierArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer typeIdentifierBuffer = ByteBuffer.wrap(typeIdentifierArray);
 		
-		int typeIdentifier = typeIdentifierBuffer.getInt();
+		int typeIdentifier = typeIdentifierBuffer.get();
 		return typeIdentifier;
 	}
 
@@ -218,8 +217,7 @@ public class TransportLayer {
 	 */
 	public static String getName(byte[] pulsePayloadData) {
 		byte[] nameArray = new byte[pulsePayloadData.length - 4];
-		nameArray = Arrays.copyOfRange(pulsePayloadData, 4, pulsePayloadData.length);
-		
+		nameArray = Arrays.copyOfRange(pulsePayloadData, 11, pulsePayloadData.length);
 		String name = "";
 		try {
 			name = new String(nameArray, "UTF-8");
@@ -255,10 +253,10 @@ public class TransportLayer {
 	 */
 	public static int getMessageID(byte[] payloadData) {
 		byte[] messageIdArray = new byte[2];
-		messageIdArray = Arrays.copyOfRange(payloadData, 8, 10);
+		messageIdArray = Arrays.copyOfRange(payloadData, 10, 11);
 		ByteBuffer messageIdByteBuffer = ByteBuffer.wrap(messageIdArray);
 		
-		int messageID = messageIdByteBuffer.getInt();
+		int messageID = messageIdByteBuffer.get();
 		return messageID;
 	}
 
