@@ -27,6 +27,7 @@ public class Receiver extends Thread {
 				connection.receiveSocket.receive(pkt);
 				System.out.println(Arrays.toString(pkt.getData()));
 				transportLayer.handlePacket(pkt);
+				pkt = new DatagramPacket(buf, buf.length);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

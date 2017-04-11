@@ -284,6 +284,7 @@ public class TransportLayer {
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
+		System.out.println(name);
 		return name;
 	}
 
