@@ -4,11 +4,16 @@ import java.util.ArrayList;
 
 public class EncryptedMessage implements Payload {
 	
+	public static final int MESSAGE_ID_LENGTH = 2;
+	public static final int MESSAGE_LENGTH_LENGTH = 2;
+	
 	private int messageID;
+	private int messageLength;
 	private String encryptedMessage;
 
-	public EncryptedMessage(int messageID, String encryptedMessage) {
+	public EncryptedMessage(int messageID, int messageLength, String encryptedMessage) {
 		this.messageID = messageID;
+		this.messageLength = messageLength;
 		this.encryptedMessage = encryptedMessage;
 	}
 
@@ -19,6 +24,9 @@ public class EncryptedMessage implements Payload {
 		// Message sequence number to binary
 		resultList.add((byte) (messageID >> 8));
 		resultList.add((byte) messageID);
+		
+		resultList.add((byte) (messageLength >> 8));
+		resultList.add((byte) messageLength);
 		
 		// encryptedMessage to binary
 		for (int i = 0; i < encryptedMessage.length(); i++) {
@@ -40,5 +48,9 @@ public class EncryptedMessage implements Payload {
 
 	public String getEncryptedMessage() {
 		return encryptedMessage;
+	}
+	
+	public int getMessageLength() {
+		return messageLength;
 	}
 }

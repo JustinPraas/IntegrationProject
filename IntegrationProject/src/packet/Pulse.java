@@ -4,9 +4,13 @@ import java.util.ArrayList;
 
 public class Pulse implements Payload {
 	
+	public static final int NAME_LENGTH_LENGTH = 1;
+	
+	private int nameLength;
 	private String name;
 
-	public Pulse(String name) {
+	public Pulse(int nameLength, String name) {
+		this.nameLength = nameLength;
 		this.name = name;	
 	}
 
@@ -14,9 +18,11 @@ public class Pulse implements Payload {
 	public byte[] getPayloadData() {
 		ArrayList<Byte> resultList = new ArrayList<>();
 		
+		resultList.add((byte) nameLength);
+		
 		// Name to binary
 		for (int i = 0; i < name.length(); i++) {
-			resultList.add((byte)name.charAt(i));
+			resultList.add((byte) name.charAt(i));
 		}
 		
 		// Convert ArrayList to byte[]
@@ -30,5 +36,9 @@ public class Pulse implements Payload {
 
 	public String getName() {
 		return name;
+	}
+	
+	public int getNameLength() {
+		return nameLength;
 	}
 }

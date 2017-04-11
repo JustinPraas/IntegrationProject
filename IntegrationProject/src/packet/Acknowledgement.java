@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 public class Acknowledgement implements Payload {
 	
+	public static final int ACK_PAYLOAD_LENGHT = 2;
+
 	private int messageID;
 
 	public Acknowledgement(int messageID) {

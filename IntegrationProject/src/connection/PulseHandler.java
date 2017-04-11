@@ -29,7 +29,8 @@ public class PulseHandler extends Thread {
 	}
 	
 	public void pulse() {
-		Pulse pulse = new Pulse(session.getName()); 
+		int nameLength = session.getName().length();
+		Pulse pulse = new Pulse(nameLength, session.getName()); 
 		Packet packet = new Packet(session.getID(), 0, session.getNextSeq(), PayloadType.PULSE.getType(), pulse);
 		session.getConnection().getSender().send(packet);
 	}
