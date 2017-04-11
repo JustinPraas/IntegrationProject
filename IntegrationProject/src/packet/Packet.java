@@ -61,7 +61,7 @@ public class Packet {
 			packetArray[i] = packetList.get(i);
 		}
 		
-		return new DatagramPacket(packetArray, packetList.size(), Connection.group, Connection.port);		
+		return new DatagramPacket(packetArray, packetArray.length, Connection.group, Connection.port);		
 	}
 	
 	public byte[] getDatagramPacketData() {
