@@ -174,6 +174,12 @@ public class GUI extends Application {
 			alert.setHeaderText("Empty username");
 			alert.setContentText("Please enter a valid, non-empty username.");
 			alert.showAndWait();
+		} else if (input.length() > 20) {
+			Alert alert = new Alert(AlertType.WARNING);
+			alert.setTitle("Invalid input");
+			alert.setHeaderText("Username too long");
+			alert.setContentText("Please enter a shorter username.");
+			alert.showAndWait();
 		} else {
 			GUIHandler.username = input;
 			window.hide();
