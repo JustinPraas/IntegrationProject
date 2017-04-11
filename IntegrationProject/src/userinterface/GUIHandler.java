@@ -2,6 +2,7 @@ package userinterface;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import application.Session;
 import javafx.application.Platform;
@@ -174,7 +175,9 @@ public class GUIHandler {
 		VBox vb = new VBox(0);
 		
 		// Iterate over all the known Person objects to create Buttons for them
-		for (Person person : session.getKnownPersons()) {
+		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
+			Person person = entry.getValue();
+			
 			Button button = new Button(person.getName());
 			
 			// Check if the Button should be marked as containing unread messages
