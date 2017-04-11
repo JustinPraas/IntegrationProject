@@ -112,7 +112,9 @@ public class TransportLayer {
 	}
 
 	/**
-	 * Processes a received <code>Packet</code> object.
+	 * Processes a received <code>Packet</code> object, interpreted with a
+	 * Pulse payload. Adds the person to the knownPersons list if the person was not 
+	 * in the list yet. Resets the person's TTL and updates the GUI. 
 	 * @param receivedPacket the packet that has been received
 	 */
 	public void handlePulse(Packet receivedPacket) {
@@ -122,16 +124,29 @@ public class TransportLayer {
 		Person person;
 		int senderID = receivedPacket.getSenderID();
 		
+		// If the sender is known: use this Person object as person
+		// else: create a new person with the sender's ID and name
 		if (session.getKnownPersons().containsKey(senderID)) {
 			person = session.getKnownPersons().get(senderID);
 		} else {
 			person = new Person(payload.getName(), senderID);
 		}
+		
+		// Set the peron's time to live to PULSE_TTL and put it in the session.knownPersons map
 		person.setTimeToLive(PULSE_TTL);
 		session.getKnownPersons().put(senderID, person);
+		
+		// Update the GUI
 		GUIHandler.changedPersonList();
 	}
 
+	/**
+	 * Processes a received <code>Packet</code> object interpreted with an
+	 * EncryptedMessage payload. Creates a <code>Message</code> object from the 
+	 * payload contents and updates the chatMessages map. Updates the GUI and sends 
+	 * an acknowledgement.
+	 * @param receivedPacket
+	 */
 	public void handleEncryptedMessage(Packet receivedPacket) {
 		EncryptedMessage payload = (EncryptedMessage) receivedPacket.getPayload();
 		
@@ -155,17 +170,8 @@ public class TransportLayer {
 		// Update GUI
 		GUIHandler.messagePutInMap(person);
 		
-		// Prepare an acknowledgement
-		Acknowledgement acknowledgement = new Acknowledgement(message.getMessageID());
-		
-		int senderID = receivedPacket.getReceiverID();
-		int receiverID = receivedPacket.getSenderID();
-		int sequenceNum = session.getNextSeq();
-		int typeIdentifier = Payload.ACKNOWLEDGEMENT;
-		
 		// Send an acknowledgement
-		Packet packet = new Packet(senderID, receiverID, sequenceNum, typeIdentifier, acknowledgement);
-		session.getConnection().getSender().send(packet);		
+		sendAcknowledgement(receivedPacket, message);		
 	}
 
 	public void handleAcknowledgement(Packet receivedPacket) {
@@ -188,6 +194,20 @@ public class TransportLayer {
 		if (!seenPackets.contains(receivedPacket)) {
 			session.getConnection().getSender().send(receivedPacket);
 		}
+	}
+
+	private void sendAcknowledgement(Packet receivedPacket, Message message) {
+		// Prepare an acknowledgement
+		Acknowledgement acknowledgement = new Acknowledgement(message.getMessageID());
+		
+		int senderID = receivedPacket.getReceiverID();
+		int receiverID = receivedPacket.getSenderID();
+		int sequenceNum = session.getNextSeq();
+		int typeIdentifier = Payload.ACKNOWLEDGEMENT;
+		
+		// Send an acknowledgement
+		Packet packet = new Packet(senderID, receiverID, sequenceNum, typeIdentifier, acknowledgement);
+		session.getConnection().getSender().send(packet);
 	}
 	
 	public void sendMessageFromGUI(String msg, Person receiver) {
