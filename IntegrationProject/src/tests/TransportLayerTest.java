@@ -19,7 +19,7 @@ public class TransportLayerTest {
 	
 	@Test
 	public void getReceiverIDTest() {
-		assertEquals(20, TransportLayer.getReceiverID(pulse.getPayload()));
+		assertEquals(20, TransportLayer.getReceiverID(pulse.getPayloadData()));
 		assertEquals(20, TransportLayer.getReceiverID(encrMsgPacket.getDatagramPacket().getData()));
 		assertEquals(20, TransportLayer.getReceiverID(ackPacket.getDatagramPacket().getData()));
 	}

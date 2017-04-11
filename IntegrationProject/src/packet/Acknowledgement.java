@@ -11,7 +11,7 @@ public class Acknowledgement implements Payload {
 	}
 
 	@Override
-	public byte[] getPayload() {
+	public byte[] getPayloadData() {
 		ArrayList<Byte> resultList = new ArrayList<>();
 		
 		// Message sequence number to binary

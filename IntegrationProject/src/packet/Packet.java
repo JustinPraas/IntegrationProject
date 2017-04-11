@@ -25,6 +25,13 @@ public class Packet {
 		this.sequenceNumber = sequenceNumber;
 		this.typeIdentifier = (byte) typeIdentifier;
 		this.payload = payload;
+	}	
+
+	public static void main(String[] args) {
+		Pulse p = new Pulse("Justin");
+		Packet packet = new Packet (10, 12, PayloadType.PULSE, 2, p);
+		System.out.println(Arrays.toString(p.getPayloadData()));
+		System.out.println(Arrays.toString(packet.getDatagramPacket().getData()));
 	}
 	
 	public DatagramPacket getDatagramPacket() {
@@ -48,7 +55,7 @@ public class Packet {
 		}
 		
 		// Add the payload data to the packetList
-		for (byte b: payload.getPayload()) {
+		for (byte b: payload.getPayloadData()) {
 			packetList.add(b);
 		}
 		
@@ -60,11 +67,24 @@ public class Packet {
 		
 		return new DatagramPacket(packetArray, packetList.size());		
 	}
-	
-	public static void main(String[] args) {
-		Pulse p = new Pulse("Justin");
-		Packet packet = new Packet (10, 12, 1, 2, p);
-		System.out.println(Arrays.toString(p.getPayload()));
-		System.out.println(Arrays.toString(packet.getDatagramPacket().getData()));
+
+	public int getSenderID() {
+		return senderID;
+	}
+
+	public int getReceiverID() {
+		return receiverID;
+	}
+
+	public int getSequenceNumber() {
+		return sequenceNumber;
+	}
+
+	public int getTypeIdentifier() {
+		return typeIdentifier;
+	}
+
+	public Payload getPayload() {
+		return payload;
 	}
 }

@@ -11,7 +11,7 @@ public class Pulse implements Payload {
 	}
 
 	@Override
-	public byte[] getPayload() {
+	public byte[] getPayloadData() {
 		ArrayList<Byte> resultList = new ArrayList<>();
 		
 		// Name to binary

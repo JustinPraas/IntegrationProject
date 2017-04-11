@@ -28,13 +28,13 @@ public class TransportLayer {
 	
 	public static void main(String[] args) {
 		Pulse p = new Pulse("Justin");
-		Packet packet = new Packet (1, 2, 12, 0, p);
+		Packet packet = new Packet (1, 2, PayloadType.PULSE.getType(), 0, p);
 		
 		Payload payload = getPayload(packet.getDatagramPacket().getData(), 0);
 		
-		System.out.println(Arrays.toString(p.getPayload()));
+		System.out.println(Arrays.toString(p.getPayloadData()));
 		System.out.println(Arrays.toString(packet.getDatagramPacket().getData()));
-		System.out.println(Arrays.toString(payload.getPayload()));
+		System.out.println(Arrays.toString(payload.getPayloadData()));
 	}
 	
 	/**
@@ -52,28 +52,43 @@ public class TransportLayer {
 		int typeIdentifier = getTypeIdentifier(datagramContents);		
 		Payload payload = getPayload(datagramContents, typeIdentifier);
 		
-		Packet p = new Packet(senderID, receiverID, sequenceNumber, typeIdentifier, payload);
+		Packet receivedPacket = new Packet(senderID, receiverID, sequenceNumber, typeIdentifier, payload);
 		
 		// TODO: First check if we've seen this packet before, otherwise process the packet
-		if (payload.getReceiverID() != session.getID()) {
+		if (receivedPacket.getReceiverID() != session.getID()) {
 			forwardPacket(datagramContents);
 		} else {
-			// Handle packets
-			switch (typeIdentifier) { 
-			case 1:
-				handleEncryptedMessage((EncryptedMessage)payload);
+			switch (receivedPacket.getTypeIdentifier()) { 
+			case PayloadType.PULSE.getType():
+				handlePulse(receivedPacket);
 				break;
-			case 2:
-				handleAcknowledgement((Acknowledgement)payload);
+			case PayloadType.ENCRYPTED_MESSAGE.getType():
+				handleEncryptedMessage(receivedPacket);
 				break;
-			case 3:
-				// TODO implement encryption pair
+			case PayloadType.ACKNOWLEDGEMENT.getType():
+				handleAcknowledgement(receivedPacket);
+				break;
+			case PayloadType.ENCRYPTION_PAIR.getType():
+				// TODO: handleEncryptionPair(receivedPacket);
 				break;
 			default: 
 				System.err.println("Nothing to do here.");
 			}	
 		}			
 	}
+	
+	/**
+	 * Processes a received <code>Packet</code> object.
+	 * @param packet the packet that has been received
+	 */
+	public void handlePulse(Packet packet) {
+		Pulse payload = (Pulse) packet.getPayload();
+		Person person = new Person(payload.getName(), packet.getSenderID());	
+		if (!session.getKnownPersons().contains(person)) {
+			person.setTimeToLive(PULSE_TTL);
+			session.getKnownPersons().add(person);
+		}		
+	}	
 
 	/**
 	 * Processes a received <code>EncryptedMessage</code> packet.
@@ -89,18 +104,6 @@ public class TransportLayer {
 		
 		
 	}
-	
-	/**
-	 * Processes a received <code>Payload</code> packet.
-	 * @param payload the payload that has been received
-	 */
-	public void handlePulse(Pulse payload) {
-		Person person = new Person(payload.getName(), payload.getSenderID());	
-		if (!session.getKnownPersons().contains(person)) {
-			person.setTimeToLive(PULSE_TTL);
-			session.getKnownPersons().add(person);
-		}		
-	}	
 
 	/**
 	 * Converts the datagram-packet contents into a <code>Payload</code> object, according to the
@@ -141,6 +144,92 @@ public class TransportLayer {
 	}
 
 	/**
+	 * Returns the senderID of the source.
+	 * @param datagramContents the contents of the packet
+	 * @return
+	 */
+	public static int getSenderID(byte[] datagramContents) {
+		int start = 0;
+		int end = Packet.SENDER_LENGTH;
+		
+		byte[] senderIdArray = new byte[Packet.SENDER_LENGTH];
+		senderIdArray = Arrays.copyOfRange(datagramContents, start, end);
+		ByteBuffer senderIdByteBuffer = ByteBuffer.wrap(senderIdArray);
+		
+		int senderID = senderIdByteBuffer.getInt();
+		return senderID;
+	}
+
+	/**
+	 * Returns the receiverID of the destination node.
+	 * @param datagramContents the contents of the packet
+	 * @return receiverID the receiverID of the destination node
+	 */
+	public static int getReceiverID(byte[] datagramContents) {
+		int start = Packet.RECEIVER_LENGTH;
+		int end = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH;
+		
+		byte[] receiverIdArray = new byte[Packet.RECEIVER_LENGTH];
+		receiverIdArray = Arrays.copyOfRange(datagramContents, start, end);
+		ByteBuffer receiverIdByteBuffer = ByteBuffer.wrap(receiverIdArray);
+		
+		int receiverID = receiverIdByteBuffer.getInt();
+		return receiverID;
+	}
+
+	/**
+	 * Returns the sequence number of the packet.
+	 * @param datagramContents the packet contents
+	 * @return the sequence number of the packet
+	 */
+	public static int getSequenceNumber(byte[] datagramContents) {
+		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH;
+		int end = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH + Packet.SEQUENCE_NUM_LENGTH;
+		
+		byte[] seqNumArray = new byte[Packet.SEQUENCE_NUM_LENGTH];
+		seqNumArray = Arrays.copyOfRange(datagramContents, start, end);
+		ByteBuffer seqNumByteBuffer = ByteBuffer.wrap(seqNumArray);
+		
+		int seqNum = seqNumByteBuffer.getInt();
+		return seqNum;
+	}
+	
+	/**
+	 * Returns the type identifier of the packet, representing the payload type.
+	 * @param datagramContents the packet contents
+	 * @return the type identifier of the packet
+	 */
+	public static int getTypeIdentifier(byte[] datagramContents) {
+		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH + Packet.SEQUENCE_NUM_LENGTH;
+		int end = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH + Packet.SEQUENCE_NUM_LENGTH + Packet.TYPE_LENGTH;
+		
+		byte[] typeIdentifierArray = new byte[Packet.SEQUENCE_NUM_LENGTH];
+		typeIdentifierArray = Arrays.copyOfRange(datagramContents, start, end);
+		ByteBuffer typeIdentifierBuffer = ByteBuffer.wrap(typeIdentifierArray);
+		
+		int typeIdentifier = typeIdentifierBuffer.getInt();
+		return typeIdentifier;
+	}
+
+	/**
+	 * Returns the name of the source.
+	 * @param pulsePayloadData the payload data of a pulse packet
+	 * @return the name of the source
+	 */
+	public static String getName(byte[] pulsePayloadData) {
+		byte[] nameArray = new byte[pulsePayloadData.length - 4];
+		nameArray = Arrays.copyOfRange(pulsePayloadData, 4, pulsePayloadData.length);
+		
+		String name = "";
+		try {
+			name = new String(nameArray, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		return name;
+	}
+
+	/**
 	 * Returns the (encrypted) message from an encrypted message packet.
 	 * @param encryptedPayloadData the payload data of the encrypted message packet
 	 * @return the (encrypted) message of a encrypted message packet
@@ -171,70 +260,6 @@ public class TransportLayer {
 		
 		int messageID = messageIdByteBuffer.getInt();
 		return messageID;
-	}
-
-	/**
-	 * Returns the receiverID of the destination node.
-	 * @param datagramContents the contents of the packet
-	 * @return receiverID the receiverID of the destination node
-	 */
-	public static int getReceiverID(byte[] datagramContents) {
-		byte[] receiverIdArray = new byte[4];
-		receiverIdArray = Arrays.copyOfRange(datagramContents, 0, 4);
-		ByteBuffer receiverIdByteBuffer = ByteBuffer.wrap(receiverIdArray);
-		
-		int receiverID = receiverIdByteBuffer.getInt();
-		return receiverID;
-	}
-
-	/**
-	 * Returns the senderID of the source.
-	 * @param payloadData the payload data of the packet
-	 * @return
-	 */
-	public static int getSenderID(byte[] payloadData) {
-		byte[] senderIdArray = new byte[4];
-		senderIdArray = Arrays.copyOfRange(payloadData, 0, 4);
-		ByteBuffer senderIdByteBuffer = ByteBuffer.wrap(senderIdArray);
-		
-		int senderID = senderIdByteBuffer.getInt();
-		return senderID;
-	}
-
-	/**
-	 * Returns the name of the source.
-	 * @param pulsePayloadData the payload data of a pulse packet
-	 * @return the name of the source
-	 */
-	public static String getName(byte[] pulsePayloadData) {
-		byte[] nameArray = new byte[pulsePayloadData.length - 4];
-		nameArray = Arrays.copyOfRange(pulsePayloadData, 4, pulsePayloadData.length);
-		
-		String name = "";
-		try {
-			name = new String(nameArray, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		return name;
-	}
-
-	/**
-	 * Returns the sequence number of the packet.
-	 * @param datagramContents the packet contents
-	 * @return the sequence number of the packet
-	 */
-	public static int getSequenceNumber(byte[] datagramContents) {
-		return datagramContents[0] * 256 + datagramContents[1];
-	}
-	
-	/**
-	 * Returns the type identifier of the packet, representing the payload type.
-	 * @param datagramContents the packet contents
-	 * @return the type identifier of the packet
-	 */
-	public static int getTypeIdentifier(byte[] datagramContents) {
-		return datagramContents[3];
 	}
 
 }
