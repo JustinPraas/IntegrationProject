@@ -16,6 +16,7 @@ public class TransportLayer {
 	
 	// Constants
 	public static final int PULSE_TTL = 5;
+	public static final int MAX_SEEN_PACKETS_SIZE = 300;
 
 	// Used objects
 	private Session session;
@@ -183,8 +184,13 @@ public class TransportLayer {
 		// TODO implement encryption pair
 	}
 
+	/**
+	 * Adds a packet to the seenPacket's list. Removes the oldest
+	 * entry from the list if the list size exceeds <code>MAX_SEEN_PACKETS_SIZE</code>.
+	 * @param receivedPacket the packet that has been received
+	 */
 	public void addPacketToSeenPackets(Packet receivedPacket) {
-		if (seenPackets.size() == 300) {
+		if (seenPackets.size() == MAX_SEEN_PACKETS_SIZE) {
 			seenPackets.remove(0);
 		}			
 		seenPackets.add(receivedPacket);
