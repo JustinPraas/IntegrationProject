@@ -22,13 +22,42 @@ public class TransportLayer {
 	private ArrayList<Packet> seenPackets = new ArrayList<>();
 
 	/**
-	 * Creates a <code>TransportLayer</code> object that acts on a sessions.
+	 * Creates a <code>TransportLayer</code> object that acts on a session.
 	 * @param session the session to act upon
 	 */
 	public TransportLayer(Session session) {
 		this.session = session;
 	}
-	
+
+	private static byte[] shortenDatagramPacket(byte[] datagramArray) {
+		int length = 0;
+		length += Packet.HEADER_LENGTH;
+		
+		// Add the length according to the type of payload
+		int typeIdentifier = getTypeIdentifier(datagramArray);
+		switch (typeIdentifier) {
+		case Payload.PULSE:
+			length += Pulse.NAME_LENGTH_LENGTH;
+			length += getNameLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
+			break;
+		case Payload.ENCRYPTED_MESSAGE:
+			length += EncryptedMessage.MESSAGE_ID_LENGTH;
+			length += EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
+			break;
+		case Payload.ACKNOWLEDGEMENT:
+			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
+			break;
+		case Payload.ENCRYPTION_PAIR:
+			// TODO: implement encryption
+			break;
+		default: 
+			System.err.println("Unknown type identifier: " + typeIdentifier);
+		}
+		
+		return Arrays.copyOfRange(datagramArray, 0, length);
+	}
+
 	/**
 	 * Processes a received packet. If the packet has been here before, don't 
 	 * process the packet, otherwise pass it on to the corresponding payload
@@ -37,7 +66,6 @@ public class TransportLayer {
 	 */
 	public void handlePacket(DatagramPacket datagramPacket) {
 		byte[] datagramContents = shortenDatagramPacket(datagramPacket.getData());
-		System.out.println("Line 40: Content data: " + Arrays.toString(datagramContents));
 		
 		int senderID = getSenderID(datagramContents);
 		int receiverID = getReceiverID(datagramContents);
@@ -51,93 +79,37 @@ public class TransportLayer {
 			return;
 		} 	
 		
+		// TODO SOUTS testing purposes and if statements
+		if (senderID != session.getID() && typeIdentifier == 1) {
+			System.out.println(Arrays.toString(datagramContents));
+		}
+		
 		addPacketToSeenPackets(receivedPacket);
 		
 		// TODO: First check if we've seen this packet before, otherwise process the packet
-		if (typeIdentifier != PayloadType.PULSE.getType() && receivedPacket.getReceiverID() != session.getID()) {
+		if (typeIdentifier != Payload.PULSE && receivedPacket.getReceiverID() != session.getID()) {
 			forwardPacket(receivedPacket);
 		} else {	
-			if (PayloadType.PULSE.getType() == typeIdentifier) {
+			switch (typeIdentifier) {
+			case Payload.PULSE:
 				forwardPacket(receivedPacket);
 				handlePulse(receivedPacket);
-			} else if (PayloadType.ENCRYPTED_MESSAGE.getType() == typeIdentifier) {
+				break;
+			case Payload.ENCRYPTED_MESSAGE:
 				handleEncryptedMessage(receivedPacket);
-			} else if (PayloadType.ACKNOWLEDGEMENT.getType() == typeIdentifier) {
+				break;
+			case Payload.ACKNOWLEDGEMENT:
 				handleAcknowledgement(receivedPacket);
-			} else if (PayloadType.ENCRYPTION_PAIR.getType() == typeIdentifier) {
-				// TODO: handleEncryptionPair(receivedPacket);
-			} else {
-				System.err.println("Something went wrong...");
+				break;
+			case Payload.ENCRYPTION_PAIR:
+				// TODO: Implement encryption pair
+				break;
+			default: 
+				System.err.println("Unknown type identifier: " + typeIdentifier);
 			}
 		}
 	}
 
-	private byte[] shortenDatagramPacket(byte[] datagramArray) {
-		int length = 0;
-		length += Packet.HEADER_LENGTH;
-		
-		int type = getTypeIdentifier(datagramArray);
-		
-		if (type == PayloadType.PULSE.getType()) { 
-			length += Pulse.NAME_LENGTH_LENGTH;
-			System.out.println("Name length in shortener is: " + getNameLength(getPayload(datagramArray, type).getPayloadData()));
-			length += getNameLength(getPayload(datagramArray, type).getPayloadData());
-		} else if (type == PayloadType.ENCRYPTED_MESSAGE.getType()) {
-			length += EncryptedMessage.MESSAGE_ID_LENGTH;
-			length += EncryptedMessage.MESSAGE_LENGTH_LENGTH;
-			length += getMessageLength(getPayload(datagramArray, type).getPayloadData());
-			// TODO: remove this for testing purposes
-			System.out.println("shortenDatagramPacket: " + Arrays.toString(getPayload(datagramArray, type).getPayloadData()));
-		} else if (type == PayloadType.ACKNOWLEDGEMENT.getType()) {
-			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
-		} else if (type == PayloadType.ENCRYPTION_PAIR.getType()) {
-			// TODO: Implement encryption pair
-		}
-		
-		byte[] datagramContents = Arrays.copyOfRange(datagramArray, 0, length);
-		
-		return datagramContents;
-	}
-
-	private void handleAcknowledgement(Packet receivedPacket) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void addPacketToSeenPackets(Packet receivedPacket) {
-		if (seenPackets.size() == 300) {
-			seenPackets.remove(0);
-		}			
-		seenPackets.add(receivedPacket);
-	}
-	
-	public void forwardPacket(Packet receivedPacket) {
-		if (!seenPackets.contains(receivedPacket)) {
-			session.getConnection().getSender().send(receivedPacket);
-		}
-	}
-	
-	public void sendMessageFromGUI(String msg, Person receiver) {
-		int msgLength = msg.length();
-		int nextMessageID = receiver.getNextMessageID();
-		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msgLength, msg); // TODO: Encrypt
-		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
-		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), PayloadType.ENCRYPTED_MESSAGE.getType(), EncryptedMessage);
-		session.getConnection().getSender().send(packet);
-
-		// TODO SYNCHRONIZE
-		// Add it to the chatmessages map
-		if (!session.getChatMessages().containsKey(receiver)) {
-			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
-		} else {
-			ArrayList<Message> currentMessageList = session.getChatMessages().get(receiver);
-			currentMessageList.add(message);
-			session.getChatMessages().put(receiver, currentMessageList);
-		}
-		
-		GUIHandler.messagePutInMap(receiver);
-	}
-	
 	/**
 	 * Processes a received <code>Packet</code> object.
 	 * @param receivedPacket the packet that has been received
@@ -154,8 +126,8 @@ public class TransportLayer {
 		person.setTimeToLive(PULSE_TTL);
 		
 	}
-	
-	private void handleEncryptedMessage(Packet receivedPacket) {
+
+	public void handleEncryptedMessage(Packet receivedPacket) {
 		EncryptedMessage payload = (EncryptedMessage) receivedPacket.getPayload();
 		
 		// Convert the packet to a message
@@ -184,13 +156,56 @@ public class TransportLayer {
 		int senderID = receivedPacket.getReceiverID();
 		int receiverID = receivedPacket.getSenderID();
 		int sequenceNum = session.getNextSeq();
-		int type = PayloadType.ACKNOWLEDGEMENT.getType();
+		int typeIdentifier = Payload.ACKNOWLEDGEMENT;
 		
 		// Send an acknowledgement
-		Packet packet = new Packet(senderID, receiverID, sequenceNum, type, acknowledgement);
+		Packet packet = new Packet(senderID, receiverID, sequenceNum, typeIdentifier, acknowledgement);
 		session.getConnection().getSender().send(packet);		
 	}
 
+	public void handleAcknowledgement(Packet receivedPacket) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	public void handleEncryptionPair(Packet receivedPacket) {
+		// TODO implement encryption pair
+	}
+
+	public void addPacketToSeenPackets(Packet receivedPacket) {
+		if (seenPackets.size() == 300) {
+			seenPackets.remove(0);
+		}			
+		seenPackets.add(receivedPacket);
+	}
+	
+	public void forwardPacket(Packet receivedPacket) {
+		if (!seenPackets.contains(receivedPacket)) {
+			session.getConnection().getSender().send(receivedPacket);
+		}
+	}
+	
+	public void sendMessageFromGUI(String msg, Person receiver) {
+		int msgLength = msg.length();
+		int nextMessageID = receiver.getNextMessageID();
+		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msgLength, msg); // TODO: Encrypt
+		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
+		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, EncryptedMessage);
+		session.getConnection().getSender().send(packet);
+
+		// TODO SYNCHRONIZE
+		// Add it to the chatmessages map
+		if (!session.getChatMessages().containsKey(receiver)) {
+			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
+		} else {
+			ArrayList<Message> currentMessageList = session.getChatMessages().get(receiver);
+			currentMessageList.add(message);
+			session.getChatMessages().put(receiver, currentMessageList);
+		}
+		
+		GUIHandler.messagePutInMap(receiver);
+	}
+	
 	/**
 	 * Converts the datagram-packet contents into a <code>Payload</code> object, according to the
 	 * type identifier.
@@ -198,29 +213,28 @@ public class TransportLayer {
 	 * @param typeIdentifier the type of the payload
 	 * @return a <code>Payload</code> object, converted from the packet contents
 	 */
-	public static Payload getPayload(byte[] datagramContents, int typeIdentifier) {
+	private static Payload getPayload(byte[] datagramContents, int typeIdentifier) {
 		byte[] payloadData = Arrays.copyOfRange(datagramContents, Packet.HEADER_LENGTH, datagramContents.length);
 		
-		if (PayloadType.PULSE.getType() == typeIdentifier) {
+		switch (typeIdentifier) {
+		case Payload.PULSE:
 			int nameLength = getNameLength(payloadData);
 			String name = getName(payloadData);
-			String string = "Line 204: Pulse packet: nameLength=" + nameLength + ", name=" + name + ", from=" + Arrays.toString(datagramContents);
-			System.out.println(string);
 			return new Pulse(nameLength, name);
-		} else if (PayloadType.ENCRYPTED_MESSAGE.getType() == typeIdentifier) {
+		case Payload.ENCRYPTED_MESSAGE:
 			String message = getMessage(payloadData);
-			int messageID = getMessageID(payloadData);
+			int encryptionMessageID = getMessageID(payloadData);
 			int messageLength = getMessageLength(payloadData);
-			return new EncryptedMessage(messageID, messageLength, message);
-		} else if (PayloadType.ACKNOWLEDGEMENT.getType() == typeIdentifier) {
-			int messageID = getMessageID(payloadData);
-			return new Acknowledgement(messageID);
-		} else if (PayloadType.ENCRYPTION_PAIR.getType() == typeIdentifier) {
-			// TODO: implement encryption pair exchange
-		} else {
-			System.err.println("Something went wrong...");
-		}		
-		return null;
+			return new EncryptedMessage(encryptionMessageID, messageLength, message);
+		case Payload.ACKNOWLEDGEMENT:
+			int acknowledgeMessageID = getMessageID(payloadData);
+			return new Acknowledgement(acknowledgeMessageID);	
+		case Payload.ENCRYPTION_PAIR:
+			// TODO: implement encryption pair
+		default: 
+			System.err.println("Unknown type identifier: " + typeIdentifier);
+			return null;
+		}	
 	}
 
 	/**
@@ -228,7 +242,7 @@ public class TransportLayer {
 	 * @param datagramContents the contents of the packet
 	 * @return
 	 */
-	public static int getSenderID(byte[] datagramContents) {
+	private static int getSenderID(byte[] datagramContents) {
 		int start = 0;
 		int end = start + Packet.SENDER_LENGTH;
 		
@@ -245,7 +259,7 @@ public class TransportLayer {
 	 * @param datagramContents the contents of the packet
 	 * @return receiverID the receiverID of the destination node
 	 */
-	public static int getReceiverID(byte[] datagramContents) {
+	private static int getReceiverID(byte[] datagramContents) {
 		int start = Packet.RECEIVER_LENGTH;
 		int end = start + Packet.RECEIVER_LENGTH;
 		
@@ -262,7 +276,7 @@ public class TransportLayer {
 	 * @param datagramContents the packet contents
 	 * @return the sequence number of the packet
 	 */
-	public static int getSequenceNumber(byte[] datagramContents) {
+	private static int getSequenceNumber(byte[] datagramContents) {
 		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH;
 		int end = start + Packet.SEQUENCE_NUM_LENGTH;
 		
@@ -279,7 +293,7 @@ public class TransportLayer {
 	 * @param datagramContents the packet contents
 	 * @return the type identifier of the packet
 	 */
-	public static int getTypeIdentifier(byte[] datagramContents) {
+	private static int getTypeIdentifier(byte[] datagramContents) {
 		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH + Packet.SEQUENCE_NUM_LENGTH;
 		int end = start + Packet.TYPE_LENGTH;
 		
@@ -296,10 +310,8 @@ public class TransportLayer {
 	 * @param pulsePayloadData the payload data of a pulse packet
 	 * @return the name of the source
 	 */
-	public static String getName(byte[] pulsePayloadData) {
+	private static String getName(byte[] pulsePayloadData) {
 		int length = getNameLength(pulsePayloadData);
-		
-		System.out.println("Line 299: Length = " + length);
 		int start = Pulse.NAME_LENGTH_LENGTH;
 		int end = start + length;
 		
@@ -324,9 +336,9 @@ public class TransportLayer {
 	 * @param encryptedPayloadData the payload data of the encrypted message packet
 	 * @return the (encrypted) message of a encrypted message packet
 	 */
-	public static String getMessage(byte[] encryptedPayloadData) {
+	private static String getMessage(byte[] encryptedPayloadData) {
 		int length = getMessageLength(encryptedPayloadData);
-		int start = Packet.HEADER_LENGTH + EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
 		int end = start + length;
 		byte[] messageArray = new byte[length];
 		messageArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
@@ -346,7 +358,7 @@ public class TransportLayer {
 	 * @param encryptedPayloadData the payload data of the packet
 	 * @return the messageID of the encrypted message
 	 */
-	public static int getMessageID(byte[] encryptedPayloadData) {
+	private static int getMessageID(byte[] encryptedPayloadData) {
 		int start = 0;
 		int end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
 		byte[] messageIdArray = new byte[EncryptedMessage.MESSAGE_ID_LENGTH];
@@ -361,14 +373,11 @@ public class TransportLayer {
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH;
 		int end = start + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
 		
-		System.out.println(encryptedPayloadData.length);
-		System.out.println("Encrypted payload data: " + Arrays.toString(encryptedPayloadData));
-		
 		byte[] messageLengthArray = new byte[EncryptedMessage.MESSAGE_LENGTH_LENGTH];
-		messageLengthArray = Arrays.copyOfRange(encryptedPayloadData, start, end);		
+		messageLengthArray = Arrays.copyOfRange(encryptedPayloadData, start, end);	
 		ByteBuffer messageLengthBytebuffer = ByteBuffer.wrap(messageLengthArray);
 		
-		int messageLength = messageLengthBytebuffer.get();
+		int messageLength = messageLengthBytebuffer.getShort();
 		return messageLength;
 	}
 
