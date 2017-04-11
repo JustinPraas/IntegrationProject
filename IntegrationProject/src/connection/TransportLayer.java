@@ -276,6 +276,7 @@ public class TransportLayer {
 	 */
 	public static String getName(byte[] pulsePayloadData) {
 		byte[] nameArray = new byte[pulsePayloadData.length - 4];
+		System.out.println(Arrays.toString(pulsePayloadData));
 		nameArray = Arrays.copyOfRange(pulsePayloadData, 5, pulsePayloadData.length);
 		
 		String name = "";
