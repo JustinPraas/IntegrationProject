@@ -9,6 +9,7 @@ public class Message {
 	private int receiverID;
 	private int messageID;
 	private long timestamp;
+	//private long timestampDiff;
 	private String text;
 	
 	public Message(int senderID, int receiverID, int messageID, String text, boolean myMessage) {
@@ -16,8 +17,7 @@ public class Message {
 		this.receiverID = receiverID;
 		this.messageID = messageID;
 		timestamp = new Date().getTime();
-		this.text = text;
-		
+		this.text = text;		
 	}
 	
 	public String getText() {
@@ -31,5 +31,7 @@ public class Message {
 	public String getTimestampString() {
 		return new SimpleDateFormat("HH:mm").format(timestamp);
 	}
+	
+	// TODO: Message order with timestamp differences
 
 }

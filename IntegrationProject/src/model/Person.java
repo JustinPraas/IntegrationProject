@@ -12,6 +12,7 @@ public class Person {
 	public String name;
 	public int ID;
 	private int timeToLive;
+	private int nextMessageID;
 	
 	// Diffie-Hellman data
 	private int secretInteger;
@@ -26,6 +27,7 @@ public class Person {
 		this.name = name;
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
 		this.secretInteger = 1 + (int) (Math.random() * 10);
+		this.nextMessageID = 0;
 	}
 	
 	/**
@@ -52,6 +54,11 @@ public class Person {
 	
 	public int getID() {
 		return ID;
+	}
+	
+	public int getNextMessageID() {
+		nextMessageID++;
+		return nextMessageID;
 	}
 	
 	

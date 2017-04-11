@@ -6,10 +6,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.sun.javafx.runtime.async.AsyncOperationListener;
-
-import java.time;
-
 import application.Session;
 import model.Message;
 import model.Person;
@@ -70,23 +66,20 @@ public class TransportLayer {
 		// TODO: First check if we've seen this packet before, otherwise process the packet
 		if (receivedPacket.getReceiverID() != session.getID()) {
 			forwardPacket(receivedPacket);
-		} else {
-			switch (receivedPacket.getTypeIdentifier()) { 
-			case PayloadType.PULSE.getType():
+		} else {	
+			int type = receivedPacket.getTypeIdentifier();
+			
+			if (PayloadType.PULSE.getType() == type) {
 				handlePulse(receivedPacket);
-				break;
-			case PayloadType.ENCRYPTED_MESSAGE.getType():
+			} else if (PayloadType.ENCRYPTED_MESSAGE.getType() == type) {
 				handleEncryptedMessage(receivedPacket);
-				break;
-			case PayloadType.ACKNOWLEDGEMENT.getType():
+			} else if (PayloadType.ACKNOWLEDGEMENT.getType() == type) {
 				handleAcknowledgement(receivedPacket);
-				break;
-			case PayloadType.ENCRYPTION_PAIR.getType():
+			} else if (PayloadType.ENCRYPTION_PAIR.getType() == type) {
 				// TODO: handleEncryptionPair(receivedPacket);
-				break;
-			default: 
-				System.err.println("Nothing to do here.");
-			}	
+			} else {
+				System.err.println("Something went wrong...");
+			}
 		}			
 	}
 
@@ -127,19 +120,26 @@ public class TransportLayer {
 	private void handleEncryptedMessage(Packet receivedPacket) {
 		EncryptedMessage payload = (EncryptedMessage) receivedPacket.getPayload();
 		
+		// Convert the packet to a message
 		Message message = new Message(receivedPacket.getSenderID(), 
 				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getEncryptedMessage(), false);
 		
+		// The person that sent the message
 		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
 		
+		// Add it to the chatmessages map
 		if (!session.getChatMessages().containsKey(person)) {
 			session.getChatMessages().put(person, new ArrayList<>(Arrays.asList(new Message[]{message})));
 		} else {
 			ArrayList<Message> currentMessageList = session.getChatMessages().get(person);
-			ArrayList<Message> newMessageList = insertMessage(currentMessageList, message);
-			session.getChatMessages().put(person, newMessageList);
+			currentMessageList.add(message);
+			session.getChatMessages().put(person, currentMessageList);
 		}
 		
+		// Update GUI
+		GUIHandler.messagePutInMap(person);
+		
+		// Prepare an acknowledgement
 		Acknowledgement acknowledgement = new Acknowledgement(message.getMessageID());
 		
 		int senderID = receivedPacket.getReceiverID();
@@ -147,30 +147,9 @@ public class TransportLayer {
 		int sequenceNum = session.getNextSeq();
 		int type = PayloadType.ACKNOWLEDGEMENT.getType();
 		
+		// Send an acknowledgement
 		Packet packet = new Packet(senderID, receiverID, sequenceNum, type, acknowledgement);
 		session.getConnection().getSender().send(packet);		
-	}	
-
-	private ArrayList<Message> insertMessage(ArrayList<Message> currentMessageList, Message message) {
-		for (Message m : currentMessageList) {
-			
-		}
-		return null;
-	}
-
-	/**
-	 * Processes a received <code>EncryptedMessage</code> packet.
-	 * @param payload the payload that has been received
-	 */
-	public void handleEncryptedMessage(EncryptedMessage payload) {
-		// TODO: implement encryption
-		
-		int messageID = payload.getMessageID();
-		int senderID = payload.getSenderID();
-		String encryptedText = payload.getEncryptedMessage();
-		Message message = new Message(); // TODO: Further implement
-		
-		
 	}
 
 	/**
@@ -181,33 +160,23 @@ public class TransportLayer {
 	 * @return a <code>Payload</code> object, converted from the packet contents
 	 */
 	public static Payload getPayload(byte[] datagramContents, int typeIdentifier) {
-		byte[] payloadData = Arrays.copyOfRange(datagramContents, 3, datagramContents.length);
+		byte[] payloadData = Arrays.copyOfRange(datagramContents, Packet.HEADER_LENGTH, datagramContents.length);
 		
-		// Get the senderID from the payloadData
-		int senderID = getSenderID(payloadData);
-		int receiverID, messageID;
-		
-		
-		switch (typeIdentifier) {
-		case 0: 
+		if (PayloadType.PULSE.getType() == typeIdentifier) {
 			String name = getName(payloadData);
-			return new Pulse(senderID, name);
-		case 1:
-			receiverID = getReceiverID(payloadData);
-			messageID = getMessageID(payloadData);
+			return new Pulse(name);
+		} else if (PayloadType.ENCRYPTED_MESSAGE.getType() == typeIdentifier) {
 			String message = getMessage(payloadData);
-			return new EncryptedMessage(senderID, receiverID, messageID, message);
-		case 2:
-			receiverID = getReceiverID(payloadData);
-			messageID = getMessageID(payloadData);
-			return new Acknowledgement(senderID, receiverID, messageID);
-		case 3:
-			// TODO implement encryption pair exchange
-			break;
-		default:
-			System.err.println("Nothing to do here.");	
-		}
-		
+			int messageID = getMessageID(payloadData);
+			return new EncryptedMessage(messageID, message);
+		} else if (PayloadType.ACKNOWLEDGEMENT.getType() == typeIdentifier) {
+			int messageID = getMessageID(payloadData);
+			return new Acknowledgement(messageID);
+		} else if (PayloadType.ENCRYPTION_PAIR.getType() == typeIdentifier) {
+			// TODO: implement encryption pair exchange
+		} else {
+			System.err.println("Something went wrong...");
+		}		
 		return null;
 	}
 

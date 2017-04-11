@@ -5,6 +5,7 @@ import java.util.Map;
 import application.Session;
 import model.Person;
 import packet.Packet;
+import packet.PayloadType;
 import packet.Pulse;
 import userinterface.GUIHandler;
 
@@ -28,8 +29,8 @@ public class PulseHandler extends Thread {
 	}
 	
 	public void pulse() {
-		Pulse pulse = new Pulse(session.getID(), session.getName()); 
-		Packet packet = new Packet(0, session.getNextSeq(), pulse);
+		Pulse pulse = new Pulse(session.getName()); 
+		Packet packet = new Packet(session.getID(), 0, session.getNextSeq(), PayloadType.PULSE.getType(), pulse);
 		session.getConnection().getSender().send(packet);
 	}
 	
