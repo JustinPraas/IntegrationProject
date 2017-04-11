@@ -29,6 +29,12 @@ public class TransportLayer {
 		this.session = session;
 	}
 
+	/**
+	 * Shortens the given input from the datagramArray back to the
+	 * initial packet that was sent by the source node.
+	 * @param datagramArray the data from the DatagramPacket
+	 * @return originalDatagramContents the initial packet that was sent by the source node
+	 */
 	private static byte[] shortenDatagramPacket(byte[] datagramArray) {
 		int length = 0;
 		length += Packet.HEADER_LENGTH;
@@ -55,42 +61,37 @@ public class TransportLayer {
 			System.err.println("Unknown type identifier: " + typeIdentifier);
 		}
 		
-		return Arrays.copyOfRange(datagramArray, 0, length);
+		byte[] originalDatagramContents = Arrays.copyOfRange(datagramArray, 0, length);
+		return originalDatagramContents;
 	}
 
 	/**
-	 * Processes a received packet. If the packet has been here before, don't 
-	 * process the packet, otherwise pass it on to the corresponding payload
+	 * Processes a received <code>DatagramPacket</code>. If the packet has been here 
+	 * before, don't process the packet, otherwise pass it on to the corresponding payload
 	 * handlers according to the packet's type identifier.
 	 * @param datagramPacket the received packet
 	 */
 	public void handlePacket(DatagramPacket datagramPacket) {
 		byte[] datagramContents = shortenDatagramPacket(datagramPacket.getData());
 		
-		int senderID = getSenderID(datagramContents);
-		int receiverID = getReceiverID(datagramContents);
-		int sequenceNumber = getSequenceNumber(datagramContents);
-		int typeIdentifier = getTypeIdentifier(datagramContents);		
-		Payload payload = getPayload(datagramContents, typeIdentifier);
+		// Construct a Packet object from the datagramContents	
+		Packet receivedPacket = getPacket(datagramContents);
 		
-		Packet receivedPacket = new Packet(senderID, receiverID, sequenceNumber, typeIdentifier, payload);
-		
+		// Don't do anything if: we've already seen this packet OR if this packet is from ourself
+		// Else: add the packet to the seenPackets list
 		if (seenPackets.contains(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
 			return;
-		} 	
+		} else {
+			addPacketToSeenPackets(receivedPacket);
+		}		
 		
-		// TODO SOUTS testing purposes and if statements
-		if (senderID != session.getID() && typeIdentifier == 1) {
-			System.out.println(Arrays.toString(datagramContents));
-		}
-		
-		addPacketToSeenPackets(receivedPacket);
-		
-		// TODO: First check if we've seen this packet before, otherwise process the packet
-		if (typeIdentifier != Payload.PULSE && receivedPacket.getReceiverID() != session.getID()) {
+		// Forward the packet if: it's NOT a Pulse AND we are NOT the destination
+		// Else: process the packet accordingly
+		if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
+				receivedPacket.getReceiverID() != session.getID()) {
 			forwardPacket(receivedPacket);
 		} else {	
-			switch (typeIdentifier) {
+			switch (receivedPacket.getTypeIdentifier()) {
 			case Payload.PULSE:
 				forwardPacket(receivedPacket);
 				handlePulse(receivedPacket);
@@ -105,7 +106,7 @@ public class TransportLayer {
 				// TODO: Implement encryption pair
 				break;
 			default: 
-				System.err.println("Unknown type identifier: " + typeIdentifier);
+				System.err.println("Unknown type identifier: " + receivedPacket.getTypeIdentifier());
 			}
 		}
 	}
@@ -206,6 +207,21 @@ public class TransportLayer {
 		GUIHandler.messagePutInMap(receiver);
 	}
 	
+	/**
+	 * Creates a <code>Packet</code> object from datagram contents.
+	 * @param datagramContents the datagram contents of a <code>DatagramPacket</code>
+	 * @return resultPacket the <code>Packet</code> resulting from the datagram contents
+	 */
+	private Packet getPacket(byte[] datagramContents) {
+		int senderID = getSenderID(datagramContents);
+		int receiverID = getReceiverID(datagramContents);
+		int sequenceNumber = getSequenceNumber(datagramContents);
+		int typeIdentifier = getTypeIdentifier(datagramContents);		
+		Payload payload = getPayload(datagramContents, typeIdentifier);	
+		Packet resultPacket = new Packet(senderID, receiverID, sequenceNumber, typeIdentifier, payload); 
+		return resultPacket;
+	}
+
 	/**
 	 * Converts the datagram-packet contents into a <code>Payload</code> object, according to the
 	 * type identifier.
