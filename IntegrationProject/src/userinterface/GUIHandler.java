@@ -23,33 +23,6 @@ public class GUIHandler {
 	private static HashMap<Person, Boolean> personUnreadMessages;
 	private static Person currentPerson;
 	
-	// Testing purposes
-	public static void main(String[] args) {
-		GUIHandler aa = new GUIHandler("Application");
-//		System.out.println(getUsername());
-		session = new Session(getUsername());
-		Person p1 = new Person("Justin");
-		Person p2 = new Person("Casper");
-		sleep(1000);
-		session.knownPersons.add(p1);
-		changedPersonList();
-		sleep(1000);
-		session.knownPersons.add(p2);
-		changedPersonList();
-		sleep(1000);
-		Message m1 = new Message(1, 1, 1, 278321, "Aa");
-		ArrayList<Message> a1 = new ArrayList<>();
-		a1.add(m1);
-		session.chatMessages.put(p1, a1);
-		messagePutInMap(p1);
-		sleep(1000);
-		Message m2 = new Message(1, 1, 1, 2783251, "BB");
-		ArrayList<Message> a2 = new ArrayList<>();
-		a2.add(m2);
-		session.chatMessages.put(p2, a2);
-		messagePutInMap(p2);
-	}
-	
 	// Constructor to launch the GUI
 	public GUIHandler(String name) {
 		applicationName = name;
