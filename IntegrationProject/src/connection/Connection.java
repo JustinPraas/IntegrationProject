@@ -37,7 +37,7 @@ public class Connection {
 	public void joinGroup(String address) {
 		try {
 			if (address.equals("default")) {
-				group = InetAddress.getByName("224.0.0.0");
+				group = InetAddress.getByName("228.0.0.0");
 				sendSocket.joinGroup(group);
 				receiveSocket.joinGroup(group);
 			} else {
