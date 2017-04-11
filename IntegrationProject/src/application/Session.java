@@ -25,7 +25,7 @@ public class Session {
 		this.knownPersons = new ArrayList<>();
 		this.chatMessages = new HashMap<>();
 		this.seq = 0;
-		new PulseHandler(this);		
+		new PulseHandler(this);
 	}
 
 	public String getName() {
@@ -56,4 +56,5 @@ public class Session {
 		seq++;
 		return seq;
 	}
+	
 }
