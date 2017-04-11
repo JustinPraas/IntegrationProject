@@ -200,6 +200,7 @@ public class GUI extends Application {
 			Optional<ButtonType> answer = exitQuestion.showAndWait();
 			if (answer.get() == ButtonType.OK) {
 				window.close();
+				System.exit(0);
 			} else {
 				e.consume();
 			}
