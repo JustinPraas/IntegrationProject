@@ -6,9 +6,11 @@ import java.net.DatagramPacket;
 public class Receiver extends Thread {
 	
 	public Connection connection;
+	public TransportLayer transportLayer;
 	
 	public Receiver(Connection c) {
 		connection = c;
+		transportLayer = c.getTransportLayer();
 	}
 	
 	public void run() {
@@ -20,7 +22,8 @@ public class Receiver extends Thread {
 		DatagramPacket pkt = new DatagramPacket(buf, buf.length);
 		while (!connection.receiveSocket.isClosed()) {
 			try {
-				TransportLayer.handlePacket(connection.receiveSocket.receive(pkt));
+				connection.receiveSocket.receive(pkt);
+				transportLayer.handlePacket(pkt);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

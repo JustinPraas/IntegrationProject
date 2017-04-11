@@ -66,4 +66,8 @@ public class Connection {
 		return sendSocket;
 	}
 	
+	public TransportLayer getTransportLayer() {
+		return transportLayer;
+	}
+	
 }
