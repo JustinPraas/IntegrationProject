@@ -29,17 +29,6 @@ public class TransportLayer {
 		this.session = session;
 	}
 	
-	public static void main(String[] args) {
-		Pulse p = new Pulse(6, "Justin");
-		Packet packet = new Packet (1, 2, PayloadType.PULSE.getType(), 0, p);
-		
-		Payload payload = getPayload(packet.getDatagramPacket().getData(), 0);
-		
-		System.out.println(Arrays.toString(p.getPayloadData()));
-		System.out.println(Arrays.toString(packet.getDatagramPacket().getData()));
-		System.out.println(Arrays.toString(payload.getPayloadData()));
-	}
-	
 	/**
 	 * Processes a received packet. If the packet has been here before, don't 
 	 * process the packet, otherwise pass it on to the corresponding payload
@@ -48,7 +37,7 @@ public class TransportLayer {
 	 */
 	public void handlePacket(DatagramPacket datagramPacket) {
 		byte[] datagramContents = shortenDatagramPacket(datagramPacket.getData());
-		System.out.println(Arrays.asList("Content data: " + datagramContents));
+		// TODO testing purposes System.out.println("Content data: " + Arrays.toString(datagramContents));
 		
 		int senderID = getSenderID(datagramContents);
 		int receiverID = getReceiverID(datagramContents);
@@ -88,10 +77,13 @@ public class TransportLayer {
 		length += Packet.HEADER_LENGTH;
 		
 		int type = getTypeIdentifier(datagramArray);
+		
 		if (type == PayloadType.PULSE.getType()) { 
 			length += getNameLength(getPayload(datagramArray, type).getPayloadData());
 		} else if (type == PayloadType.ENCRYPTED_MESSAGE.getType()) {
 			length += getMessageLength(getPayload(datagramArray, type).getPayloadData());
+			// TODO: remove this for testing purposes
+			System.out.println("shortenDatagramPacket: " + Arrays.toString(getPayload(datagramArray, type).getPayloadData()));
 		} else if (type == PayloadType.ACKNOWLEDGEMENT.getType()) {
 			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
 		} else if (type == PayloadType.ENCRYPTION_PAIR.getType()) {
@@ -208,6 +200,7 @@ public class TransportLayer {
 		if (PayloadType.PULSE.getType() == typeIdentifier) {
 			int nameLength = getNameLength(payloadData);
 			String name = getName(payloadData);
+			System.out.println("Pulse packet: nameLength=" + nameLength + ", name=" + name + ", from=" + Arrays.toString(datagramContents));
 			return new Pulse(nameLength, name);
 		} else if (PayloadType.ENCRYPTED_MESSAGE.getType() == typeIdentifier) {
 			String message = getMessage(payloadData);
@@ -315,16 +308,8 @@ public class TransportLayer {
 		return name;
 	}
 
-	private static int getNameLength(byte[] pulsePayloadData) {
-		int start = 0;
-		int end = start + Pulse.NAME_LENGTH_LENGTH;
-		
-		byte[] nameLengthArray = new byte[Pulse.NAME_LENGTH_LENGTH];
-		nameLengthArray = Arrays.copyOfRange(pulsePayloadData, start, end);		
-		ByteBuffer nameLengthBytebuffer = ByteBuffer.wrap(nameLengthArray);
-		
-		int nameLength = nameLengthBytebuffer.get();
-		return nameLength;
+	private static int getNameLength(byte[] pulsePayloadData) {		
+		return pulsePayloadData[0];	
 	}
 
 	/**
@@ -368,6 +353,9 @@ public class TransportLayer {
 	private static int getMessageLength(byte[] encryptedPayloadData) {
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH;
 		int end = start + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+		
+		System.out.println(encryptedPayloadData.length);
+		System.out.println("Encrypted payload data: " + Arrays.toString(encryptedPayloadData));
 		
 		byte[] messageLengthArray = new byte[EncryptedMessage.MESSAGE_LENGTH_LENGTH];
 		messageLengthArray = Arrays.copyOfRange(encryptedPayloadData, start, end);		
