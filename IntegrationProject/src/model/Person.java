@@ -45,6 +45,14 @@ public class Person {
 	public void setTimeToLive(int ttl) {
 		this.timeToLive = ttl;
 	}
+		
+	public String getName() {
+		return name;
+	}
+	
+	public int getID() {
+		return ID;
+	}
 	
 	
 }
