@@ -68,9 +68,9 @@ public class GUIHandler {
 	
 	// Send message TODO
 	protected static void sendMessage(String msg) {
-		Person receiver = currentPerson;
 		if (currentPerson != null && !msg.equals("")) {
-			System.out.println("Message to " + currentPerson.getName() + ": " + msg);
+			Person receiver = currentPerson;
+			session.getConnection().getTransportLayer().sendMessageFromGUI(receiver, msg);
 		}
 	}
 	
