@@ -30,8 +30,9 @@ public class Connection {
 		}
 		
 		this.sender = new Sender(this);
-		this.receiver = new Receiver(this);
 		this.transportLayer = new TransportLayer(session);
+		this.receiver = new Receiver(this);
+		
 	}
 	
 	public void joinGroup(String address) {
