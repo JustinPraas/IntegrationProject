@@ -248,7 +248,7 @@ public class TransportLayer {
 		seqNumArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer seqNumByteBuffer = ByteBuffer.wrap(seqNumArray);
 		
-		int seqNum = seqNumByteBuffer.getInt();
+		int seqNum = seqNumByteBuffer.getShort();
 		return seqNum;
 	}
 	
@@ -265,7 +265,7 @@ public class TransportLayer {
 		typeIdentifierArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer typeIdentifierBuffer = ByteBuffer.wrap(typeIdentifierArray);
 		
-		int typeIdentifier = typeIdentifierBuffer.getInt();
+		int typeIdentifier = typeIdentifierBuffer.get();
 		return typeIdentifier;
 	}
 

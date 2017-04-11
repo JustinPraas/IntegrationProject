@@ -2,6 +2,7 @@ package connection;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.Arrays;
 
 public class Receiver extends Thread {
 	
@@ -11,6 +12,7 @@ public class Receiver extends Thread {
 	public Receiver(Connection c) {
 		connection = c;
 		transportLayer = c.getTransportLayer();
+		this.start();
 	}
 	
 	public void run() {
@@ -24,6 +26,7 @@ public class Receiver extends Thread {
 			try {
 				connection.receiveSocket.receive(pkt);
 				transportLayer.handlePacket(pkt);
+				System.out.println(Arrays.toString(pkt.getData()));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

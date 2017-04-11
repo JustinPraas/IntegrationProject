@@ -28,10 +28,10 @@ public class Connection {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
+		this.transportLayer = new TransportLayer(session);
 		this.sender = new Sender(this);
 		this.receiver = new Receiver(this);
-		this.transportLayer = new TransportLayer(session);
 	}
 	
 	public void joinGroup(String address) {

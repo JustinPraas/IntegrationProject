@@ -32,8 +32,6 @@ public class GUI extends Application {
 	protected static TextField inputBox;
 	protected static VBox rightVBox;
 	
-	int i = 0;
-	
 	protected static void launchGUI() {
 		launch();
 	}
