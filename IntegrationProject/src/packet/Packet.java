@@ -26,13 +26,6 @@ public class Packet {
 		this.typeIdentifier = (byte) typeIdentifier;
 		this.payload = payload;
 	}	
-
-	public static void main(String[] args) {
-		Pulse p = new Pulse("Justin");
-		Packet packet = new Packet (10, 12, PayloadType.PULSE, 2, p);
-		System.out.println(Arrays.toString(p.getPayloadData()));
-		System.out.println(Arrays.toString(packet.getDatagramPacket().getData()));
-	}
 	
 	public DatagramPacket getDatagramPacket() {
 		//byte[] packet = new byte[HEADER_LENGTH + payload.getPayload().length];
@@ -66,6 +59,10 @@ public class Packet {
 		}
 		
 		return new DatagramPacket(packetArray, packetList.size());		
+	}
+	
+	public byte[] getDatagramPacketData() {
+		return getDatagramPacket().getData();
 	}
 
 	public int getSenderID() {
