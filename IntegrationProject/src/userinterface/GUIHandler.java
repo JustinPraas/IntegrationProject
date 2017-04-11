@@ -6,6 +6,9 @@ import java.util.HashMap;
 import application.Session;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -23,33 +26,6 @@ public class GUIHandler {
 	private static HashMap<Person, Boolean> personUnreadMessages;
 	private static Person currentPerson;
 	
-	// Testing purposes
-	public static void main(String[] args) {
-		GUIHandler aa = new GUIHandler("Application");
-//		System.out.println(getUsername());
-		session = new Session(getUsername());
-		Person p1 = new Person("Justin");
-		Person p2 = new Person("Casper");
-		sleep(1000);
-		session.knownPersons.add(p1);
-		changedPersonList();
-		sleep(1000);
-		session.knownPersons.add(p2);
-		changedPersonList();
-		sleep(1000);
-		Message m1 = new Message(1, 1, 1, 278321, "Aa");
-		ArrayList<Message> a1 = new ArrayList<>();
-		a1.add(m1);
-		session.chatMessages.put(p1, a1);
-		messagePutInMap(p1);
-		sleep(1000);
-		Message m2 = new Message(1, 1, 1, 2783251, "BB");
-		ArrayList<Message> a2 = new ArrayList<>();
-		a2.add(m2);
-		session.chatMessages.put(p2, a2);
-		messagePutInMap(p2);
-	}
-	
 	// Constructor to launch the GUI
 	public GUIHandler(String name) {
 		applicationName = name;
@@ -58,7 +34,7 @@ public class GUIHandler {
 		personUnreadMessages = new HashMap<>();
 		GUIThread thread = new GUIThread();
 		thread.start();
-		sleep(500); // To prevent from the GUI being used before it is fully loaded
+		sleep(1000); // To prevent from the GUI being used before it is fully loaded
 	}
 	
 	// Inner class GUIThread
@@ -195,7 +171,7 @@ public class GUIHandler {
 		HashMap<Person, Button> newPersonToButton = new HashMap<>();
 		
 		// Create new VBox for the Buttons to be
-		VBox vb = new VBox(15);
+		VBox vb = new VBox(0);
 		
 		// Iterate over all the known Person objects to create Buttons for them
 		for (Person person : session.getKnownPersons()) {
@@ -211,6 +187,11 @@ public class GUIHandler {
 			newButtonToPerson.put(button, person);
 			newPersonToButton.put(person, button);
 			
+			// Let the button fill the width of the right sidebar
+			button.setMaxWidth(Double.MAX_VALUE);
+			button.setMinHeight(100);
+			button.setMaxHeight(100);
+			
 			// Add the Button to the newly created VBox
 			vb.getChildren().add(button);
 			
@@ -220,11 +201,18 @@ public class GUIHandler {
 			});
 		}
 		
+		ScrollPane scrollingNearbyList = new ScrollPane();
+		scrollingNearbyList.setContent(vb);
+		scrollingNearbyList.setHbarPolicy(ScrollBarPolicy.NEVER);
+		scrollingNearbyList.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+		scrollingNearbyList.setFitToWidth(true);
+		
 		// Remove old VBox element from the GUI and add new VBox element to the GUI
 		// As a result, the user side bar of the GUI is updated
 		Platform.runLater(() -> {
 			GUI.rightVBox.getChildren().remove(1);
-			GUI.rightVBox.getChildren().add(vb);
+			GUI.rightVBox.getChildren().add(scrollingNearbyList);
+			GUI.rightVBox.setVgrow(scrollingNearbyList, Priority.ALWAYS);
 		});
 		
 		// Set maps that link Buttons to Persons to the newly created maps

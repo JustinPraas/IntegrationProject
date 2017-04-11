@@ -124,6 +124,12 @@ public class GUI extends Application {
 		
 		// Initialize elements of right VBox
 		Label personListHeader = new Label("Nearby");
+		
+		ScrollPane scrollingNearbyList = new ScrollPane();
+		scrollingNearbyList.setContent(rightVBox);
+		scrollingNearbyList.setHbarPolicy(ScrollBarPolicy.NEVER);
+		scrollingNearbyList.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+		
 		personListHeader.setFont(Font.font(null, FontWeight.SEMI_BOLD, 24));
 		VBox nearbyPersonsVBox = new VBox(15);
 		rightVBox.getChildren().addAll(personListHeader, nearbyPersonsVBox);
