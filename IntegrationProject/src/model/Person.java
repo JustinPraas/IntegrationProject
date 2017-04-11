@@ -59,7 +59,6 @@ public class Person {
 	public int getNextMessageID() {
 		nextMessageID++;
 		return nextMessageID;
-	}
-	
+	}	
 	
 }

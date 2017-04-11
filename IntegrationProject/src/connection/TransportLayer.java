@@ -116,16 +116,20 @@ public class TransportLayer {
 	 * @param receivedPacket the packet that has been received
 	 */
 	public void handlePulse(Packet receivedPacket) {
+		
+		// Create a Pulse object and a Person object, derived from the receivedPacket
 		Pulse payload = (Pulse) receivedPacket.getPayload();
-		Person person = new Person(payload.getName(), receivedPacket.getSenderID());
+		Person person;
+		int senderID = receivedPacket.getSenderID();
 		
-		if (!session.getKnownPersons().containsKey(person.getID())) {
-			session.getKnownPersons().put(person.getID(), person);
-			GUIHandler.changedPersonList();
-		} 
-		//TODO
+		if (session.getKnownPersons().containsKey(senderID)) {
+			person = session.getKnownPersons().get(senderID);
+		} else {
+			person = new Person(payload.getName(), senderID);
+		}
 		person.setTimeToLive(PULSE_TTL);
-		
+		session.getKnownPersons().put(senderID, person);
+		GUIHandler.changedPersonList();
 	}
 
 	public void handleEncryptedMessage(Packet receivedPacket) {
