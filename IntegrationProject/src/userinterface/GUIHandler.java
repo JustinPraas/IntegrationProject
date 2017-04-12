@@ -7,8 +7,10 @@ import java.util.Map;
 import application.Session;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -94,8 +96,17 @@ public class GUIHandler {
 		// Store TextBox text
 		textBoxText.put(currentPerson, GUI.inputBox.getText());
 		
-		// Initialize empty ChatBox String
-		String chatBoxString = "";
+		// Initialize empty HorizontalBox for message
+
+		
+		// Initialize empty label for message inside HBox
+		Label label;
+		
+		// Initialize string for final message
+		String finalMessage;
+		
+		// Initialize list with all final messages
+		ArrayList<HBox> total = new ArrayList<>();
 		
 		// Iterate of all the messages with person (argument)
 		for (int i = 0; i < messages.size(); i++) {
@@ -112,17 +123,20 @@ public class GUIHandler {
 			}
 			
 			// Append this message to ChatBox String
-			chatBoxString += "  " + messageSender + " (" + message.getTimestampString()
-					+ "): " + message.getText() + "\n";
+			finalMessage = "  " + messageSender + " (" + message.getTimestampString()
+			+ "): " + message.getText() + "\n";
+			label = new Label(finalMessage);
+			HBox box = new HBox();
+			box.getChildren().add(label);
+			total.add(box);
 		}
 		
-		// Set chatBoxStringFinal to chatBoxString
-		// Because otherwise Platform.runLater() does not work
-		String chatBoxStringFinal = chatBoxString;
-		
-		// Set chatBox label to chatBoxStringFinal
+		// Set the chatbox to all the hbox elements
 		Platform.runLater(() -> {
-			GUI.chatBox.setText(chatBoxStringFinal);
+			GUI.chatBox.getChildren().clear();
+			for (HBox message : total) {
+					GUI.chatBox.getChildren().add(message);
+			}
 			GUI.scrollingChatBox.setVvalue(1);
 		});
 		

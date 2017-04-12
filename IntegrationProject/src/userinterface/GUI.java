@@ -27,7 +27,7 @@ public class GUI extends Application {
 	protected static Stage window;
 	protected static Scene connectionScreen;
 	protected static Scene chatScreen;
-	protected static Label chatBox;
+	protected static VBox chatBox;
 	protected static Label currentChatHeader;
 	protected static TextField inputBox;
 	protected static VBox rightVBox;
@@ -107,9 +107,9 @@ public class GUI extends Application {
 		
 		// Initialize elements of left VBox
 		currentChatHeader = new Label();
-		chatBox = new Label();
-		chatBox.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
-		chatBox.setWrapText(true);
+		
+		chatBox = new VBox();
+		chatBox.setSpacing(2);
 		chatBox.setMaxWidth(920);
 		chatBox.setPadding(new Insets(10, 10, 30, 10));
 		currentChatHeader.setFont(Font.font(null, FontWeight.SEMI_BOLD, 24));
