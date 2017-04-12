@@ -2,8 +2,6 @@ package model;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import encryption.DiffieHellman;
 import encryption.EncryptionPair;
 
 public class Person {
@@ -16,7 +14,7 @@ public class Person {
 	
 	// Diffie-Hellman data
 	private int secretInteger;
-	private Map<Integer, EncryptionPair> privateChatPair = new HashMap<>();
+	private EncryptionPair privateChatPair;
 
 	/**
 	 * Creates a <code>Person</code> object with a random ID 
@@ -26,7 +24,7 @@ public class Person {
 	public Person(String name) {
 		this.name = name;
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
-		this.secretInteger = 1 + (int) (Math.random() * 10);
+		this.secretInteger = 1 + (int) (Math.random() * 12);
 		this.nextMessageID = 0;
 	}
 	
@@ -59,6 +57,10 @@ public class Person {
 	public int getNextMessageID() {
 		nextMessageID++;
 		return nextMessageID;
-	}	
+	}
+	
+	public void setEncryptionPair(EncryptionPair ep) {
+		this.privateChatPair = ep;
+	}
 	
 }

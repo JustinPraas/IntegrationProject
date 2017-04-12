@@ -4,14 +4,17 @@ import java.util.ArrayList;
 
 public class EncryptedMessage implements Payload {
 	
+	public static final int MESSAGE_ENCRYPTION_KEY = 4;
 	public static final int MESSAGE_ID_LENGTH = 2;
 	public static final int MESSAGE_LENGTH_LENGTH = 2;
 	
+	private int messageEncryptionKey;
 	private int messageID;
 	private int messageLength;
 	private String encryptedMessage;
 
-	public EncryptedMessage(int messageID, int messageLength, String encryptedMessage) {
+	public EncryptedMessage(int messageEncryptionKey, int messageID, int messageLength, String encryptedMessage) {
+		this.messageEncryptionKey = messageEncryptionKey;
 		this.messageID = messageID;
 		this.messageLength = messageLength;
 		this.encryptedMessage = encryptedMessage;
@@ -52,5 +55,9 @@ public class EncryptedMessage implements Payload {
 	
 	public int getMessageLength() {
 		return messageLength;
+	}
+	
+	public int getMessageEncryptionKey() {
+		return messageEncryptionKey;
 	}
 }

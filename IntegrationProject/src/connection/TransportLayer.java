@@ -490,5 +490,4 @@ public class TransportLayer {
 		int messageLength = messageLengthBytebuffer.getShort();
 		return messageLength;
 	}
-
 }
