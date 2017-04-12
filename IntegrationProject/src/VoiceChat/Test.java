@@ -29,14 +29,14 @@ public class Test {
 			byte[] data = new byte[microphone.getBufferSize() / 5];
 			microphone.start();
 			
-			int bytesRead = 0;
+			// int bytesRead = 0;
 			DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, format);
 			speakers = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
 			speakers.open(format);
 			speakers.start();
 			while (!stopped) {
 				numBytesRead = microphone.read(data, 0, CHUNK_SIZE);
-				bytesRead += numBytesRead;
+				// bytesRead += numBytesRead;
 				// Write the microphone data to a stream for later use
 				out.write(data, 0, numBytesRead);
 				// Write microphone data to stream for immediate playback
