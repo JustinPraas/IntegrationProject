@@ -122,7 +122,8 @@ public class GUIHandler {
 		
 		// Set chatBox label to chatBoxStringFinal
 		Platform.runLater(() -> {
-			GUI.chatBox.setText(new String(chatBoxStringFinal));
+			GUI.chatBox.setText(chatBoxStringFinal);
+			GUI.scrollingChatBox.setVvalue(1);
 		});
 		
 		// Set Header Label

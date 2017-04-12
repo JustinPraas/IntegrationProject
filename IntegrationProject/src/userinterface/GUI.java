@@ -31,6 +31,7 @@ public class GUI extends Application {
 	protected static Label currentChatHeader;
 	protected static TextField inputBox;
 	protected static VBox rightVBox;
+	protected static ScrollPane scrollingChatBox;
 	
 	protected static void launchGUI() {
 		launch();
@@ -110,9 +111,9 @@ public class GUI extends Application {
 		chatBox.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
 		chatBox.setWrapText(true);
 		chatBox.setMaxWidth(920);
-		chatBox.setPadding(new Insets(10, 10, 10, 10));
+		chatBox.setPadding(new Insets(10, 10, 30, 10));
 		currentChatHeader.setFont(Font.font(null, FontWeight.SEMI_BOLD, 24));
-		ScrollPane scrollingChatBox = new ScrollPane();
+		scrollingChatBox = new ScrollPane();
 		scrollingChatBox.setContent(chatBox);
 		scrollingChatBox.setHbarPolicy(ScrollBarPolicy.NEVER);
 		scrollingChatBox.setVbarPolicy(ScrollBarPolicy.ALWAYS);
