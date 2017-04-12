@@ -3,6 +3,8 @@ package connection;
 import java.util.Map;
 
 import application.Session;
+import encryption.DiffieHellman;
+import encryption.EncryptionPair;
 import model.Person;
 import packet.Packet;
 import packet.*;
@@ -25,6 +27,7 @@ public class PulseHandler extends Thread {
 		while (!connection.sendSocket.isClosed()) {
 			pulse();
 			decreaseTimeToLive();
+			sendEncryptionPair();
 			try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 		}
 	}
@@ -55,7 +58,29 @@ public class PulseHandler extends Thread {
 	public void sendEncryptionPair() {
 		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
 			if (entry.getValue().getPrivateChatPair() == null) {
-				entry.getValue().setPrivateChatPair(new EncryptionPair(true));
+				
+				// If I have a higher ID than the other person, create an encryption pair
+				// pair it to the other person and, generate a secretKey for myself to use with this person
+				// and send the encryption pair to the other person
+				if (entry.getValue().getID() < session.getID()) {
+					EncryptionPair ep = new EncryptionPair(false);
+					entry.getValue().setPrivateChatPair(ep);
+					session.getSecretKeysForPerson().put(entry.getKey(), DiffieHellman.produceSecretKey(ep.getPrime()));	
+					
+					// Send the packet
+					EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator());
+					Packet packet = new Packet(session.getID(), entry.getValue().getID(), 
+							session.getNextSeq(), Payload.ENCRYPTION_PAIR, epe);
+					session.getConnection().getSender().send(packet);
+				}	
+				
+			} else if (!entry.getValue().getPrivateChatPair().isAcknowledged()) {
+				// Send the packet
+				EncryptionPair ep = entry.getValue().getPrivateChatPair();
+				EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator());
+				Packet packet = new Packet(session.getID(), entry.getValue().getID(), 
+						session.getNextSeq(), Payload.ENCRYPTION_PAIR, epe);
+				session.getConnection().getSender().send(packet);
 			}
 		}
 	}

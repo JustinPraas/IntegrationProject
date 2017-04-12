@@ -15,6 +15,7 @@ public class Session {
 	private int ID;
 	private Connection connection;
 	private Map<Integer, Person> knownPersons;
+	private Map<Integer, Integer> secretKeysForPerson;
 	private Map<Person, ArrayList<Message>> chatMessages;
 	private int seq;
 
@@ -23,6 +24,7 @@ public class Session {
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
 		this.connection = new Connection(this);
 		this.knownPersons = new HashMap<>();
+		this.secretKeysForPerson = new HashMap<>();
 		this.chatMessages = new HashMap<>();
 		this.seq = 0;
 		new PulseHandler(this);
@@ -56,5 +58,8 @@ public class Session {
 		seq++;
 		return seq;
 	}
-	
+
+	public Map<Integer, Integer> getSecretKeysForPerson() {
+		return secretKeysForPerson;
+	}	
 }

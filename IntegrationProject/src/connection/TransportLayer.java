@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import application.Session;
+import encryption.DiffieHellman;
 import model.Message;
 import model.Person;
 import packet.*;
@@ -278,9 +279,11 @@ public class TransportLayer {
 	public void sendMessageFromGUI(String msg, Person receiver) {
 		int msgLength = msg.length();
 		int nextMessageID = receiver.getNextMessageID();
-		
-		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msgLength, msg); // TODO: Encrypt
 		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
+		
+		// Encrypt the message
+		int messageEncryptionKey = DiffieHellman.getEncryptionKey(session, receiver);
+		EncryptedMessage EncryptedMessage = new EncryptedMessage(messageEncryptionKey, nextMessageID, msgLength, msg); // TODO: Encrypt
 		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, EncryptedMessage);
 		session.getConnection().getSender().send(packet);
 		

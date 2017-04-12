@@ -24,10 +24,9 @@ public class Person {
 	public Person(String name) {
 		this.name = name;
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
-		this.secretInteger = 1 + (int) (Math.random() * 12);
 		this.nextMessageID = 0;
 	}
-	
+
 	/**
 	 * Creates a <code>Person</code> object for an outsider
 	 * @param name the outsider's name
@@ -57,6 +56,10 @@ public class Person {
 	public int getNextMessageID() {
 		nextMessageID++;
 		return nextMessageID;
+	}
+	
+	public int getSecretInteger() {
+		return secretInteger;
 	}
 
 	public EncryptionPair getPrivateChatPair() {
