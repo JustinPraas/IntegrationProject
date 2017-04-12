@@ -1,6 +1,5 @@
 package connection;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 import application.Session;
@@ -56,7 +55,7 @@ public class PulseHandler extends Thread {
 	public void sendEncryptionPair() {
 		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
 			if (entry.getValue().getPrivateChatPair() == null) {
-				
+				entry.getValue().setPrivateChatPair(new EncryptionPair(true));
 			}
 		}
 	}
