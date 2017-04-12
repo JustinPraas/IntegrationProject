@@ -33,6 +33,7 @@ public class GUI extends Application {
 	protected static TextField inputBox;
 	protected static VBox rightVBox;
 	protected static ScrollPane scrollingChatBox;
+	protected static Button globalChatButton;
 	
 	protected static void launchGUI() {
 		launch();
@@ -139,7 +140,7 @@ public class GUI extends Application {
 		VBox nearbyPersonsVBox = new VBox(0);
 		
 		// Add Global Chat Button
-		Button globalChatButton = new Button("GLOBAL");
+		globalChatButton = new Button("GLOBAL");
 		globalChatButton.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
 		globalChatButton.setTextFill(Color.BLUE);
 		globalChatButton.setOnAction(e -> {
@@ -204,6 +205,7 @@ public class GUI extends Application {
 			window.hide();
 			window.setScene(chatScreen);
 			window.setTitle(GUIHandler.username + " - " + GUIHandler.getApplicationName());
+			GUIHandler.showChat();
 			window.show();
 		}
 	}

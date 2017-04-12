@@ -33,6 +33,8 @@ public class GUIHandler {
 	private static HashMap<Person, String> textBoxText;
 	private static HashMap<Person, Boolean> personUnreadMessages;
 	private static Person currentPerson;
+	private static String globalTextBoxText;
+	private static boolean unreadGlobalChatMessages;
 	
 	// Constructor to launch the GUI
 	public GUIHandler(String name) {
@@ -41,6 +43,7 @@ public class GUIHandler {
 		textBoxText = new HashMap<>();
 		personUnreadMessages = new HashMap<>();
 		GUIThread thread = new GUIThread();
+		unreadGlobalChatMessages = false;
 		thread.start();
 		sleep(1000); // To prevent from the GUI being used before it is fully loaded
 	}
@@ -72,11 +75,13 @@ public class GUIHandler {
 		return applicationName;
 	}
 	
-	// Send message TODO
+	// Send message
 	protected static void sendMessage(String msg) {
 		if (currentPerson != null && !msg.equals("")) {
 			Person receiver = currentPerson;
 			session.getConnection().getTransportLayer().sendMessageFromGUI(msg, receiver);
+		} else {
+			session.getConnection().getTransportLayer().sendMessageFromGUI(msg);
 		}
 	}
 	
@@ -98,10 +103,11 @@ public class GUIHandler {
 		}
 		
 		// Store TextBox text
-		textBoxText.put(currentPerson, GUI.inputBox.getText());
-		
-		// Initialize empty HorizontalBox for message
-
+		if (currentPerson != null) {
+			textBoxText.put(currentPerson, GUI.inputBox.getText());
+		} else {
+			globalTextBoxText = GUI.inputBox.getText();
+		}
 		
 		// Initialize empty label for message inside HBox
 		Label label;
@@ -177,7 +183,86 @@ public class GUIHandler {
 	
 	// Show Global Chat
 	protected static void showChat() {
+		// Put chat messages with person (argument) in list
+		// If no messages with person, initialize empty list
+		ArrayList<Message> messages = session.getPublicChatMessages();
 		
+		// Store TextBox text
+		if (currentPerson != null) {
+			textBoxText.put(currentPerson, GUI.inputBox.getText());
+		} else {
+			globalTextBoxText = GUI.inputBox.getText();
+		}
+		
+		// Initialize empty label for message inside HBox
+		Label label;
+		
+		// Initialize string for final message
+		String finalMessage;
+		
+		// Initialize list with all final messages
+		ArrayList<HBox> total = new ArrayList<>();
+		
+		// Iterate of all the messages with person (argument)
+		for (int i = 0; i < messages.size(); i++) {
+			
+			// Set message to currently being processed message
+			Message message = messages.get(i);
+			
+			// Set sender of message to actual sender
+			String messageSender = "";
+			boolean found = false;
+			for (int j = 0; j < session.getKnownPersons().size() && !found; j++) {
+				if (message.getSenderID() == session.getKnownPersons().get(j).getID()) {
+					messageSender = session.getKnownPersons().get(j).getName();
+					found = true;
+				}
+			}
+			if (!found) {
+				messageSender = username;
+			}
+			
+			// Append this message to ChatBox String
+			Text senderText = new Text(messageSender);
+			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
+			Text messageText = new Text(message.getText());
+			senderText.getStyleClass().add("sender");
+			TextFlow flow = new TextFlow();
+			flow.getChildren().addAll(senderText, timestampText, messageText);
+			HBox box = new HBox();
+			if (message.getSenderID() == session.getID()) {
+				flow.getStyleClass().add("local");
+			} else {
+				flow.getStyleClass().add("remote");
+			}
+			box.getChildren().add(flow);
+			
+			total.add(box);
+		}
+		
+		// Set the chatbox to all the hbox elements
+		Platform.runLater(() -> {
+			GUI.chatBox.getChildren().clear();
+			for (HBox message : total) {
+					GUI.chatBox.getChildren().add(message);
+			}
+			GUI.scrollingChatBox.setVvalue(1);
+		});
+		
+		// Set Header Label
+		GUI.currentChatHeader.setText("Global Chat");
+		
+		// Set TextBox text (if exists)
+		if (currentPerson != null) {
+			GUI.inputBox.setText(globalTextBoxText);
+		}
+		
+		// Set current person
+		currentPerson = null;
+		
+		// Mark Global Chat as read
+		unreadGlobalChatMessages = false;
+		GUI.globalChatButton.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
 	}
 	
 	
@@ -212,19 +297,25 @@ public class GUIHandler {
 		VBox vb = new VBox(0);
 		
 		// Add Global Chat Button
-		Button globalChatButton = new Button("GLOBAL");
-		globalChatButton.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
-		globalChatButton.setTextFill(Color.BLUE);
-		globalChatButton.setOnAction(e -> {
+		GUI.globalChatButton = new Button("GLOBAL");
+		GUI.globalChatButton.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
+		GUI.globalChatButton.setTextFill(Color.BLUE);
+		GUI.globalChatButton.setOnAction(e -> {
 			GUIHandler.showChat();
-			System.out.println("hello");
 		});
 		
 		// Let the button fill the width of the right sidebar
-		globalChatButton.setMaxWidth(Double.MAX_VALUE);
-		globalChatButton.setMinHeight(100);
-		globalChatButton.setMaxHeight(100);
-		vb.getChildren().add(globalChatButton);
+		GUI.globalChatButton.setMaxWidth(Double.MAX_VALUE);
+		GUI.globalChatButton.setMinHeight(100);
+		GUI.globalChatButton.setMaxHeight(100);
+		vb.getChildren().add(GUI.globalChatButton);
+		
+		// Check if global chat button should me marked as unread
+		if (unreadGlobalChatMessages) {
+			unreadGlobalChatMessages = false;
+			GUI.globalChatButton.setFont(Font.font(null, FontWeight.BOLD, 14.5));
+		}
+		
 		
 		// Iterate over all the known Person objects to create Buttons for them
 		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
@@ -294,6 +385,18 @@ public class GUIHandler {
 			// If not, mark chat with this Person as containing unread messages
 			personUnreadMessages.put(person, true);
 			personToButton.get(person).setFont(Font.font(null, FontWeight.BOLD, 14.5));
+		}
+	}
+	
+	// To be called when a message is put in the Global Chat Messages list of session
+	public static void messagePutInMap() {
+		// Check if the Global chat is currently opened
+		if (currentPerson == null) {
+			showChat();
+		} else {
+			// If not, mark chat with the global chat as containing unread messages
+			unreadGlobalChatMessages = true;
+			GUI.globalChatButton.setFont(Font.font(null, FontWeight.BOLD, 14.5));
 		}
 	}
 	
