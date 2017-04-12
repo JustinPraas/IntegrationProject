@@ -191,6 +191,7 @@ public class TransportLayer {
 						} else {
 							if (insertPosition == currentMessageList.size()) {
 								currentMessageList.add(message);
+								continues = false;
 							} else {
 								currentMessageList.add(insertPosition, message);
 								continues = false;
