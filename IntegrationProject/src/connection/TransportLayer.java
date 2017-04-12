@@ -1,10 +1,16 @@
 package connection;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Timer;
 
 import application.Session;
 import model.Message;
@@ -510,5 +516,54 @@ public class TransportLayer {
 		int messageLength = messageLengthBytebuffer.getShort();
 		return messageLength;
 	}
+
+	public void sendImageFromGUI(File img, Person receiver) {
+		int nextMessageID = receiver.getNextMessageID();
+		Path path = Paths.get(img.getPath());
+		byte[] imgData;
+		try {
+			
+			imgData = Files.readAllBytes(path);
+			
+			int chunksize = 63000;
+			byte[][] ret = new byte[(int)Math.ceil(imgData.length / (double)chunksize)][chunksize];
+			
+			if (imgData.length > chunksize) {
+				int start = 0;
+				for(int i = 0; i < ret.length; i++) {
+					ret[i] = Arrays.copyOfRange(imgData,start, start + chunksize);
+					start += chunksize ;
+				}
+			} else {
+				ret[0] = imgData;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catcha block
+			e.printStackTrace();
+		}
+		
+//		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msgLength, msg); // TODO: Encrypt
+//		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
+//		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, EncryptedMessage);
+//		session.getConnection().getSender().send(packet);
+//		
+//		synchronized (this.unacknowledgedPackets) {
+//			unacknowledgedPackets.add(packet);
+//			new RetransmissionThread(this, packet);
+//		}		
+//
+//		// TODO SYNCHRONIZE
+//		// Add it to the chatmessages map
+//		if (!session.getChatMessages().containsKey(receiver)) {
+//			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
+//		} else {
+//			ArrayList<Message> currentMessageList = session.getChatMessages().get(receiver);
+//			currentMessageList.add(message);
+//			session.getChatMessages().put(receiver, currentMessageList);
+//		}
+	}
+		
+
+	
 
 }
