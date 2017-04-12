@@ -13,6 +13,9 @@ import java.util.Arrays;
 import java.util.Timer;
 
 import application.Session;
+import encryption.Crypter;
+import encryption.DiffieHellman;
+import encryption.EncryptionPair;
 import model.Message;
 import model.Person;
 import packet.*;
@@ -56,10 +59,10 @@ public class TransportLayer {
 			length += Pulse.NAME_LENGTH_LENGTH;
 			length += getNameLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
-		case Payload.ENCRYPTED_MESSAGE:
-			length += EncryptedMessage.MESSAGE_ID_LENGTH;
-			length += EncryptedMessage.MESSAGE_LENGTH_LENGTH;
-			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), 1);
+		case Payload.PLAIN_MESSAGE:
+			length += PlainMessage.MESSAGE_ID_LENGTH;
+			length += PlainMessage.MESSAGE_LENGTH_LENGTH;
+			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.PLAIN_MESSAGE);
 			break;
 		case Payload.ACKNOWLEDGEMENT:
 			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
@@ -69,13 +72,20 @@ public class TransportLayer {
 			length += FileMessage.MESSAGE_LENGTH_LENGTH;
 			length += FileMessage.FILE_ID_LENGTH;
 			length += FileMessage.FILE_SEQ_LENGTH;
-			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), 4);
+			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.FILE_MESSAGE);
 			break;
 		case Payload.ENCRYPTION_PAIR:
-			// TODO: implement encryption
+			length += EncryptionPairExchange.PRIME_LENGTH;
+			length += EncryptionPairExchange.GENERATOR_LENGTH;
+			break;
+		case Payload.ENCRYPTED_MESSAGE:
+			length += EncryptedMessage.MESSAGE_ID_LENGTH;
+			length += EncryptedMessage.MID_WAY_KEY_LENGTH;
+			length += EncryptedMessage.CIPHER_LENGTH_LENGTH;
+			length += getCipherLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		default: 
-			System.err.println("Unknown type identifier: " + typeIdentifier);
+			System.err.println("Unknown type identifier at shortenDatagramContents(): " + typeIdentifier);
 		}
 		
 		byte[] originalDatagramContents = Arrays.copyOfRange(datagramArray, 0, length);
@@ -102,9 +112,12 @@ public class TransportLayer {
 			addPacketToSeenPackets(receivedPacket);
 		}		
 		
-		// Forward the packet if: it's NOT a Pulse AND we are NOT the destination
-		// Else: process the packet accordingly
-		if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
+		// If the packet has PLAIN_MESSAGE payload contents, handle it
+		// Else, if it's NOT a Pulse AND we are NOT the destination, foward it
+		// Else process the packet accordingly
+		if (receivedPacket.getTypeIdentifier() == Payload.PLAIN_MESSAGE) {
+			handlePlainMessage(receivedPacket);
+		} else if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
 				receivedPacket.getReceiverID() != session.getID()) {
 			forwardPacket(receivedPacket);
 		} else {	
@@ -113,24 +126,22 @@ public class TransportLayer {
 				forwardPacket(receivedPacket);
 				handlePulse(receivedPacket);
 				break;
-			case Payload.ENCRYPTED_MESSAGE:
-				handleEncryptedMessage(receivedPacket);
-				break;
 			case Payload.FILE_MESSAGE:
 				handleFileMessage(receivedPacket);
+			case Payload.PLAIN_MESSAGE:
+				handlePlainMessage(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
-				//TODO SOUTS
-				if (receivedPacket.getTypeIdentifier() == Payload.ACKNOWLEDGEMENT) {
-					System.out.println("Acknowledgement received");
-				}
 				handleAcknowledgement(receivedPacket);
 				break;
 			case Payload.ENCRYPTION_PAIR:
-				// TODO: Implement encryption pair
+				handleEncryptionPair(receivedPacket);
+				break;
+			case Payload.ENCRYPTED_MESSAGE:
+				handleEncryptedMessage(receivedPacket);
 				break;
 			default: 
-				System.err.println("Unknown type identifier: " + receivedPacket.getTypeIdentifier());
+				System.err.println("Unknown type identifier at handlePacket(): " + receivedPacket.getTypeIdentifier());
 			}
 		}
 	}
@@ -166,7 +177,68 @@ public class TransportLayer {
 
 	/**
 	 * Processes a received <code>Packet</code> object interpreted with an
-	 * EncryptedMessage payload. Creates a <code>Message</code> object from the 
+	 * PlainMessage payload. Creates a <code>Message</code> object from the 
+	 * payload contents and updates the chatMessages map. Updates the GUI and sends 
+	 * an acknowledgement.
+	 * @param receivedPacket
+	 */
+	public void handlePlainMessage(Packet receivedPacket) {
+		PlainMessage payload = (PlainMessage) receivedPacket.getPayload();
+		
+		// The person that sent the message
+		Person sender = session.getKnownPersons().get(receivedPacket.getSenderID());
+		
+		// Convert the packet to a message
+		Message receivedMessage = new Message(receivedPacket.getSenderID(), 
+				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getPlainText(), false);		
+		
+		boolean addMessageToList = true;		
+		// Add it to the chatmessages map
+		ArrayList<Message> publicChatMessageList = session.getPublicChatMessages();		
+		for (Message message : publicChatMessageList) {
+			if (message.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == message.getSenderID()) {
+				addMessageToList = false;
+				break;
+			}
+		}
+		
+		if (addMessageToList) {
+			int insertPosition = publicChatMessageList.size();
+			int receivedMessageID = receivedMessage.getMessageID();
+			boolean continues = true;
+			for (int i = publicChatMessageList.size() - 1; i >= 0 && continues; i--) {
+				if (publicChatMessageList.get(i).getSenderID() != session.getID()) {
+					if (publicChatMessageList.get(i).getMessageID() > receivedMessageID) {
+						insertPosition = i;
+					} else {
+						if (insertPosition == publicChatMessageList.size()) {
+							publicChatMessageList.add(receivedMessage);
+							continues = false;
+						} else {
+							publicChatMessageList.add(insertPosition, receivedMessage);
+							continues = false;
+
+							
+						}
+					}
+				}
+			}
+		
+			if (continues) {
+				publicChatMessageList.add(receivedMessage);
+			}
+			session.getChatMessages().put(sender, publicChatMessageList);
+		}
+		
+		// Update GUI
+		if (addMessageToList) {
+			GUIHandler.messagePutInMap();
+		}		
+	}
+	
+	/**
+	 * Processes a received <code>Packet</code> object interpreted with an
+	 * PlainMessage payload. Creates a <code>Message</code> object from the 
 	 * payload contents and updates the chatMessages map. Updates the GUI and sends 
 	 * an acknowledgement.
 	 * @param receivedPacket
@@ -174,20 +246,28 @@ public class TransportLayer {
 	public void handleEncryptedMessage(Packet receivedPacket) {
 		EncryptedMessage payload = (EncryptedMessage) receivedPacket.getPayload();
 		
-		// Convert the packet to a message
-		Message message = new Message(receivedPacket.getSenderID(), 
-				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getEncryptedMessage(), false);
-		
 		// The person that sent the message
-		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
+		Person sender = session.getKnownPersons().get(receivedPacket.getSenderID());
 		
-		boolean addMessageToList = true;
-		// TODO SYNCHRONIZE
+		// Get the messageID
+		int messageID = payload.getMessageID();
+		
+		// Decrypt the message
+		int decryptionKey = (int) Math.pow(payload.getMidWayKey(), 
+				session.getSecretKeysForPerson().get(sender.getID())) % 
+				sender.getPrivateChatPair().getPrime();
+		String decryptedMessage = Crypter.decrypt(payload.getCipher(), decryptionKey);
+		
+		// Construct a message
+		Message message = new Message(sender.getID(), session.getID(), messageID, decryptedMessage, false);
+		
+		
+		boolean addMessageToList = true;		
 		// Add it to the chatmessages map
-		if (!session.getChatMessages().containsKey(person)) {
-			session.getChatMessages().put(person, new ArrayList<>(Arrays.asList(new Message[]{message})));
+		if (!session.getChatMessages().containsKey(sender)) {
+			session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
 		} else {
-			ArrayList<Message> currentMessageList = session.getChatMessages().get(person);
+			ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
 			
 			for (Message msg : currentMessageList) {
 				if (msg.getMessageID() == message.getMessageID() && message.getSenderID() == msg.getSenderID()) {
@@ -218,14 +298,13 @@ public class TransportLayer {
 				if (continues) {
 					currentMessageList.add(message);
 				}
-				session.getChatMessages().put(person, currentMessageList);
-			}
-			
+				session.getChatMessages().put(sender, currentMessageList);
+			}			
 		}
 		
 		// Update GUI
 		if (addMessageToList) {
-			GUIHandler.messagePutInMap(person);
+			GUIHandler.messagePutInMap(sender);
 		}
 		
 		// Send an acknowledgement
@@ -321,9 +400,9 @@ public class TransportLayer {
 		synchronized (this.unacknowledgedPackets) {
 			Packet removePacket = null;
 			for (Packet packet : unacknowledgedPackets) {
-				if (packet.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE) {
+				if (packet.getTypeIdentifier() == Payload.PLAIN_MESSAGE) {
 					if (packet.getReceiverID() == senderID && 
-							((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
+							((PlainMessage) packet.getPayload()).getMessageID() == messageID) {
 						removePacket = packet;
 					}
 				} else {
@@ -332,17 +411,40 @@ public class TransportLayer {
 						removePacket = packet;
 					}
 				}
-			}
 			
 			// To prevent ConcurrentModificationException
-			if (removePacket != null) {
-				unacknowledgedPackets.remove(removePacket);
+				if (removePacket != null) {
+					unacknowledgedPackets.remove(removePacket);
+				}
 			}
-		}		
+		}	
+			
 	}
 	
 	public void handleEncryptionPair(Packet receivedPacket) {
-		// TODO implement encryption pair
+		EncryptionPairExchange epe = (EncryptionPairExchange) receivedPacket.getPayload();
+		
+		int senderID = receivedPacket.getSenderID();
+		
+		if (session.getKnownPersons().containsKey(senderID)) {
+			if (senderID >= session.getID()) {
+				// Add the EncryptionPair to the person
+				EncryptionPair ep = new EncryptionPair(epe.getPrime(), epe.getGenerator(), true);
+				ep.setAcknowledged(true);
+				session.getKnownPersons().get(senderID).setPrivateChatPair(ep);
+				
+				// Set a secretInteger for messages with this person
+				session.getSecretKeysForPerson().put(senderID, DiffieHellman.produceSecretKey(ep.getPrime()));
+				
+				// Send the same EncryptionPairExchange packet back as acknowledgement
+				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator());
+				Packet packet = new Packet(session.getID(), senderID, session.getNextSeq(), Payload.ENCRYPTION_PAIR, epeResponse);
+				session.getConnection().getSender().send(packet);
+			} else {
+				// Set the PrivateChatPair to be acknowlegded
+				session.getKnownPersons().get(senderID).getPrivateChatPair().setAcknowledged(true);
+			}
+		}
 	}
 
 	/**
@@ -397,17 +499,27 @@ public class TransportLayer {
 		int msgLength = msg.length();
 		int nextMessageID = receiver.getNextMessageID();
 		
-		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msgLength, msg); // TODO: Encrypt
-		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
-		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, EncryptedMessage);
+		// Create EncryptedMessage
+		EncryptionPair ep = session.getKnownPersons().get(receiver.getID()).getPrivateChatPair();
+		int prime = ep.getPrime();
+		int generator = ep.getGenerator();
+		int secretInt = session.getSecretKeysForPerson().get(receiver.getID());
+		int midWayKey = (int) Math.pow(generator, secretInt) % prime;
+		String cipher = Crypter.encrypt(msg, midWayKey);
+		EncryptedMessage encryptedMessage = new EncryptedMessage(nextMessageID, midWayKey, cipher.length(), cipher); // TODO: Encrypt
+		
+		
+		
+		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, encryptedMessage);
 		session.getConnection().getSender().send(packet);
 		
 		synchronized (this.unacknowledgedPackets) {
 			unacknowledgedPackets.add(packet);
 			new RetransmissionThread(this, packet);
-		}		
+		}
+		
+		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);		
 
-		// TODO SYNCHRONIZE
 		// Add it to the chatmessages map
 		if (!session.getChatMessages().containsKey(receiver)) {
 			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
@@ -419,6 +531,26 @@ public class TransportLayer {
 		
 		// Update the GUI
 		GUIHandler.messagePutInMap(receiver);
+	}
+	
+	public void sendMessageFromGUI(String msg) {
+		int msgLength = msg.length();
+		int nextPublicMessageID = session.getNextPublicMessageID();
+		
+		PlainMessage plainMessage = new PlainMessage(nextPublicMessageID, msg.length(), msg);
+		Packet packet = new Packet(session.getID(), 0, session.getNextSeq(), Payload.PLAIN_MESSAGE, plainMessage);
+		session.getConnection().getSender().send(packet);
+		
+		synchronized (this.unacknowledgedPackets) {
+			unacknowledgedPackets.add(packet);
+			new RetransmissionThread(this, packet);
+		}
+		
+		Message message = new Message(session.getID(), 0, nextPublicMessageID, msg, true);
+		session.getPublicChatMessages().add(message);
+		
+		// Update the GUI
+		GUIHandler.messagePutInMap();
 	}
 	
 	/**
@@ -451,25 +583,33 @@ public class TransportLayer {
 			int nameLength = getNameLength(payloadData);
 			String name = getName(payloadData);
 			return new Pulse(nameLength, name);
-		case Payload.ENCRYPTED_MESSAGE:
-			String message = getMessage(payloadData);
-			int encryptionMessageID = getMessageID(payloadData);
-			int encryptionMessageLength = getMessageLength(payloadData, 1);
-			return new EncryptedMessage(encryptionMessageID, encryptionMessageLength, message);
+		case Payload.PLAIN_MESSAGE:
+			String message = getPlainMessage(payloadData);
+			int messageID = getMessageID(payloadData, Payload.PLAIN_MESSAGE);
+			int messageLength = getMessageLength(payloadData, Payload.PLAIN_MESSAGE);
+			return new PlainMessage(messageID, messageLength, message);
 		case Payload.ACKNOWLEDGEMENT:
-			int acknowledgeMessageID = getMessageID(payloadData);
+			int acknowledgeMessageID = getMessageID(payloadData, Payload.ACKNOWLEDGEMENT);
 			return new Acknowledgement(acknowledgeMessageID);	
-		case Payload.ENCRYPTION_PAIR:
-			// TODO: implement encryption pair
 		case Payload.FILE_MESSAGE:
 			byte[] fileData = getFileData(payloadData);
-			int fileMessageID = getMessageID(payloadData);
-			int fileMessageLength = getMessageLength(payloadData, 4);
+			int fileMessageID = getMessageID(payloadData, Payload.FILE_MESSAGE);
+			int fileMessageLength = getMessageLength(payloadData, Payload.FILE_MESSAGE);
 			int fileID = getFileID(payloadData);
 			int fileSeq = getFileSequenceNumber(payloadData);
 			return new FileMessage(fileMessageID, fileMessageLength, fileID, fileSeq, fileData);
+		case Payload.ENCRYPTION_PAIR:
+			int prime = getPrime(payloadData);
+			int generator = getGenerator(payloadData);
+			return new EncryptionPairExchange(prime, generator);
+		case Payload.ENCRYPTED_MESSAGE:
+			int MessageID = getMessageID(payloadData, Payload.ENCRYPTED_MESSAGE);
+			int midWayKey = getMidWayKey(payloadData);
+			int cipherLength = getCipherLength(payloadData);
+			String cipher = getCipher(payloadData);
+			return new EncryptedMessage(MessageID, midWayKey, cipherLength, cipher);
 		default: 
-			System.err.println("Unknown type identifier: " + typeIdentifier);
+			System.err.println("Unknown type identifier at getPayload(): " + typeIdentifier);
 			return null;
 		}	
 	}
@@ -593,14 +733,15 @@ public class TransportLayer {
 
 	/**
 	 * Returns the (encrypted) message from the <code>EncryptedMessage</code> payload data.
-	 * @param encryptedPayloadData the payload data of the <code>EncryptedMessage</code> packet
+	 * @param payloadData the payload data of the <code>EncryptedMessage</code> packet
 	 * @return message the (encrypted) message of an encrypted message packet
 	 */
-	public static String getMessage(byte[] encryptedPayloadData) {
-		int length = getMessageLength(encryptedPayloadData, 1);
-		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+
+	public static String getPlainMessage(byte[] payloadData) {
+		int length = getMessageLength(payloadData, Payload.PLAIN_MESSAGE);
+		int start = PlainMessage.MESSAGE_ID_LENGTH + PlainMessage.MESSAGE_LENGTH_LENGTH;
 		int end = start + length;
-		byte[] messageArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
+		byte[] messageArray = Arrays.copyOfRange(payloadData, start, end);
 		
 		String message = "";
 		try {
@@ -613,7 +754,7 @@ public class TransportLayer {
 	}
 
 	public static byte[] getFileData(byte[] filePayloadData) {
-		int length = getMessageLength(filePayloadData, 4);
+		int length = getMessageLength(filePayloadData, Payload.FILE_MESSAGE);
 		int start = FileMessage.MESSAGE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + FileMessage.FILE_ID_LENGTH + FileMessage.FILE_SEQ_LENGTH;
 		int end = start + length;
 		byte[] fileData = Arrays.copyOfRange(filePayloadData, start, end);
@@ -621,13 +762,27 @@ public class TransportLayer {
 	}
 	/**
 	 * Returns the messageID of an encrypted message packet.
-	 * @param encryptedPayloadData the payload data of the <code>EncryptedMessage</code> packet
-	 * @return messageID the messageID of the encrypted message
+	 * @param payloadData the payload data of the packet
+	 * @return messageID the messageID of the message
 	 */
-	public static int getMessageID(byte[] encryptedPayloadData) {
-		int start = 0;
-		int end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
-		byte[] messageIdArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
+	public static int getMessageID(byte[] payloadData, int typeIdentifier) {
+		int start = 0, end = 0;
+		
+		if (typeIdentifier == Payload.PLAIN_MESSAGE) {
+			start = 0;
+			end = start + PlainMessage.MESSAGE_ID_LENGTH;
+		} else if (typeIdentifier == Payload.ENCRYPTED_MESSAGE) {
+			start = 0;
+			end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
+		} else if (typeIdentifier == Payload.ACKNOWLEDGEMENT) {
+			start = 0;
+			end = start + Acknowledgement.ACK_PAYLOAD_LENGHT;
+		} else if (typeIdentifier == Payload.FILE_MESSAGE) {
+			start = 0;
+			end = start + FileMessage.MESSAGE_ID_LENGTH;
+		}
+		
+		byte[] messageIdArray = Arrays.copyOfRange(payloadData, start, end);
 		ByteBuffer messageIdByteBuffer = ByteBuffer.wrap(messageIdArray);
 		
 		int messageID = messageIdByteBuffer.getShort();
@@ -638,9 +793,9 @@ public class TransportLayer {
 		int start = 0;
 		int end = 0;
 		switch (payloadType) {
-			case Payload.ENCRYPTED_MESSAGE:
-				start = EncryptedMessage.MESSAGE_ID_LENGTH;
-				end = start + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+			case Payload.PLAIN_MESSAGE:
+				start = PlainMessage.MESSAGE_ID_LENGTH;
+				end = start + PlainMessage.MESSAGE_LENGTH_LENGTH;
 				
 				byte[] encryptedMessageLengthArray = Arrays.copyOfRange(payloadData, start, end);
 				ByteBuffer encryptedMessageLengthBytebuffer = ByteBuffer.wrap(encryptedMessageLengthArray);
@@ -660,7 +815,6 @@ public class TransportLayer {
 				return fileMessageLength;
 			default: return 0;
 		}
-		
 	}
 
 	public void sendImageFromGUI(File img, Person receiver) {
@@ -723,5 +877,64 @@ public class TransportLayer {
 		
 
 	
+	private static int getCipherLength(byte[] payloadData) {
+		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MID_WAY_KEY_LENGTH;
+		int end = start + EncryptedMessage.CIPHER_LENGTH_LENGTH;
+		
+		byte[] cipherLengthArray = Arrays.copyOfRange(payloadData, start, end);	
+		ByteBuffer cipherLengthBytebuffer = ByteBuffer.wrap(cipherLengthArray);
+		
+		int cipherLength = cipherLengthBytebuffer.getShort();
+		return cipherLength;
+	}
+
+	private static String getCipher(byte[] payloadData) {
+		int length = getCipherLength(payloadData);
+		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MID_WAY_KEY_LENGTH + EncryptedMessage.CIPHER_LENGTH_LENGTH;
+		int end = start + length;
+		byte[] cipherArray = Arrays.copyOfRange(payloadData, start, end);
+		
+		String cipher = "";
+		try {
+			cipher = new String(cipherArray, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
+		return cipher;
+	}
+
+	private static int getMidWayKey(byte[] payloadData) {
+		int start = EncryptedMessage.MESSAGE_ID_LENGTH;
+		int end = start + EncryptedMessage.MID_WAY_KEY_LENGTH;
+		
+		byte[] midWayKeyArray = Arrays.copyOfRange(payloadData, start, end);	
+		ByteBuffer midWayKeyBytebuffer = ByteBuffer.wrap(midWayKeyArray);
+		
+		int midWayKey = midWayKeyBytebuffer.get();
+		return midWayKey;
+	}
+
+	private static int getPrime(byte[] payloadData) {
+		int start = 0;
+		int end = start + EncryptionPairExchange.PRIME_LENGTH;
+		
+		byte[] primeArray = Arrays.copyOfRange(payloadData, start, end);	
+		ByteBuffer primeBytebuffer = ByteBuffer.wrap(primeArray);
+		
+		int prime = primeBytebuffer.get();
+		return prime;
+	}
+
+	private static int getGenerator(byte[] payloadData) {
+		int start = EncryptionPairExchange.PRIME_LENGTH;
+		int end = start + EncryptionPairExchange.GENERATOR_LENGTH;
+		
+		byte[] generatorArray = Arrays.copyOfRange(payloadData, start, end);	
+		ByteBuffer generatorBytebuffer = ByteBuffer.wrap(generatorArray);
+		
+		int generator = generatorBytebuffer.get();
+		return generator;
+	}
 
 }
