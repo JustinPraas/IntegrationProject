@@ -175,7 +175,7 @@ public class TransportLayer {
 			ArrayList<Message> currentMessageList = session.getChatMessages().get(person);
 			
 			for (Message msg : currentMessageList) {
-				if (msg.getMessageID() == message.getMessageID()) {
+				if (msg.getMessageID() == message.getMessageID() && message.getSenderID() == msg.getSenderID()) {
 					addMessageToList = false;
 					break;
 				}
