@@ -2,7 +2,6 @@ package connection;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.util.Arrays;
 
 public class Receiver extends Thread {
 	

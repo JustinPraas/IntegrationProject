@@ -32,6 +32,10 @@ public class Message {
 		return senderID;
 	}
 	
+	public int getReceiverID() {
+		return receiverID;
+	}
+	
 	public String getTimestampString() {
 		return new SimpleDateFormat("HH:mm").format(timestamp);
 	}

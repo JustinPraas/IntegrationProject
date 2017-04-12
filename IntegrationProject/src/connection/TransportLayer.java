@@ -383,7 +383,6 @@ public class TransportLayer {
 			e.printStackTrace();
 		}
 		
-		System.out.println("Name: " + name);
 		return name;
 	}
 

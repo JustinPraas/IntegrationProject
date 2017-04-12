@@ -182,8 +182,6 @@ public class GUIHandler {
 		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
 			Person person = entry.getValue();
 			
-			String buttonText = "";
-			
 			Button button = new Button(person.getName());
 			
 			// Check if the Button should be marked as containing unread messages
@@ -230,7 +228,7 @@ public class GUIHandler {
 		Platform.runLater(() -> {
 			GUI.rightVBox.getChildren().remove(1);
 			GUI.rightVBox.getChildren().add(scrollingNearbyList);
-			GUI.rightVBox.setVgrow(scrollingNearbyList, Priority.ALWAYS);
+			VBox.setVgrow(scrollingNearbyList, Priority.ALWAYS);
 		});
 		
 		// Set maps that link Buttons to Persons to the newly created maps
