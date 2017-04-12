@@ -1,8 +1,8 @@
-.remote .label {
-	-fx-text-fill: #000080;
+.remote * {
+	-fx-fill: #000080;
 }
-.local .label {
-	-fx-text-fill: black;
+.local {
+	-fx-fill: black;
 }
 
 .local, .remote {
@@ -11,5 +11,4 @@
 
 .local .sender, .remote .sender {
 	-fx-font-weight: bold;
-	
 }
