@@ -19,8 +19,8 @@ public class TransportLayer {
 	public static final int MAX_SEEN_PACKETS_SIZE = 300;
 
 	// Used objects
-	private Session session;
-	private ArrayList<Packet> seenPackets = new ArrayList<>();
+	public Session session;
+	public ArrayList<Packet> seenPackets = new ArrayList<>();
 
 	/**
 	 * Creates a <code>TransportLayer</code> object that acts on a session.
@@ -36,7 +36,7 @@ public class TransportLayer {
 	 * @param datagramArray the data from the DatagramPacket
 	 * @return originalDatagramContents the initial packet that was sent by the source node
 	 */
-	private static byte[] shortenDatagramPacket(byte[] datagramArray) {
+	public static byte[] shortenDatagramPacket(byte[] datagramArray) {
 		int length = 0;
 		length += Packet.HEADER_LENGTH;
 		
@@ -212,7 +212,7 @@ public class TransportLayer {
 	 * @param receivedPacket the packet that contains the message that needs acknowledgement
 	 * @param message the message that needs acknowledgement
 	 */
-	private void sendAcknowledgement(Packet receivedPacket, Message message) {
+	public void sendAcknowledgement(Packet receivedPacket, Message message) {
 		// Prepare an acknowledgement
 		Acknowledgement acknowledgement = new Acknowledgement(message.getMessageID());
 		
@@ -254,14 +254,12 @@ public class TransportLayer {
 		GUIHandler.messagePutInMap(receiver);
 	}
 	
-	// TODO: LEFT OFF HERE
-	
 	/**
 	 * Creates a <code>Packet</code> object from datagram contents.
-	 * @param datagramContents the datagram contents of a <code>DatagramPacket</code>
+	 * @param datagramContents the datagram contents of a shortened <code>DatagramPacket</code>
 	 * @return resultPacket the <code>Packet</code> resulting from the datagram contents
 	 */
-	private Packet getPacket(byte[] datagramContents) {
+	public Packet getPacket(byte[] datagramContents) {
 		int senderID = getSenderID(datagramContents);
 		int receiverID = getReceiverID(datagramContents);
 		int sequenceNumber = getSequenceNumber(datagramContents);
@@ -272,13 +270,13 @@ public class TransportLayer {
 	}
 
 	/**
-	 * Converts the datagram-packet contents into a <code>Payload</code> object, according to the
+	 * Converts the datagram (shortened or unshortened) contents into a <code>Payload</code> object, according to the
 	 * type identifier.
 	 * @param datagramContents the packet contents
 	 * @param typeIdentifier the type of the payload
 	 * @return a <code>Payload</code> object, converted from the packet contents
 	 */
-	private static Payload getPayload(byte[] datagramContents, int typeIdentifier) {
+	public static Payload getPayload(byte[] datagramContents, int typeIdentifier) {
 		byte[] payloadData = Arrays.copyOfRange(datagramContents, Packet.HEADER_LENGTH, datagramContents.length);
 		
 		switch (typeIdentifier) {
@@ -305,14 +303,13 @@ public class TransportLayer {
 	/**
 	 * Returns the senderID of the source.
 	 * @param datagramContents the contents of the packet
-	 * @return
+	 * @return senderID the senderID of the source
 	 */
-	private static int getSenderID(byte[] datagramContents) {
+	public static int getSenderID(byte[] datagramContents) {
 		int start = 0;
 		int end = start + Packet.SENDER_LENGTH;
 		
-		byte[] senderIdArray = new byte[Packet.SENDER_LENGTH];
-		senderIdArray = Arrays.copyOfRange(datagramContents, start, end);
+		byte[] senderIdArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer senderIdByteBuffer = ByteBuffer.wrap(senderIdArray);
 		
 		int senderID = senderIdByteBuffer.getInt();
@@ -324,12 +321,11 @@ public class TransportLayer {
 	 * @param datagramContents the contents of the packet
 	 * @return receiverID the receiverID of the destination node
 	 */
-	private static int getReceiverID(byte[] datagramContents) {
+	public static int getReceiverID(byte[] datagramContents) {
 		int start = Packet.RECEIVER_LENGTH;
 		int end = start + Packet.RECEIVER_LENGTH;
 		
-		byte[] receiverIdArray = new byte[Packet.RECEIVER_LENGTH];
-		receiverIdArray = Arrays.copyOfRange(datagramContents, start, end);
+		byte[] receiverIdArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer receiverIdByteBuffer = ByteBuffer.wrap(receiverIdArray);
 		
 		int receiverID = receiverIdByteBuffer.getInt();
@@ -339,14 +335,13 @@ public class TransportLayer {
 	/**
 	 * Returns the sequence number of the packet.
 	 * @param datagramContents the packet contents
-	 * @return the sequence number of the packet
+	 * @return seqNum the sequence number of the packet
 	 */
-	private static int getSequenceNumber(byte[] datagramContents) {
+	public static int getSequenceNumber(byte[] datagramContents) {
 		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH;
 		int end = start + Packet.SEQUENCE_NUM_LENGTH;
 		
-		byte[] seqNumArray = new byte[Packet.SEQUENCE_NUM_LENGTH];
-		seqNumArray = Arrays.copyOfRange(datagramContents, start, end);
+		byte[] seqNumArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer seqNumByteBuffer = ByteBuffer.wrap(seqNumArray);
 		
 		int seqNum = seqNumByteBuffer.getShort();
@@ -356,14 +351,13 @@ public class TransportLayer {
 	/**
 	 * Returns the type identifier of the packet, representing the payload type.
 	 * @param datagramContents the packet contents
-	 * @return the type identifier of the packet
+	 * @return typeIdentifier the type identifier of the packet
 	 */
-	private static int getTypeIdentifier(byte[] datagramContents) {
+	public static int getTypeIdentifier(byte[] datagramContents) {
 		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH + Packet.SEQUENCE_NUM_LENGTH;
 		int end = start + Packet.TYPE_LENGTH;
 		
-		byte[] typeIdentifierArray = new byte[Packet.SEQUENCE_NUM_LENGTH];
-		typeIdentifierArray = Arrays.copyOfRange(datagramContents, start, end);
+		byte[] typeIdentifierArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer typeIdentifierBuffer = ByteBuffer.wrap(typeIdentifierArray);
 		
 		int typeIdentifier = typeIdentifierBuffer.get();
@@ -371,17 +365,16 @@ public class TransportLayer {
 	}
 
 	/**
-	 * Returns the name of the source.
+	 * Returns the name of the source from the <code>Pulse</code> payload data.
 	 * @param pulsePayloadData the payload data of a pulse packet
-	 * @return the name of the source
+	 * @return name the name of the source
 	 */
-	private static String getName(byte[] pulsePayloadData) {
+	public static String getName(byte[] pulsePayloadData) {
 		int length = getNameLength(pulsePayloadData);
 		int start = Pulse.NAME_LENGTH_LENGTH;
 		int end = start + length;
 		
-		byte[] nameArray = new byte[length];
-		nameArray = Arrays.copyOfRange(pulsePayloadData, start, end);
+		byte[] nameArray = Arrays.copyOfRange(pulsePayloadData, start, end);
 		
 		String name = "";
 		try {
@@ -389,24 +382,30 @@ public class TransportLayer {
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
+		
+		System.out.println("Name: " + name);
 		return name;
 	}
 
-	private static int getNameLength(byte[] pulsePayloadData) {		
+	/**
+	 * Returns the name length from the <code>Pulse</code> payload data.
+	 * @param pulsePayloadData the payload data of a pulse packet
+	 * @return pulsePayloadData[0] the length of the name
+	 */
+	public static int getNameLength(byte[] pulsePayloadData) {
 		return pulsePayloadData[0];	
 	}
 
 	/**
-	 * Returns the (encrypted) message from an encrypted message packet.
-	 * @param encryptedPayloadData the payload data of the encrypted message packet
-	 * @return the (encrypted) message of a encrypted message packet
+	 * Returns the (encrypted) message from the <code>EncryptedMessage</code> payload data.
+	 * @param encryptedPayloadData the payload data of the <code>EncryptedMessage</code> packet
+	 * @return message the (encrypted) message of an encrypted message packet
 	 */
-	private static String getMessage(byte[] encryptedPayloadData) {
+	public static String getMessage(byte[] encryptedPayloadData) {
 		int length = getMessageLength(encryptedPayloadData);
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
 		int end = start + length;
-		byte[] messageArray = new byte[length];
-		messageArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
+		byte[] messageArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
 		
 		String message = "";
 		try {
@@ -420,26 +419,24 @@ public class TransportLayer {
 
 	/**
 	 * Returns the messageID of an encrypted message packet.
-	 * @param encryptedPayloadData the payload data of the packet
-	 * @return the messageID of the encrypted message
+	 * @param encryptedPayloadData the payload data of the <code>EncryptedMessage</code> packet
+	 * @return messageID the messageID of the encrypted message
 	 */
-	private static int getMessageID(byte[] encryptedPayloadData) {
+	public static int getMessageID(byte[] encryptedPayloadData) {
 		int start = 0;
 		int end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
-		byte[] messageIdArray = new byte[EncryptedMessage.MESSAGE_ID_LENGTH];
-		messageIdArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
+		byte[] messageIdArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
 		ByteBuffer messageIdByteBuffer = ByteBuffer.wrap(messageIdArray);
 		
 		int messageID = messageIdByteBuffer.getShort();
 		return messageID;
 	}
 
-	private static int getMessageLength(byte[] encryptedPayloadData) {
+	public static int getMessageLength(byte[] encryptedPayloadData) {
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH;
 		int end = start + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
 		
-		byte[] messageLengthArray = new byte[EncryptedMessage.MESSAGE_LENGTH_LENGTH];
-		messageLengthArray = Arrays.copyOfRange(encryptedPayloadData, start, end);	
+		byte[] messageLengthArray = Arrays.copyOfRange(encryptedPayloadData, start, end);	
 		ByteBuffer messageLengthBytebuffer = ByteBuffer.wrap(messageLengthArray);
 		
 		int messageLength = messageLengthBytebuffer.getShort();

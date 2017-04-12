@@ -28,4 +28,8 @@ public class Acknowledgement implements Payload {
 		
 		return result;
 	}
+
+	public int getMessageID() {
+		return messageID;
+	}
 }
