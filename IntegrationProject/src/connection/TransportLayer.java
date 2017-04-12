@@ -185,7 +185,7 @@ public class TransportLayer {
 				int receivedMessageID = message.getMessageID();
 				boolean continues = true;
 				for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
-					if (message.getSenderID() != session.getID()) {
+					if (currentMessageList.get(i).getSenderID() != session.getID()) {
 						if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
 							insertPosition = i;
 						} else {
