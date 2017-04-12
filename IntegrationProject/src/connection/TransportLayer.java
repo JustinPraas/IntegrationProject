@@ -81,6 +81,11 @@ public class TransportLayer {
 		// Construct a Packet object from the datagramContents	
 		Packet receivedPacket = getPacket(datagramContents);
 		
+		//TODO SOUTS
+		if (receivedPacket.getTypeIdentifier() == Payload.ACKNOWLEDGEMENT) {
+			System.out.println("Acknowledgement received");
+		}
+		
 		// Don't do anything if: we've already seen this packet OR if this packet is from ourself
 		// Else: add the packet to the seenPackets list
 		if (seenPackets.contains(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
@@ -161,18 +166,32 @@ public class TransportLayer {
 		// The person that sent the message
 		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
 		
+		boolean addMessageToList = true;
 		// TODO SYNCHRONIZE
 		// Add it to the chatmessages map
 		if (!session.getChatMessages().containsKey(person)) {
 			session.getChatMessages().put(person, new ArrayList<>(Arrays.asList(new Message[]{message})));
 		} else {
 			ArrayList<Message> currentMessageList = session.getChatMessages().get(person);
-			currentMessageList.add(message);
-			session.getChatMessages().put(person, currentMessageList);
+			
+			for (Message msg : currentMessageList) {
+				if (msg.getMessageID() == message.getMessageID()) {
+					addMessageToList = false;
+					break;
+				}
+			}
+			
+			if (addMessageToList) {
+				currentMessageList.add(message);
+				session.getChatMessages().put(person, currentMessageList);
+			}
+			
 		}
 		
 		// Update GUI
-		GUIHandler.messagePutInMap(person);
+		if (addMessageToList) {
+			GUIHandler.messagePutInMap(person);
+		}
 		
 		// Send an acknowledgement
 		sendAcknowledgement(receivedPacket, message);		
@@ -190,11 +209,17 @@ public class TransportLayer {
 		int senderID = receivedPacket.getSenderID();
 		
 		synchronized (this.unacknowledgedPackets) {
+			Packet removePacket = null;
 			for (Packet packet : unacknowledgedPackets) {
-				if (packet.getSenderID() == senderID && 
-						((Acknowledgement) packet.getPayload()).getMessageID() == messageID) {
-					unacknowledgedPackets.remove(packet);
+				if (packet.getReceiverID() == senderID && 
+						((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
+					removePacket = packet;
 				}
+			}
+			
+			// To prevent ConcurrentModificationException
+			if (removePacket != null) {
+				unacknowledgedPackets.remove(removePacket);
 			}
 		}		
 	}
