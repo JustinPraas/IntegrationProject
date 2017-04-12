@@ -128,8 +128,6 @@ public class TransportLayer {
 				break;
 			case Payload.FILE_MESSAGE:
 				handleFileMessage(receivedPacket);
-			case Payload.PLAIN_MESSAGE:
-				handlePlainMessage(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
 				handleAcknowledgement(receivedPacket);
@@ -405,17 +403,21 @@ public class TransportLayer {
 							((PlainMessage) packet.getPayload()).getMessageID() == messageID) {
 						removePacket = packet;
 					}
+				} else if (packet.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE){ 
+					if (packet.getReceiverID() == senderID && 
+							((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
+						removePacket = packet;
+					}
 				} else {
 					if (packet.getReceiverID() == senderID && 
 							((FileMessage) packet.getPayload()).getMessageID() == messageID) {
 						removePacket = packet;
 					}
 				}
-			
+			}
 			// To prevent ConcurrentModificationException
-				if (removePacket != null) {
-					unacknowledgedPackets.remove(removePacket);
-				}
+			if (removePacket != null) {
+				unacknowledgedPackets.remove(removePacket);
 			}
 		}	
 			
