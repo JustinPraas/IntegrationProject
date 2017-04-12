@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.javafx.tk.Toolkit;
+
 import application.Session;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
@@ -124,11 +126,12 @@ public class GUIHandler {
 			
 			// Append this message to ChatBox String
 			Label sender = new Label(messageSender);
-			Label timestamp = new Label(message.getTimestampString());
+			Label timestamp = new Label(" (" + message.getTimestampString() + "): ");
 			Label messageText = new Label(message.getText());
 			sender.getStyleClass().add("sender");
 			timestamp.getStyleClass().add("timestamp");
 			messageText.getStyleClass().add("text");
+			messageText.setWrapText(true);
 			HBox box = new HBox();
 			if (message.getSenderID() == session.getID()) {
 				box.getStyleClass().add("local");
@@ -136,10 +139,9 @@ public class GUIHandler {
 				box.getStyleClass().add("remote");
 			}
 			box.getChildren().add(sender);
-			box.getChildren().add(new Label(" ("));
 			box.getChildren().add(timestamp);
-			box.getChildren().add(new Label("): "));
 			box.getChildren().add(messageText);
+			System.out.println(sender.prefWidth(-1) + " " + timestamp.prefWidth(-1));
 			total.add(box);
 		}
 		
