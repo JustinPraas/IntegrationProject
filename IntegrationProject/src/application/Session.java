@@ -28,6 +28,7 @@ public class Session {
 		this.knownPersons = new HashMap<>();
 		this.secretKeysForPerson = new HashMap<>();
 		this.chatMessages = new HashMap<>();
+		this.publicChatMessages = new ArrayList<>();
 		this.seq = 0;
 		this.nextPublicMessageID = 0;
 		new PulseHandler(this);

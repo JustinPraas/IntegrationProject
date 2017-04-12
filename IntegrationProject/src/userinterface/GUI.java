@@ -18,6 +18,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -32,6 +33,7 @@ public class GUI extends Application {
 	protected static TextField inputBox;
 	protected static VBox rightVBox;
 	protected static ScrollPane scrollingChatBox;
+	protected static Button globalChatButton;
 	
 	protected static void launchGUI() {
 		launch();
@@ -108,6 +110,7 @@ public class GUI extends Application {
 		// Initialize elements of left VBox
 		currentChatHeader = new Label();
 		
+		
 		chatBox = new VBox();
 		chatBox.setSpacing(2);
 		chatBox.setMaxWidth(920);
@@ -129,13 +132,30 @@ public class GUI extends Application {
 		Label personListHeader = new Label("Nearby");
 		
 		ScrollPane scrollingNearbyList = new ScrollPane();
-		scrollingNearbyList.setContent(rightVBox);
 		scrollingNearbyList.setHbarPolicy(ScrollBarPolicy.NEVER);
 		scrollingNearbyList.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+		scrollingNearbyList.setFitToWidth(true);
 		
 		personListHeader.setFont(Font.font(null, FontWeight.SEMI_BOLD, 24));
-		VBox nearbyPersonsVBox = new VBox(15);
-		rightVBox.getChildren().addAll(personListHeader, nearbyPersonsVBox);
+		VBox nearbyPersonsVBox = new VBox(0);
+		
+		// Add Global Chat Button
+		globalChatButton = new Button("GLOBAL");
+		globalChatButton.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
+		globalChatButton.setTextFill(Color.BLUE);
+		globalChatButton.setOnAction(e -> {
+			GUIHandler.showChat();
+		});
+		
+		// Let the button fill the width of the right sidebar
+		globalChatButton.setMaxWidth(Double.MAX_VALUE);
+		globalChatButton.setMinHeight(100);
+		globalChatButton.setMaxHeight(100);
+		
+		nearbyPersonsVBox.getChildren().add(globalChatButton);
+		scrollingNearbyList.setContent(nearbyPersonsVBox);
+		
+		rightVBox.getChildren().addAll(personListHeader, scrollingNearbyList);
 		rightVBox.setSpacing(15);
 		
 		// Set filling properties
@@ -153,6 +173,7 @@ public class GUI extends Application {
 
 		// Construct Scene
 		chatScreen = new Scene(outerHBox, 1280, 720);
+		chatScreen.getStylesheets().add(getClass().getResource("Test.css").toExternalForm());
 		
 		// Set actions
 		inputBox.setOnAction(e -> {
@@ -184,6 +205,7 @@ public class GUI extends Application {
 			window.hide();
 			window.setScene(chatScreen);
 			window.setTitle(GUIHandler.username + " - " + GUIHandler.getApplicationName());
+			GUIHandler.showChat();
 			window.show();
 		}
 	}

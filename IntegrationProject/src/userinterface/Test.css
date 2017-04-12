@@ -1,0 +1,14 @@
+.remote * {
+	-fx-fill: #000080;
+}
+.local {
+	-fx-fill: black;
+}
+
+.local, .remote {
+	-fx-font-size: 14.5;
+}
+
+.local .sender, .remote .sender {
+	-fx-font-weight: bold;
+}
