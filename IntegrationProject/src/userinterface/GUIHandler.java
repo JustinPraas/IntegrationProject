@@ -18,6 +18,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import model.Message;
 import model.Person;
 
@@ -125,23 +127,20 @@ public class GUIHandler {
 			}
 			
 			// Append this message to ChatBox String
-			Label sender = new Label(messageSender);
-			Label timestamp = new Label(" (" + message.getTimestampString() + "): ");
-			Label messageText = new Label(message.getText());
-			sender.getStyleClass().add("sender");
-			timestamp.getStyleClass().add("timestamp");
-			messageText.getStyleClass().add("text");
-			messageText.setWrapText(true);
+			Text senderText = new Text(messageSender);
+			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
+			Text messageText = new Text(message.getText());
+			senderText.setStyle("-fx-font-weight: bold;");
+			TextFlow flow = new TextFlow();
+			flow.getChildren().addAll(senderText, timestampText, messageText);
 			HBox box = new HBox();
 			if (message.getSenderID() == session.getID()) {
 				box.getStyleClass().add("local");
 			} else {
 				box.getStyleClass().add("remote");
 			}
-			box.getChildren().add(sender);
-			box.getChildren().add(timestamp);
-			box.getChildren().add(messageText);
-			System.out.println(sender.prefWidth(-1) + " " + timestamp.prefWidth(-1));
+			box.getChildren().add(flow);
+			
 			total.add(box);
 		}
 		
