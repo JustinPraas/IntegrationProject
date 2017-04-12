@@ -17,6 +17,8 @@ public class Session {
 	private Map<Integer, Person> knownPersons;
 	private Map<Integer, Integer> secretKeysForPerson;
 	private Map<Person, ArrayList<Message>> chatMessages;
+	private ArrayList<Message> publicChatMessages;
+	private int nextPublicMessageID;
 	private int seq;
 
 	public Session(String name) {
@@ -27,6 +29,7 @@ public class Session {
 		this.secretKeysForPerson = new HashMap<>();
 		this.chatMessages = new HashMap<>();
 		this.seq = 0;
+		this.nextPublicMessageID = 0;
 		new PulseHandler(this);
 	}
 
@@ -61,5 +64,14 @@ public class Session {
 
 	public Map<Integer, Integer> getSecretKeysForPerson() {
 		return secretKeysForPerson;
+	}
+
+	public ArrayList<Message> getPublicChatMessages() {
+		return publicChatMessages;
+	}
+
+	public int getNextPublicMessageID() {
+		nextPublicMessageID++;
+		return nextPublicMessageID;
 	}	
 }
