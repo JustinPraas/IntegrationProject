@@ -1,5 +1,6 @@
 package userinterface;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,6 +78,13 @@ public class GUIHandler {
 		if (currentPerson != null && !msg.equals("")) {
 			Person receiver = currentPerson;
 			session.getConnection().getTransportLayer().sendMessageFromGUI(msg, receiver);
+		}
+	}
+	
+	protected static void sendImage(File img) {
+		if (currentPerson != null && img.exists() && img.length() < 1000000) {
+			Person receiver = currentPerson;
+			session.getConnection().getTransportLayer().sendImageFromGUI(img, receiver);
 		}
 	}
 	
