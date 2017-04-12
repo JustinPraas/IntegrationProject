@@ -123,11 +123,23 @@ public class GUIHandler {
 			}
 			
 			// Append this message to ChatBox String
-			finalMessage = "  " + messageSender + " (" + message.getTimestampString()
-			+ "): " + message.getText() + "\n";
-			label = new Label(finalMessage);
+			Label sender = new Label(messageSender);
+			Label timestamp = new Label(message.getTimestampString());
+			Label messageText = new Label(message.getText());
+			sender.getStyleClass().add("sender");
+			timestamp.getStyleClass().add("timestamp");
+			messageText.getStyleClass().add("text");
 			HBox box = new HBox();
-			box.getChildren().add(label);
+			if (message.getSenderID() == session.getID()) {
+				box.getStyleClass().add("local");
+			} else {
+				box.getStyleClass().add("remote");
+			}
+			box.getChildren().add(sender);
+			box.getChildren().add(new Label(" ("));
+			box.getChildren().add(timestamp);
+			box.getChildren().add(new Label("): "));
+			box.getChildren().add(messageText);
 			total.add(box);
 		}
 		

@@ -108,6 +108,7 @@ public class GUI extends Application {
 		// Initialize elements of left VBox
 		currentChatHeader = new Label();
 		
+		
 		chatBox = new VBox();
 		chatBox.setSpacing(2);
 		chatBox.setMaxWidth(920);
@@ -153,6 +154,7 @@ public class GUI extends Application {
 
 		// Construct Scene
 		chatScreen = new Scene(outerHBox, 1280, 720);
+		chatScreen.getStylesheets().add(getClass().getResource("Test.css").toExternalForm());
 		
 		// Set actions
 		inputBox.setOnAction(e -> {
