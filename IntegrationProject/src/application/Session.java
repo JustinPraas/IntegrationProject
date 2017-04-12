@@ -16,6 +16,7 @@ public class Session {
 	private Connection connection;
 	private Map<Integer, Person> knownPersons;
 	private Map<Person, ArrayList<Message>> chatMessages;
+	private Map<Person, ArrayList<ArrayList<byte[]>>> fileMessages;
 	private int seq;
 
 	public Session(String name) {
@@ -24,6 +25,7 @@ public class Session {
 		this.connection = new Connection(this);
 		this.knownPersons = new HashMap<>();
 		this.chatMessages = new HashMap<>();
+		this.fileMessages = new HashMap<>();
 		this.seq = 0;
 		new PulseHandler(this);
 	}
@@ -48,6 +50,10 @@ public class Session {
 		return chatMessages;
 	}
 	
+	public Map<Person, ArrayList<ArrayList<byte[]>>> getFileMessages() {
+		return fileMessages;
+	}
+
 	public int getSeq() {
 		return seq;
 	}

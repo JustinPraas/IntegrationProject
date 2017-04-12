@@ -59,10 +59,17 @@ public class TransportLayer {
 		case Payload.ENCRYPTED_MESSAGE:
 			length += EncryptedMessage.MESSAGE_ID_LENGTH;
 			length += EncryptedMessage.MESSAGE_LENGTH_LENGTH;
-			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
+			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), 1);
 			break;
 		case Payload.ACKNOWLEDGEMENT:
 			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
+			break;
+		case Payload.FILE_MESSAGE:
+			length += FileMessage.MESSAGE_ID_LENGTH;
+			length += FileMessage.MESSAGE_LENGTH_LENGTH;
+			length += FileMessage.FILE_ID_LENGTH;
+			length += FileMessage.FILE_SEQ_LENGTH;
+			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), 4);
 			break;
 		case Payload.ENCRYPTION_PAIR:
 			// TODO: implement encryption
@@ -108,6 +115,9 @@ public class TransportLayer {
 				break;
 			case Payload.ENCRYPTED_MESSAGE:
 				handleEncryptedMessage(receivedPacket);
+				break;
+			case Payload.FILE_MESSAGE:
+				handleFileMessage(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
 				//TODO SOUTS
@@ -219,7 +229,82 @@ public class TransportLayer {
 		}
 		
 		// Send an acknowledgement
-		sendAcknowledgement(receivedPacket, message);		
+		sendAcknowledgement(receivedPacket, message);
+	}
+	
+	public void handleFileMessage(Packet receivedPacket) {
+		FileMessage payload = (FileMessage) receivedPacket.getPayload();
+		
+		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
+		if (!session.getFileMessages().containsKey(person)) {
+			ArrayList<byte[]> segmentedFile = new ArrayList<>();
+			segmentedFile.add(payload.getMessage());
+			ArrayList<ArrayList<byte[]>> files = new ArrayList<>();
+			files.add(segmentedFile);
+			session.getFileMessages().put(person, files);
+		} else {
+			ArrayList<ArrayList<byte[]>> currentFiles = new ArrayList<>();
+			ArrayList<byte[]> segmentedFile = null;
+			if (currentFiles.size() < payload.getFileID()) {
+				segmentedFile = new ArrayList<>();
+				segmentedFile.add(payload.getMessage());
+			} else {
+				segmentedFile = currentFiles.get(payload.getFileID());
+				if (!segmentedFile.contains(payload.getMessage())) {
+					segmentedFile.add(payload.getMessage());
+				}
+			}
+			currentFiles.add(segmentedFile);
+			session.getFileMessages().put(person, currentFiles);
+		}
+		Message message = new Message(receivedPacket.getSenderID(), 
+				receivedPacket.getReceiverID(), payload.getMessageID(), FileMessage.FILEMESSAGE_INDICATOR + payload.getFileID(), false);
+		boolean addMessageToList = true;
+		if (payload.getFileSeq() == 0) {
+			if (!session.getChatMessages().containsKey(person)) {
+				session.getChatMessages().put(person, new ArrayList<>(Arrays.asList(new Message[]{message})));
+			} else {
+				ArrayList<Message> currentMessageList = session.getChatMessages().get(person);
+				
+				for (Message msg : currentMessageList) {
+					if (msg.getMessageID() == message.getMessageID() && message.getSenderID() == msg.getSenderID()) {
+						addMessageToList = false;
+						break;
+					}
+				}
+				
+				if (addMessageToList) {
+					int insertPosition = currentMessageList.size();
+					int receivedMessageID = message.getMessageID();
+					boolean continues = true;
+					for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
+						if (currentMessageList.get(i).getSenderID() != session.getID()) {
+							if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
+								insertPosition = i;
+							} else {
+								if (insertPosition == currentMessageList.size()) {
+									currentMessageList.add(message);
+									continues = false;
+								} else {
+									currentMessageList.add(insertPosition, message);
+									continues = false;
+								}
+							}
+						}
+					}
+					if (continues) {
+						currentMessageList.add(message);
+					}
+					session.getChatMessages().put(person, currentMessageList);
+				}
+			}
+		}
+		// Update GUI
+		if (addMessageToList) {
+			GUIHandler.messagePutInMap(person);
+		}
+		// Send acknowledgement
+		sendAcknowledgement(receivedPacket, message); 
 	}
 
 	/**
@@ -236,9 +321,16 @@ public class TransportLayer {
 		synchronized (this.unacknowledgedPackets) {
 			Packet removePacket = null;
 			for (Packet packet : unacknowledgedPackets) {
-				if (packet.getReceiverID() == senderID && 
-						((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
-					removePacket = packet;
+				if (packet.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE) {
+					if (packet.getReceiverID() == senderID && 
+							((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
+						removePacket = packet;
+					}
+				} else {
+					if (packet.getReceiverID() == senderID && 
+							((FileMessage) packet.getPayload()).getMessageID() == messageID) {
+						removePacket = packet;
+					}
 				}
 			}
 			
@@ -362,13 +454,20 @@ public class TransportLayer {
 		case Payload.ENCRYPTED_MESSAGE:
 			String message = getMessage(payloadData);
 			int encryptionMessageID = getMessageID(payloadData);
-			int messageLength = getMessageLength(payloadData);
-			return new EncryptedMessage(encryptionMessageID, messageLength, message);
+			int encryptionMessageLength = getMessageLength(payloadData, 1);
+			return new EncryptedMessage(encryptionMessageID, encryptionMessageLength, message);
 		case Payload.ACKNOWLEDGEMENT:
 			int acknowledgeMessageID = getMessageID(payloadData);
 			return new Acknowledgement(acknowledgeMessageID);	
 		case Payload.ENCRYPTION_PAIR:
 			// TODO: implement encryption pair
+		case Payload.FILE_MESSAGE:
+			byte[] fileData = getFileData(payloadData);
+			int fileMessageID = getMessageID(payloadData);
+			int fileMessageLength = getMessageLength(payloadData, 4);
+			int fileID = getFileID(payloadData);
+			int fileSeq = getFileSequenceNumber(payloadData);
+			return new FileMessage(fileMessageID, fileMessageLength, fileID, fileSeq, fileData);
 		default: 
 			System.err.println("Unknown type identifier: " + typeIdentifier);
 			return null;
@@ -421,6 +520,28 @@ public class TransportLayer {
 		
 		int seqNum = seqNumByteBuffer.getShort();
 		return seqNum;
+	}
+	
+	public static int getFileSequenceNumber(byte[] filePayloadData) {
+		int start = FileMessage.MESSAGE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + FileMessage.FILE_ID_LENGTH;
+		int end = start + FileMessage.FILE_SEQ_LENGTH;
+		
+		byte[] fileSeqArray = Arrays.copyOfRange(filePayloadData, start, end);	
+		ByteBuffer fileSeqByteBuffer = ByteBuffer.wrap(fileSeqArray);
+		
+		int fileSeq = fileSeqByteBuffer.get();
+		return fileSeq;
+	}
+	
+	public static int getFileID(byte[] filePayloadData) {
+		int start = FileMessage.MESSAGE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH;
+		int end = start + FileMessage.FILE_ID_LENGTH;
+		
+		byte[] fileIDArray = Arrays.copyOfRange(filePayloadData, start, end);	
+		ByteBuffer fileIDByteBuffer = ByteBuffer.wrap(fileIDArray);
+		
+		int fileID = fileIDByteBuffer.get();
+		return fileID;
 	}
 	
 	/**
@@ -476,7 +597,7 @@ public class TransportLayer {
 	 * @return message the (encrypted) message of an encrypted message packet
 	 */
 	public static String getMessage(byte[] encryptedPayloadData) {
-		int length = getMessageLength(encryptedPayloadData);
+		int length = getMessageLength(encryptedPayloadData, 1);
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
 		int end = start + length;
 		byte[] messageArray = Arrays.copyOfRange(encryptedPayloadData, start, end);
@@ -491,6 +612,13 @@ public class TransportLayer {
 		return message;
 	}
 
+	public static byte[] getFileData(byte[] filePayloadData) {
+		int length = getMessageLength(filePayloadData, 4);
+		int start = FileMessage.MESSAGE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + FileMessage.FILE_ID_LENGTH + FileMessage.FILE_SEQ_LENGTH;
+		int end = start + length;
+		byte[] fileData = Arrays.copyOfRange(filePayloadData, start, end);
+		return fileData;
+	}
 	/**
 	 * Returns the messageID of an encrypted message packet.
 	 * @param encryptedPayloadData the payload data of the <code>EncryptedMessage</code> packet
@@ -506,27 +634,44 @@ public class TransportLayer {
 		return messageID;
 	}
 
-	public static int getMessageLength(byte[] encryptedPayloadData) {
-		int start = EncryptedMessage.MESSAGE_ID_LENGTH;
-		int end = start + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+	public static int getMessageLength(byte[] payloadData, int payloadType) {
+		int start = 0;
+		int end = 0;
+		switch (payloadType) {
+			case Payload.ENCRYPTED_MESSAGE:
+				start = EncryptedMessage.MESSAGE_ID_LENGTH;
+				end = start + EncryptedMessage.MESSAGE_LENGTH_LENGTH;
+				
+				byte[] encryptedMessageLengthArray = Arrays.copyOfRange(payloadData, start, end);
+				ByteBuffer encryptedMessageLengthBytebuffer = ByteBuffer.wrap(encryptedMessageLengthArray);
+				
+				int messageLength = encryptedMessageLengthBytebuffer.getShort();
+				
+				return messageLength;
+			case Payload.FILE_MESSAGE:
+				start = FileMessage.MESSAGE_ID_LENGTH;
+				end = start + FileMessage.MESSAGE_LENGTH_LENGTH;
+				
+				byte[] fileMessageLengthArray = Arrays.copyOfRange(payloadData, start, end);
+				ByteBuffer fileMessageLengthBytebuffer = ByteBuffer.wrap(fileMessageLengthArray);
+				
+				int fileMessageLength = fileMessageLengthBytebuffer.getInt();
+				
+				return fileMessageLength;
+			default: return 0;
+		}
 		
-		byte[] messageLengthArray = Arrays.copyOfRange(encryptedPayloadData, start, end);	
-		ByteBuffer messageLengthBytebuffer = ByteBuffer.wrap(messageLengthArray);
-		
-		int messageLength = messageLengthBytebuffer.getShort();
-		return messageLength;
 	}
 
 	public void sendImageFromGUI(File img, Person receiver) {
-		int nextMessageID = receiver.getNextMessageID();
 		Path path = Paths.get(img.getPath());
 		byte[] imgData;
+		byte[][] ret = null;
 		try {
 			
 			imgData = Files.readAllBytes(path);
-			
 			int chunksize = 63000;
-			byte[][] ret = new byte[(int)Math.ceil(imgData.length / (double)chunksize)][chunksize];
+			ret = new byte[(int)Math.ceil(imgData.length / (double)chunksize)][chunksize];
 			
 			if (imgData.length > chunksize) {
 				int start = 0;
@@ -540,27 +685,40 @@ public class TransportLayer {
 		} catch (IOException e) {
 			// TODO Auto-generated catcha block
 			e.printStackTrace();
+			
 		}
-		
-//		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msgLength, msg); // TODO: Encrypt
-//		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
-//		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, EncryptedMessage);
-//		session.getConnection().getSender().send(packet);
-//		
-//		synchronized (this.unacknowledgedPackets) {
-//			unacknowledgedPackets.add(packet);
-//			new RetransmissionThread(this, packet);
-//		}		
-//
-//		// TODO SYNCHRONIZE
-//		// Add it to the chatmessages map
-//		if (!session.getChatMessages().containsKey(receiver)) {
-//			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
-//		} else {
-//			ArrayList<Message> currentMessageList = session.getChatMessages().get(receiver);
-//			currentMessageList.add(message);
-//			session.getChatMessages().put(receiver, currentMessageList);
-//		}
+		Message message = null;
+		int nextMessageID = receiver.getNextMessageID();
+		int nextFileID = receiver.getNextFileID();
+		ArrayList<byte[]> image = new ArrayList<>();
+		for (int i = 0; i < ret.length; i++) {
+			FileMessage fileMessage = new FileMessage(nextMessageID, ret[i].length, nextFileID, i, ret[i]);
+			message = new Message(session.getID(), receiver.getID(), nextMessageID, FileMessage.FILEMESSAGE_INDICATOR + nextFileID, true); 
+			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.FILE_MESSAGE, fileMessage);
+			session.getConnection().getSender().send(packet);
+			synchronized (this.unacknowledgedPackets) {
+				unacknowledgedPackets.add(packet);
+				new RetransmissionThread(this, packet);
+			}
+			image.add(ret[i]);
+		}
+		if (!session.getChatMessages().containsKey(receiver)) {
+			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
+		} else {
+			ArrayList<Message> currentMessageList = session.getChatMessages().get(receiver);
+			currentMessageList.add(message);
+			session.getChatMessages().put(receiver, currentMessageList);
+		}
+		if (!session.getFileMessages().containsKey(receiver)) {
+			ArrayList<ArrayList<byte[]>> images = new ArrayList<>();
+			images.add(image);
+			session.getFileMessages().put(receiver, images);
+		} else {
+			ArrayList<ArrayList<byte[]>> currentFileMessageList = session.getFileMessages().get(receiver);
+			currentFileMessageList.add(image);
+			session.getFileMessages().put(receiver, currentFileMessageList);
+		}
+		GUIHandler.messagePutInMap(receiver);
 	}
 		
 

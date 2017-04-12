@@ -13,7 +13,10 @@ public class Person {
 	public int ID;
 	private int timeToLive;
 	private int nextMessageID;
+	private int nextFileID;
 	
+
+
 	// Diffie-Hellman data
 	private int secretInteger;
 	private Map<Integer, EncryptionPair> privateChatPair = new HashMap<>();
@@ -59,6 +62,11 @@ public class Person {
 	public int getNextMessageID() {
 		nextMessageID++;
 		return nextMessageID;
-	}	
+	}
+	
+	public int getNextFileID() {
+		nextFileID++;
+		return nextFileID;
+	}
 	
 }
