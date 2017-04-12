@@ -52,7 +52,7 @@ public class Session {
 		return seq;
 	}
 	
-	public int getNextSeq() {
+	public synchronized int getNextSeq() {
 		seq++;
 		return seq;
 	}

@@ -85,4 +85,8 @@ public class Packet {
 	public Payload getPayload() {
 		return payload;
 	}
+
+	public void setSequenceNum(int sequenceNumber) {
+		this.sequenceNumber = sequenceNumber;		
+	}
 }

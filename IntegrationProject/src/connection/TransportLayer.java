@@ -17,10 +17,13 @@ public class TransportLayer {
 	// Constants
 	public static final int PULSE_TTL = 5;
 	public static final int MAX_SEEN_PACKETS_SIZE = 300;
+	public static final int RETRANSMISSION_INTERVAL = 1000;
+	public static final int MAXIMUM_RETRANSMISSIONS = 5;
 
 	// Used objects
 	public Session session;
 	public ArrayList<Packet> seenPackets = new ArrayList<>();
+	public ArrayList<Packet> unacknowledgedPackets = new ArrayList<>();
 
 	/**
 	 * Creates a <code>TransportLayer</code> object that acts on a session.
@@ -175,9 +178,25 @@ public class TransportLayer {
 		sendAcknowledgement(receivedPacket, message);		
 	}
 
+	/**
+	 * Processes an <code>Acknowledgment</code> packet. If the message with 
+	 * the messageID of this acknowledgement packet was unacknowledged, remove it from
+	 * the unacknowledgedPacketList.
+	 * @param receivedPacket the received acknowledgement packet
+	 */
 	public void handleAcknowledgement(Packet receivedPacket) {
-		// TODO Auto-generated method stub
+		Acknowledgement acknowledgement = (Acknowledgement) receivedPacket.getPayload();
+		int messageID = acknowledgement.getMessageID();
+		int senderID = receivedPacket.getSenderID();
 		
+		synchronized (this.unacknowledgedPackets) {
+			for (Packet packet : unacknowledgedPackets) {
+				if (packet.getSenderID() == senderID && 
+						((Acknowledgement) packet.getPayload()).getMessageID() == messageID) {
+					unacknowledgedPackets.remove(packet);
+				}
+			}
+		}		
 	}
 	
 	public void handleEncryptionPair(Packet receivedPacket) {
@@ -235,10 +254,16 @@ public class TransportLayer {
 	public void sendMessageFromGUI(String msg, Person receiver) {
 		int msgLength = msg.length();
 		int nextMessageID = receiver.getNextMessageID();
+		
 		EncryptedMessage EncryptedMessage = new EncryptedMessage(nextMessageID, msgLength, msg); // TODO: Encrypt
 		Message message = new Message(session.getID(), receiver.getID(), nextMessageID, msg, true);
 		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, EncryptedMessage);
 		session.getConnection().getSender().send(packet);
+		
+		synchronized (this.unacknowledgedPackets) {
+			unacknowledgedPackets.add(packet);
+			new RetransmissionThread(this, packet);
+		}		
 
 		// TODO SYNCHRONIZE
 		// Add it to the chatmessages map
