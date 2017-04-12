@@ -130,10 +130,12 @@ public class GUIHandler {
 				+ "(ID = " + person.getID() + ")");
 		
 		// Set TextBox text (if exists)
-		if (textBoxText.containsKey(person)) {
-			GUI.inputBox.setText(textBoxText.get(person));
-		} else {
-			GUI.inputBox.setText("");
+		if (currentPerson != person) {
+			if (textBoxText.containsKey(person)) {
+				GUI.inputBox.setText(textBoxText.get(person));
+			} else {
+				GUI.inputBox.setText("");
+			}
 		}
 		
 		// Set current person
