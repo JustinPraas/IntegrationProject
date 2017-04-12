@@ -181,7 +181,26 @@ public class TransportLayer {
 			}
 			
 			if (addMessageToList) {
-				currentMessageList.add(message);
+				int insertPosition = currentMessageList.size();
+				int receivedMessageID = message.getMessageID();
+				boolean continues = true;
+				for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
+					if (message.getSenderID() != session.getID()) {
+						if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
+							insertPosition = i;
+						} else {
+							if (insertPosition == currentMessageList.size()) {
+								currentMessageList.add(message);
+							} else {
+								currentMessageList.add(insertPosition, message);
+								continues = false;
+							}
+						}
+					}
+				}
+				if (continues) {
+					currentMessageList.add(message);
+				}
 				session.getChatMessages().put(person, currentMessageList);
 			}
 			
