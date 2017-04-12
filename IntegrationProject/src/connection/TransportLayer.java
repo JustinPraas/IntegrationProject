@@ -81,11 +81,6 @@ public class TransportLayer {
 		// Construct a Packet object from the datagramContents	
 		Packet receivedPacket = getPacket(datagramContents);
 		
-		//TODO SOUTS
-		if (receivedPacket.getTypeIdentifier() == Payload.ACKNOWLEDGEMENT) {
-			System.out.println("Acknowledgement received");
-		}
-		
 		// Don't do anything if: we've already seen this packet OR if this packet is from ourself
 		// Else: add the packet to the seenPackets list
 		if (seenPackets.contains(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
@@ -98,6 +93,11 @@ public class TransportLayer {
 		// Else: process the packet accordingly
 		if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
 				receivedPacket.getReceiverID() != session.getID()) {
+			
+			//TODO SOUTS
+			if (receivedPacket.getTypeIdentifier() == Payload.ACKNOWLEDGEMENT) {
+				System.out.println("Acknowledgement received");
+			}
 			forwardPacket(receivedPacket);
 		} else {	
 			switch (receivedPacket.getTypeIdentifier()) {
