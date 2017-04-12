@@ -58,9 +58,13 @@ public class Person {
 		nextMessageID++;
 		return nextMessageID;
 	}
-	
-	public void setEncryptionPair(EncryptionPair ep) {
-		this.privateChatPair = ep;
+
+	public EncryptionPair getPrivateChatPair() {
+		return privateChatPair;
+	}
+
+	public void setPrivateChatPair(EncryptionPair privateChatPair) {
+		this.privateChatPair = privateChatPair;
 	}
 	
 }

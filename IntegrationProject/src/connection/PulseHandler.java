@@ -54,8 +54,10 @@ public class PulseHandler extends Thread {
 	}
 	
 	public void sendEncryptionPair() {
-		for (Map.Entry<Integer, ArrayList<Person>> entry : session.getKnownPersons().entrySet()) {
-			
+		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
+			if (entry.getValue().getPrivateChatPair() == null) {
+				
+			}
 		}
 	}
 }
