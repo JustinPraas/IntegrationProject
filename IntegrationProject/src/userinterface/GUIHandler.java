@@ -130,14 +130,14 @@ public class GUIHandler {
 			Text senderText = new Text(messageSender);
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
 			Text messageText = new Text(message.getText());
-			senderText.setStyle("-fx-font-weight: bold;");
+			senderText.getStyleClass().add("sender");
 			TextFlow flow = new TextFlow();
 			flow.getChildren().addAll(senderText, timestampText, messageText);
 			HBox box = new HBox();
 			if (message.getSenderID() == session.getID()) {
-				box.getStyleClass().add("local");
+				flow.getStyleClass().add("local");
 			} else {
-				box.getStyleClass().add("remote");
+				flow.getStyleClass().add("remote");
 			}
 			box.getChildren().add(flow);
 			
