@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.javafx.tk.Toolkit;
-
 import application.Session;
 import javafx.application.Platform;
 import javafx.scene.control.Button;
@@ -183,6 +181,11 @@ public class GUIHandler {
 	
 	// Show Global Chat
 	protected static void showChat() {
+		// To prevent the session from being accessed before it is initialized
+		while (session == null) {
+			sleep(100);
+		}
+		
 		// Put chat messages with person (argument) in list
 		// If no messages with person, initialize empty list
 		ArrayList<Message> messages = session.getPublicChatMessages();
@@ -211,15 +214,10 @@ public class GUIHandler {
 			
 			// Set sender of message to actual sender
 			String messageSender = "";
-			boolean found = false;
-			for (int j = 0; j < session.getKnownPersons().size() && !found; j++) {
-				if (message.getSenderID() == session.getKnownPersons().get(j).getID()) {
-					messageSender = session.getKnownPersons().get(j).getName();
-					found = true;
-				}
-			}
-			if (!found) {
-				messageSender = username;
+			if (message.getSenderID() == session.getID()) {
+				messageSender = null;
+			} else {
+				messageSender = session.getKnownPersons().get(message.getSenderID()).getName();
 			}
 			
 			// Append this message to ChatBox String
@@ -250,7 +248,9 @@ public class GUIHandler {
 		});
 		
 		// Set Header Label
-		GUI.currentChatHeader.setText("Global Chat");
+		Platform.runLater(() -> {
+			GUI.currentChatHeader.setText("Global Chat");
+		});
 		
 		// Set TextBox text (if exists)
 		if (currentPerson != null) {
