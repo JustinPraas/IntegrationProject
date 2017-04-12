@@ -93,11 +93,6 @@ public class TransportLayer {
 		// Else: process the packet accordingly
 		if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
 				receivedPacket.getReceiverID() != session.getID()) {
-			
-			//TODO SOUTS
-			if (receivedPacket.getTypeIdentifier() == Payload.ACKNOWLEDGEMENT) {
-				System.out.println("Acknowledgement received");
-			}
 			forwardPacket(receivedPacket);
 		} else {	
 			switch (receivedPacket.getTypeIdentifier()) {
@@ -109,6 +104,10 @@ public class TransportLayer {
 				handleEncryptedMessage(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
+				//TODO SOUTS
+				if (receivedPacket.getTypeIdentifier() == Payload.ACKNOWLEDGEMENT) {
+					System.out.println("Acknowledgement received");
+				}
 				handleAcknowledgement(receivedPacket);
 				break;
 			case Payload.ENCRYPTION_PAIR:
