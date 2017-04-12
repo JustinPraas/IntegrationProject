@@ -142,8 +142,6 @@ public class GUIHandler {
 		// Store link between Person object and Button object
 		personUnreadMessages.put(person, false);
 		
-		//TODO SOUTS
-		System.out.println(personToButton + " " + personToButton.get(person) + " " + person);
 		personToButton.get(person).setFont(Font.font(null, FontWeight.NORMAL, 14.5));
 	}
 	
