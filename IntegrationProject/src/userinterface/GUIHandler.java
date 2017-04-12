@@ -175,6 +175,11 @@ public class GUIHandler {
 		personToButton.get(person).setFont(Font.font(null, FontWeight.NORMAL, 14.5));
 	}
 	
+	// Show Global Chat
+	protected static void showChat() {
+		
+	}
+	
 	
 	// TO BE CALLED BY OTHER PARTS OF THE PROGRAM
 
@@ -205,6 +210,21 @@ public class GUIHandler {
 		
 		// Create new VBox for the Buttons to be
 		VBox vb = new VBox(0);
+		
+		// Add Global Chat Button
+		Button globalChatButton = new Button("GLOBAL");
+		globalChatButton.setFont(Font.font(null, FontWeight.NORMAL, 14.5));
+		globalChatButton.setTextFill(Color.BLUE);
+		globalChatButton.setOnAction(e -> {
+			GUIHandler.showChat();
+			System.out.println("hello");
+		});
+		
+		// Let the button fill the width of the right sidebar
+		globalChatButton.setMaxWidth(Double.MAX_VALUE);
+		globalChatButton.setMinHeight(100);
+		globalChatButton.setMaxHeight(100);
+		vb.getChildren().add(globalChatButton);
 		
 		// Iterate over all the known Person objects to create Buttons for them
 		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
