@@ -97,7 +97,7 @@ public class TransportLayerTest {
 	
 	@Test
 	public void getEncryptedMessageTest() {
-		assertEquals("This is a test", TransportLayer.getMessage(encrMsgPacket.getPayload().getPayloadData()));
+		assertEquals("This is a test", TransportLayer.getPlainMessage(encrMsgPacket.getPayload().getPayloadData()));
 		assertEquals("This is a test", encryptedMessage.getEncryptedMessage());
 	}
 }
