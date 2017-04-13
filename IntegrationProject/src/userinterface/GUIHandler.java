@@ -363,7 +363,6 @@ public class GUIHandler {
 		
 		// Check if global chat button should me marked as unread
 		if (unreadGlobalChatMessages) {
-			unreadGlobalChatMessages = false;
 			GUI.globalChatButton.setFont(Font.font(null, FontWeight.BOLD, 14.5));
 		}
 		
