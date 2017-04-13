@@ -55,7 +55,7 @@ public class FileSender extends Thread {
 				output[i] = temp;
 			}
 			int nextMessageID = receiver.getNextMessageID();
-			int nextFileID = receiver.getNextFileID();
+			int nextFileID = session.getNextFileID();
 			int counter = output.length - 1;
 			ArrayList<byte[]> file = new ArrayList<>();
 			for (byte[] data : output) {

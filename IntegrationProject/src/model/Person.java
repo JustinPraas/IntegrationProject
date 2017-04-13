@@ -28,6 +28,7 @@ public class Person {
 		this.name = name;
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
 		this.nextMessageID = 0;
+		this.nextFileID = 0;
 	}
 
 	/**
