@@ -156,21 +156,30 @@ public class TransportLayer {
 		Pulse payload = (Pulse) receivedPacket.getPayload();
 		Person person;
 		int senderID = receivedPacket.getSenderID();
+		boolean updateGUI = false;
 		
 		// If the sender is known: use this Person object as person
 		// else: create a new person with the sender's ID and name
 		if (session.getKnownPersons().containsKey(senderID)) {
 			person = session.getKnownPersons().get(senderID);
+			
+			if (person.getTimeToLive() <= 0) {
+				updateGUI = true;
+			}
+			
 		} else {
 			person = new Person(payload.getName(), senderID);
+			updateGUI = true;
 		}
 		
 		// Set the peron's time to live to PULSE_TTL and put it in the session.knownPersons map
 		person.setTimeToLive(PULSE_TTL);
 		session.getKnownPersons().put(senderID, person);
 		
-		// Update the GUI
-		GUIHandler.changedPersonList();
+		if (updateGUI) {
+			// Update the GUI
+			GUIHandler.changedPersonList();
+		}
 	}
 
 	/**
@@ -214,9 +223,7 @@ public class TransportLayer {
 							continues = false;
 						} else {
 							publicChatMessageList.add(insertPosition, receivedMessage);
-							continues = false;
-
-							
+							continues = false;							
 						}
 					}
 				}
@@ -225,7 +232,8 @@ public class TransportLayer {
 			if (continues) {
 				publicChatMessageList.add(receivedMessage);
 			}
-			session.getChatMessages().put(sender, publicChatMessageList);
+			
+			session.setPublicChatMessages(publicChatMessageList);
 		}
 		
 		// Update GUI

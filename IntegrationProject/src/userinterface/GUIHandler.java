@@ -266,7 +266,7 @@ public class GUIHandler {
 			// Get the name of the sender of the message
 			String messageSenderName = "";
 			if (message.getSenderID() == session.getID()) {
-				messageSenderName = null;
+				messageSenderName = username;
 			} else {
 				messageSenderName = session.getKnownPersons().get(message.getSenderID()).getName();
 			}
