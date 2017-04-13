@@ -17,7 +17,7 @@ public class Session {
 	private Map<Integer, Person> knownPersons;
 	private Map<Integer, Integer> secretKeysForPerson;
 	private Map<Person, ArrayList<Message>> chatMessages;
-	private Map<Person, Map<Integer, ArrayList<byte[]>>> fileMessages;
+	private Map<Integer, Map<Integer, ArrayList<byte[]>>> fileMessages;
 	private ArrayList<Message> publicChatMessages;
 	private int nextPublicMessageID;
 	private int seq;
@@ -56,7 +56,7 @@ public class Session {
 		return chatMessages;
 	}
 	
-	public synchronized Map<Person, Map<Integer, ArrayList<byte[]>>> getFileMessages() {
+	public synchronized Map<Integer, Map<Integer, ArrayList<byte[]>>> getFileMessages() {
 		return fileMessages;
 	}
 

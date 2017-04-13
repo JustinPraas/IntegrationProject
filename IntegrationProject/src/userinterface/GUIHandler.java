@@ -164,7 +164,12 @@ public class GUIHandler {
 					imageFile = files.get(message);
 				} else {
 					int fileID = Integer.parseInt(message.getText().replace(FileMessage.FILEMESSAGE_INDICATOR, ""));
-					ArrayList<byte[]> segmentedImage = session.getFileMessages().get(person).get(fileID);
+					ArrayList<byte[]> segmentedImage;
+					if (messageSender == username) {
+						segmentedImage = session.getFileMessages().get(0).get(fileID);
+					} else {
+						segmentedImage = session.getFileMessages().get(person.getID()).get(fileID);
+					}
 					ArrayList<Byte> imageBytes = new ArrayList<>();
 					for (int j = 0; j < segmentedImage.size(); j++) {
 						for (int k = 0; k < segmentedImage.get(j).length; k++) {

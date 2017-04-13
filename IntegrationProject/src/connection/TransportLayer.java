@@ -330,7 +330,7 @@ public class TransportLayer {
 			segmentedFile.add(payload.getMessage());
 			HashMap<Integer, ArrayList<byte[]>> files = new HashMap<>();
 			files.put(payload.getFileID(), segmentedFile);
-			session.getFileMessages().put(person, files);
+			session.getFileMessages().put(person.getID(), files);
 		} else {
 			Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(person);
 			ArrayList<byte[]> segmentedFile = null;
@@ -343,7 +343,7 @@ public class TransportLayer {
 				segmentedFile.add(payload.getMessage());
 				currentFiles.put(payload.getFileID(), segmentedFile);
 			}
-			session.getFileMessages().put(person, currentFiles);
+			session.getFileMessages().put(person.getID(), currentFiles);
 		}
 		Message message = new Message(receivedPacket.getSenderID(), 
 				receivedPacket.getReceiverID(), payload.getMessageID(), FileMessage.FILEMESSAGE_INDICATOR + payload.getFileID(), false);
