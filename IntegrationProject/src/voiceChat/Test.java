@@ -1,4 +1,4 @@
-package VoiceChat;
+package voiceChat;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 
