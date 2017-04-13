@@ -54,6 +54,7 @@ public class GUIHandler {
 		buttonToPerson = new HashMap<>();
 		textBoxText = new HashMap<>();
 		personUnreadMessages = new HashMap<>();
+		files = new HashMap<>();
 		GUIThread thread = new GUIThread();
 		unreadGlobalChatMessages = false;
 		thread.start();
