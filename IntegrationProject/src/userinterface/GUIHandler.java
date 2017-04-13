@@ -303,8 +303,6 @@ public class GUIHandler {
 			GUI.currentChatHeader.setText("Global Chat");
 		});
 		
-		
-		//TODO ??
 		// Set TextBox text (if exists)
 		if (currentPerson != null) {
 			GUI.inputBox.setText(globalTextBoxText);
