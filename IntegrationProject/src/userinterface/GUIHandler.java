@@ -47,7 +47,6 @@ public class GUIHandler {
 	private static String globalTextBoxText;
 	private static boolean unreadGlobalChatMessages;
 	
-	
 	// Constructor to launch the GUI
 	public GUIHandler(String name) {
 		applicationName = name;
@@ -164,7 +163,12 @@ public class GUIHandler {
 				if (files.containsKey(message)) {
 					imageFile = files.get(message);
 				} else {
-					int fileID = Integer.parseInt(message.getText().replace(FileMessage.FILEMESSAGE_INDICATOR, ""));
+					int fileID;
+					if (messageSender == username) {
+						fileID = Integer.parseInt(message.getText().replace(FileMessage.FILEMESSAGE_INDICATOR, ""));
+					} else {
+						fileID = person.getNextFileID();
+					}
 					ArrayList<byte[]> segmentedImage = session.getFileMessages().get(person).get(fileID);
 					ArrayList<Byte> imageBytes = new ArrayList<>();
 					for (int j = 0; j < segmentedImage.size(); j++) {
