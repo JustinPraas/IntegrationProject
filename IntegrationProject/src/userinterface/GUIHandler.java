@@ -163,10 +163,9 @@ public class GUIHandler {
 						imageBytes.add(segmentedImage.get(j)[k]);
 					}
 				}
-				System.out.println(imageBytes.toString());
 				File imageFile = null;
 				try {
-					FileOutputStream fos = new FileOutputStream(imageFile = new File(System.getProperty("user.home") + "/" + fileID + ".png"));
+					FileOutputStream fos = new FileOutputStream(imageFile = new File(System.getProperty("user.home") + "/" + messageSender + fileID + ".png"));
 					for (Byte b : imageBytes) {
 						fos.write(b);
 					}
