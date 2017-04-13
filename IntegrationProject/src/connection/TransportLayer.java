@@ -386,11 +386,12 @@ public class TransportLayer {
 					session.getChatMessages().put(person, currentMessageList);
 				}
 			}
+			// Update GUI
+			if (addMessageToList) {
+				GUIHandler.messagePutInMap(person);
+			}
 		}
-		// Update GUI
-		if (addMessageToList) {
-			GUIHandler.messagePutInMap(person);
-		}
+
 		// Send acknowledgement
 		sendAcknowledgement(receivedPacket, message);
 	}
