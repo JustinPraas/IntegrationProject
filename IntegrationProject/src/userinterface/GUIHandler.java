@@ -186,8 +186,7 @@ public class GUIHandler {
 			sleep(100);
 		}
 		
-		// Put chat messages with person (argument) in list
-		// If no messages with person, initialize empty list
+		// Retrieve the public chat messages
 		ArrayList<Message> messages = session.getPublicChatMessages();
 		
 		// Store TextBox text
@@ -196,12 +195,6 @@ public class GUIHandler {
 		} else {
 			globalTextBoxText = GUI.inputBox.getText();
 		}
-		
-		// Initialize empty label for message inside HBox
-		Label label;
-		
-		// Initialize string for final message
-		String finalMessage;
 		
 		// Initialize list with all final messages
 		ArrayList<HBox> total = new ArrayList<>();
@@ -212,37 +205,36 @@ public class GUIHandler {
 			// Set message to currently being processed message
 			Message message = messages.get(i);
 			
-			// Set sender of message to actual sender
-			String messageSender = "";
+			// Get the name of the sender of the message
+			String messageSenderName = "";
 			if (message.getSenderID() == session.getID()) {
-				messageSender = null;
+				messageSenderName = null;
 			} else {
-				messageSender = session.getKnownPersons().get(message.getSenderID()).getName();
+				messageSenderName = session.getKnownPersons().get(message.getSenderID()).getName();
 			}
 			
 			// Append this message to ChatBox String
-			Text senderText = new Text(messageSender);
+			Text senderNameText = new Text(messageSenderName);
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
 			Text messageText = new Text(message.getText());
-			senderText.getStyleClass().add("sender");
+			senderNameText.getStyleClass().add("sender");
 			TextFlow flow = new TextFlow();
-			flow.getChildren().addAll(senderText, timestampText, messageText);
-			HBox box = new HBox();
+			flow.getChildren().addAll(senderNameText, timestampText, messageText);
+			HBox chatBoxEntry = new HBox();
 			if (message.getSenderID() == session.getID()) {
 				flow.getStyleClass().add("local");
 			} else {
 				flow.getStyleClass().add("remote");
 			}
-			box.getChildren().add(flow);
-			
-			total.add(box);
+			chatBoxEntry.getChildren().add(flow);			
+			total.add(chatBoxEntry);
 		}
 		
 		// Set the chatbox to all the hbox elements
 		Platform.runLater(() -> {
 			GUI.chatBox.getChildren().clear();
-			for (HBox message : total) {
-					GUI.chatBox.getChildren().add(message);
+			for (HBox boxEntry : total) {
+					GUI.chatBox.getChildren().add(boxEntry);
 			}
 			GUI.scrollingChatBox.setVvalue(1);
 		});
@@ -252,6 +244,8 @@ public class GUIHandler {
 			GUI.currentChatHeader.setText("Global Chat");
 		});
 		
+		
+		//TODO ??
 		// Set TextBox text (if exists)
 		if (currentPerson != null) {
 			GUI.inputBox.setText(globalTextBoxText);

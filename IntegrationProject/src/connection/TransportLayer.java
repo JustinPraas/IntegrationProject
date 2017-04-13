@@ -311,7 +311,7 @@ public class TransportLayer {
 			Packet removePacket = null;
 			for (Packet packet : unacknowledgedPackets) {
 				if (packet.getReceiverID() == senderID && 
-						((PlainMessage) packet.getPayload()).getMessageID() == messageID) {
+						((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
 					removePacket = packet;
 				}
 			}
@@ -439,7 +439,7 @@ public class TransportLayer {
 		int msgLength = msg.length();
 		int nextPublicMessageID = session.getNextPublicMessageID();
 		
-		PlainMessage plainMessage = new PlainMessage(nextPublicMessageID, msg.length(), msg);
+		PlainMessage plainMessage = new PlainMessage(nextPublicMessageID, msgLength, msg);
 		Packet packet = new Packet(session.getID(), 0, session.getNextSeq(), Payload.PLAIN_MESSAGE, plainMessage);
 		session.getConnection().getSender().send(packet);
 		
