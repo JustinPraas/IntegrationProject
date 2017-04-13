@@ -98,7 +98,7 @@ public class GUIHandler {
 	}
 	
 	protected static void sendImage(File img) {
-		if (currentPerson != null && img.exists() && img.length() < 1000000) {
+		if (currentPerson != null && img != null && img.exists() && img.length() < 1000000) {
 			Person receiver = currentPerson;
 			session.getConnection().getTransportLayer().sendImageFromGUI(img, receiver);
 		}
