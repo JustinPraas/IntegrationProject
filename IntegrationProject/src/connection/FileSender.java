@@ -70,6 +70,7 @@ public class FileSender extends Thread {
 				counter--;
 				file.add(data);
 			}
+			session.setNextFileID(nextFileID + 1);
 			if (!session.getFileMessages().containsKey(receiver)) {
 				Map<Integer, ArrayList<byte[]>> files = new HashMap<>();
 				files.put(nextFileID, file);

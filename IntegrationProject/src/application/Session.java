@@ -85,10 +85,13 @@ public class Session {
 	}
 
 	public int getNextFileID() {
-		nextFileID++;
 		return nextFileID;
 	}
 
+	public void setNextFileID(int id) {
+		nextFileID = id;
+	}
+	
 	public void setPublicChatMessages(ArrayList<Message> publicChatMessageList) {
 		this.publicChatMessages = publicChatMessageList;		
 	}	

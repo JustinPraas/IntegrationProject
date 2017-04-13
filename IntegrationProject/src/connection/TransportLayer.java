@@ -322,8 +322,9 @@ public class TransportLayer {
 	}
 	
 	public void handleFileMessage(Packet receivedPacket) {
-		FileMessage payload = (FileMessage) receivedPacket.getPayload();
 		
+		FileMessage payload = (FileMessage) receivedPacket.getPayload();
+		System.out.println(payload.getFileID());
 		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
 		if (!session.getFileMessages().containsKey(person)) {
 			ArrayList<byte[]> segmentedFile = new ArrayList<>();
