@@ -56,10 +56,12 @@ public class EncryptionPair {
 	}
 	
 	public String toString() {
-		return "ENCRYPTIONPAIR:"
+		return "----------------------------------"
+				+ "\nENCRYPTIONPAIR:"
 				+ "\nprime: " + prime
 				+ "\ngenerator: " + generator 
 				+ "\nlocalHalfKey: " + localHalfKey 
-				+ "\nremoteHalfKey: " + remoteHalfKey;
+				+ "\nremoteHalfKey: " + remoteHalfKey
+				+ "\n----------------------------------";
 	}
 }
