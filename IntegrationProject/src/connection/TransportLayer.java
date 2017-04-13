@@ -320,13 +320,13 @@ public class TransportLayer {
 			files.add(segmentedFile);
 			session.getFileMessages().put(person, files);
 		} else {
-			ArrayList<ArrayList<byte[]>> currentFiles = new ArrayList<>();
+			ArrayList<ArrayList<byte[]>> currentFiles = session.getFileMessages().get(person);
 			ArrayList<byte[]> segmentedFile = null;
 			if (currentFiles.size() < payload.getFileID()) {
 				segmentedFile = new ArrayList<>();
 				segmentedFile.add(payload.getMessage());
 			} else {
-				segmentedFile = currentFiles.get(payload.getFileID());
+				segmentedFile = currentFiles.get(payload.getFileID() - 1);
 				if (!segmentedFile.contains(payload.getMessage())) {
 					segmentedFile.add(payload.getMessage());
 				}
