@@ -223,9 +223,7 @@ public class TransportLayer {
 							continues = false;
 						} else {
 							publicChatMessageList.add(insertPosition, receivedMessage);
-							continues = false;
-
-							
+							continues = false;							
 						}
 					}
 				}
@@ -234,7 +232,8 @@ public class TransportLayer {
 			if (continues) {
 				publicChatMessageList.add(receivedMessage);
 			}
-			session.getChatMessages().put(sender, publicChatMessageList);
+			
+			session.setPublicChatMessages(publicChatMessageList);
 		}
 		
 		// Update GUI

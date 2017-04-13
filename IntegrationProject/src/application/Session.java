@@ -80,5 +80,9 @@ public class Session {
 	public int getNextPublicMessageID() {
 		nextPublicMessageID++;
 		return nextPublicMessageID;
+	}
+
+	public void setPublicChatMessages(ArrayList<Message> publicChatMessageList) {
+		this.publicChatMessages = publicChatMessageList;		
 	}	
 }
