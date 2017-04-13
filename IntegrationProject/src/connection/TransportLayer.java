@@ -261,7 +261,7 @@ public class TransportLayer {
 		
 		// Create EncryptedMessage
 		EncryptionPair ep = session.getKnownPersons().get(sender.getID()).getPrivateChatPair();
-		int secretInteger = session.getSecretKeysForPerson().get(session.getSecretKeysForPerson().get(sender.getID()));
+		int secretInteger = session.getSecretKeysForPerson().get(sender.getID());
 		String cipher = Crypter.encrypt(Crypter.getKey(ep, secretInteger), payload.getCipher());
 				
 		String decryptedMessage = Crypter.decrypt(cipher, Crypter.getKey(ep, secretInteger));
