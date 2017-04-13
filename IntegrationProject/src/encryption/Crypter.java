@@ -11,39 +11,40 @@ public class Crypter {
 	public static final String INIT_VECTOR = "0123456789123456";
 	
 	public static String encrypt(String key, String value) {
-        try {
-            IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
-            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+//        try {
+//            IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
+//            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+//
+//            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+//            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+//
+//            byte[] encrypted = cipher.doFinal(value.getBytes());
+//
+//            return Base64.encodeBase64String(encrypted);
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
 
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
-
-            byte[] encrypted = cipher.doFinal(value.getBytes());
-
-            return Base64.encodeBase64String(encrypted);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        return null;
+        return value;
     }
 
     public static String decrypt(String key, String encrypted) {
-        try {
-            IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
-            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+//    	System.out.println("Key at decrypt: " + key);
+//        try {
+//            IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
+//            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+//
+//            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+//            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+//
+//            byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
+//
+//            return new String(original);
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
 
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
-            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-
-            byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
-
-            return new String(original);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-
-        return null;
+        return encrypted;
     }
     
     public static String getKey(EncryptionPair ep, int secretInteger) {
@@ -55,6 +56,8 @@ public class Crypter {
     	for (int i = 0; i < 16 - length; i++) {
     		resultKey.append("0");
     	}
+    	
+    	System.out.println("Key: " + resultKey.toString());
     	
     	return resultKey.toString();
     }
