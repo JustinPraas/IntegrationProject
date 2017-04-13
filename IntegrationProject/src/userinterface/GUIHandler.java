@@ -87,11 +87,13 @@ public class GUIHandler {
 	
 	// Send message
 	protected static void sendMessage(String msg) {
-		if (currentPerson != null && !msg.equals("")) {
-			Person receiver = currentPerson;
-			session.getConnection().getTransportLayer().sendMessageFromGUI(msg, receiver);
-		} else {
-			session.getConnection().getTransportLayer().sendMessageFromGUI(msg);
+		if (!msg.equals("")) {
+			if (currentPerson != null) {
+				Person receiver = currentPerson;
+				session.getConnection().getTransportLayer().sendMessageFromGUI(msg, receiver);
+			} else {
+				session.getConnection().getTransportLayer().sendMessageFromGUI(msg);
+			}
 		}
 	}
 	
