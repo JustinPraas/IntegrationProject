@@ -389,7 +389,7 @@ public class TransportLayer {
 			GUIHandler.messagePutInMap(person);
 		}
 		// Send acknowledgement
-		sendAcknowledgement(receivedPacket, message); 
+		sendAcknowledgement(receivedPacket, message);
 	}
 
 	/**
