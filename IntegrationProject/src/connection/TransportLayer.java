@@ -830,26 +830,27 @@ public class TransportLayer {
 	public void sendImageFromGUI(File img, Person receiver) {
 		Path path = Paths.get(img.getPath());
 		byte[] imgData;
-		byte[][] ret = null;
+		
+		
 		try {
-			
 			imgData = Files.readAllBytes(path);
-			int chunksize = 64000;
-			ret = new byte[(int)Math.ceil(imgData.length / (double)chunksize)][chunksize];
+			int chunkSize = 64000;
+			int numOfChunks = (int)Math.ceil((double)imgData.length / chunkSize);
+			byte[][] output = new byte[numOfChunks][];
 			
-			if (imgData.length > chunksize) {
-				int start = 0;
-				for(int i = 0; i < ret.length; i++) {
-					ret[i] = Arrays.copyOfRange(imgData,start, start + chunksize);
-					start += chunksize ;
-				}
-			} else {
-				ret[0] = imgData;
+			for(int i = 0; i < numOfChunks; i++) {
+				int start = i * chunkSize;
+				int length = Math.min(imgData.length - start, chunkSize);
+				
+				byte[] temp = new byte[length];
+				System.arraycopy(imgData, start, temp, 0, length);
+				output[i] = temp;
+			}
+			for (byte[] packet : output) {
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catcha block
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-			
 		}
 		Message message = null;
 		int nextMessageID = receiver.getNextMessageID();
