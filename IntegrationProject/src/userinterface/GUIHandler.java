@@ -216,8 +216,11 @@ public class GUIHandler {
 		});
 		
 		// Set Header Label
-		GUI.currentChatHeader.setText("Chat with " + person.getName() + " " 
-				+ "(ID = " + person.getID() + ")");
+		Platform.runLater(() -> {
+			GUI.currentChatHeader.setText("Chat with " + person.getName() + " " 
+					+ "(ID = " + person.getID() + ")");
+		});
+		
 		
 		// Set TextBox text (if exists)
 		if (currentPerson != person) {

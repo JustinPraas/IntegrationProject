@@ -834,7 +834,7 @@ public class TransportLayer {
 		try {
 			
 			imgData = Files.readAllBytes(path);
-			int chunksize = 1450;
+			int chunksize = 64000;
 			ret = new byte[(int)Math.ceil(imgData.length / (double)chunksize)][chunksize];
 			
 			if (imgData.length > chunksize) {
@@ -856,7 +856,8 @@ public class TransportLayer {
 		int nextFileID = receiver.getNextFileID();
 		ArrayList<byte[]> image = new ArrayList<>();
 		for (int i = 0; i < ret.length; i++) {
-			FileMessage fileMessage = new FileMessage(nextMessageID, ret[i].length, nextFileID, ret.length - i - 1, ret[i]);
+			System.out.println(ret.length - i);
+			FileMessage fileMessage = new FileMessage(nextMessageID, ret[i].length, nextFileID, ret.length - i -1, ret[i]);
 			message = new Message(session.getID(), receiver.getID(), nextMessageID, FileMessage.FILEMESSAGE_INDICATOR + nextFileID, true); 
 			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.FILE_MESSAGE, fileMessage);
 			session.getConnection().getSender().send(packet);
