@@ -70,15 +70,16 @@ public class FileSender extends Thread {
 				counter--;
 				file.add(data);
 			}
-			if (!session.getFileMessages().containsKey(receiver.getID())) {
+			if (!session.getFileMessages().containsKey(0)) {
 				Map<Integer, ArrayList<byte[]>> files = new HashMap<>();
 				files.put(nextFileID, file);
 				session.getFileMessages().put(0, files);
 			} else {
-				Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(receiver.getID());
+				Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(0);
 				currentFiles.put(nextFileID, file);
 				session.getFileMessages().put(0, currentFiles);
 			}
+			System.out.println(nextFileID);
 			Message message = new Message(session.getID(), receiver.getID(), nextMessageID, FileMessage.FILEMESSAGE_INDICATOR + nextFileID, true);
 			if (!session.getChatMessages().containsKey(receiver)) {
 				ArrayList<Message> messages = new ArrayList<>();
