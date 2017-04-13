@@ -170,6 +170,9 @@ public class GUIHandler {
 					} else {
 						segmentedImage = session.getFileMessages().get(person.getID()).get(fileID);
 					}
+					for (byte[] b : segmentedImage) {
+						System.out.println(b[0]+ " " + b[1]);
+					}
 					ArrayList<Byte> imageBytes = new ArrayList<>();
 					for (int j = 0; j < segmentedImage.size(); j++) {
 						for (int k = 0; k < segmentedImage.get(j).length; k++) {
