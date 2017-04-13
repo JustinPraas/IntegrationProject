@@ -339,7 +339,6 @@ public class GUIHandler {
 	
 	// To be called when the Person list of Session is changed
 	public static void changedPersonList() {
-		System.out.println("updated person list");
 		// Create new maps to link Person objects to Button objects
 		// To prevent issues with this being executed while the GUI is not updated yet
 		HashMap<Button, Person> newButtonToPerson = new HashMap<>();
