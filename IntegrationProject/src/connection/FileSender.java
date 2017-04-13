@@ -70,13 +70,12 @@ public class FileSender extends Thread {
 				counter--;
 				file.add(data);
 			}
-			session.setNextFileID(nextFileID + 1);
-			if (!session.getFileMessages().containsKey(receiver)) {
+			if (!session.getFileMessages().containsKey(receiver.getID())) {
 				Map<Integer, ArrayList<byte[]>> files = new HashMap<>();
 				files.put(nextFileID, file);
 				session.getFileMessages().put(0, files);
 			} else {
-				Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(receiver);
+				Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(receiver.getID());
 				currentFiles.put(nextFileID, file);
 				session.getFileMessages().put(0, currentFiles);
 			}
@@ -90,6 +89,7 @@ public class FileSender extends Thread {
 				currentMessages.add(message);
 				session.getChatMessages().put(receiver, currentMessages);
 			}
+			session.setNextFileID(nextFileID + 1);
 		} catch (IOException e) {
 			
 		}

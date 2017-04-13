@@ -326,14 +326,14 @@ public class TransportLayer {
 		FileMessage payload = (FileMessage) receivedPacket.getPayload();
 		System.out.println(payload.getFileID());
 		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
-		if (!session.getFileMessages().containsKey(person)) {
+		if (!session.getFileMessages().containsKey(person.getID())) {
 			ArrayList<byte[]> segmentedFile = new ArrayList<>();
 			segmentedFile.add(payload.getMessage());
 			HashMap<Integer, ArrayList<byte[]>> files = new HashMap<>();
 			files.put(payload.getFileID(), segmentedFile);
 			session.getFileMessages().put(person.getID(), files);
 		} else {
-			Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(person);
+			Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(person.getID());
 			ArrayList<byte[]> segmentedFile = null;
 			if (currentFiles.containsKey(payload.getFileID()) && !currentFiles.get(payload.getFileID()).contains(payload.getMessage())) {
 				segmentedFile = currentFiles.get(payload.getFileID());
