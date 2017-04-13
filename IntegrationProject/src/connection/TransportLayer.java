@@ -264,7 +264,7 @@ public class TransportLayer {
 		int secretInteger = session.getSecretKeysForPerson().get(sender.getID());
 		String cipher = payload.getCipher();
 				
-		String decryptedMessage = Crypter.decrypt(cipher, Crypter.getKey(ep, secretInteger));
+		String decryptedMessage = Crypter.decrypt(Crypter.getKey(ep, secretInteger), cipher);		
 		
 		// Construct a message
 		Message message = new Message(sender.getID(), session.getID(), messageID, decryptedMessage, false);
@@ -440,6 +440,7 @@ public class TransportLayer {
 		
 		if (session.getKnownPersons().containsKey(senderID)) {
 			if (senderID >= session.getID()) {
+				
 				// Add the EncryptionPair to the person// Set a secretInteger for messages with this person
 				session.getSecretKeysForPerson().put(senderID, DiffieHellman.produceSecretKey(epe.getPrime()));
 				int secretInteger = session.getSecretKeysForPerson().get(senderID);
@@ -457,7 +458,7 @@ public class TransportLayer {
 				// Set the PrivateChatPair to be acknowlegded
 				session.getKnownPersons().get(senderID).getPrivateChatPair().setAcknowledged(true);
 				session.getKnownPersons().get(senderID).getPrivateChatPair().setRemoteHalfKey(epe.getLocalHalfKey());
-			}
+				}
 		}
 	}
 

@@ -63,9 +63,11 @@ public class PulseHandler extends Thread {
 				// pair it to the other person and, generate a secretKey for myself to use with this person
 				// and send the encryption pair to the other person
 				if (entry.getValue().getID() < session.getID()) {
-					EncryptionPair ep = new EncryptionPair(false);
+					EncryptionPair ep = new EncryptionPair();
+					int secretInteger = DiffieHellman.produceSecretKey(ep.getPrime());
+					session.getSecretKeysForPerson().put(entry.getKey(), secretInteger);	
+					ep.setLocalHalfKey(secretInteger);
 					entry.getValue().setPrivateChatPair(ep);
-					session.getSecretKeysForPerson().put(entry.getKey(), DiffieHellman.produceSecretKey(ep.getPrime()));	
 					
 					// Send the packet
 					EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator(), ep.getLocalHalfKey());

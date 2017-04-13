@@ -17,7 +17,7 @@ public class Main {
 	public static void main(String[] args) {		
 		GUIHandler GuiHandler = new GUIHandler("Come Tjetten");
 		Session session = new Session(GUIHandler.getUsername());
-		System.out.println("You are " + session.getName() + "(ID=" + session.getID()+ ")");
+		System.out.println("You are " + session.getName() + " (ID = " + session.getID()+ ")");
 		GUIHandler.setSession(session);
 	}
 }

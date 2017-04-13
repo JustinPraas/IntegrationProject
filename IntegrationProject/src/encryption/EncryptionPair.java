@@ -8,11 +8,12 @@ public class EncryptionPair {
 	private int remoteHalfKey;
 	private boolean acknowledged;
 	
-	public EncryptionPair(boolean acknowledged) {
+	public EncryptionPair() {
 		int[] primeToGenerator = DiffieHellman.PRIME_TO_PRIMITIVE_ROOT[(int) (Math.random() * DiffieHellman.PRIME_TO_PRIMITIVE_ROOT.length)];
 		this.prime = primeToGenerator[0];
 		this.generator = primeToGenerator[1];
 		this.acknowledged = acknowledged;
+		this.acknowledged = false;
 	}
 	
 	public EncryptionPair(int prime, int generator, int secretInteger, boolean acknowledged) {
@@ -46,9 +47,19 @@ public class EncryptionPair {
 		return localHalfKey;
 	}
 
+	public void setLocalHalfKey(int secretInteger) {
+		this.localHalfKey = (int) (Math.pow(generator, secretInteger) % prime);
+	}
+
 	public int getRemoteHalfKey() {
 		return remoteHalfKey;
 	}
 	
-
+	public String toString() {
+		return "ENCRYPTIONPAIR:"
+				+ "\nprime: " + prime
+				+ "\ngenerator: " + generator 
+				+ "\nlocalHalfKey: " + localHalfKey 
+				+ "\nremoteHalfKey: " + remoteHalfKey;
+	}
 }
