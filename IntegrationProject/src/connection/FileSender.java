@@ -61,7 +61,7 @@ public class FileSender extends Thread {
 			for (byte[] data : output) {
 				FileMessage payload = new FileMessage(nextMessageID, data.length, nextFileID, counter, data);
 				Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.FILE_MESSAGE, payload);
-				System.out.print(data[0] + " " + data[1]);
+				System.out.println(data[0]);
 				session.getConnection().getSender().send(packet);
 				
 				synchronized (transportLayer.unacknowledgedPackets) {
