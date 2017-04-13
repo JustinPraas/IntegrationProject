@@ -56,7 +56,7 @@ public class Session {
 		return chatMessages;
 	}
 	
-	public Map<Person, Map<Integer, ArrayList<byte[]>>> getFileMessages() {
+	public synchronized Map<Person, Map<Integer, ArrayList<byte[]>>> getFileMessages() {
 		return fileMessages;
 	}
 
