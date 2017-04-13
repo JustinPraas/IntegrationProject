@@ -336,7 +336,7 @@ public class TransportLayer {
 				segmentedFile = new ArrayList<>();
 				segmentedFile.add(payload.getMessage());
 			} else {
-				segmentedFile = currentFiles.get(payload.getFileID() - 1);
+				segmentedFile = currentFiles.get(payload.getFileID());
 				if (!segmentedFile.contains(payload.getMessage())) {
 					segmentedFile.add(payload.getMessage());
 				}
@@ -865,6 +865,12 @@ public class TransportLayer {
 				new RetransmissionThread(this, packet);
 			}
 			image.add(ret[i]);
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		if (!session.getChatMessages().containsKey(receiver)) {
 			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
