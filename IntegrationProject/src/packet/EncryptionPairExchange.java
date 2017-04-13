@@ -6,13 +6,16 @@ public class EncryptionPairExchange implements Payload {
 
 	public static final int PRIME_LENGTH = 1;
 	public static final int GENERATOR_LENGTH = 1;
+	public static final int HALF_KEY_LENGTH = 1;
 	
 	private int prime;
 	private int generator;
+	private int localHalfKey;
 	
-	public EncryptionPairExchange(int prime, int generator) {
+	public EncryptionPairExchange(int prime, int generator, int localHalfKey) {
 		this.prime = prime;
 		this.generator = generator;
+		this.localHalfKey = localHalfKey;
 	}
 	
 	@Override
@@ -21,6 +24,7 @@ public class EncryptionPairExchange implements Payload {
 		
 		resultList.add((byte) prime);
 		resultList.add((byte) generator);
+		resultList.add((byte) localHalfKey);
 		
 		// Convert ArrayList to byte[]
 		byte[] result = new byte[resultList.size()];
@@ -37,5 +41,9 @@ public class EncryptionPairExchange implements Payload {
 
 	public int getGenerator() {
 		return generator;
+	}
+
+	public int getLocalHalfKey() {
+		return localHalfKey;
 	}
 }

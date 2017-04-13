@@ -4,6 +4,8 @@ public class EncryptionPair {
 
 	private int prime;
 	private int generator;
+	private int localHalfKey;
+	private int remoteHalfKey;
 	private boolean acknowledged;
 	
 	public EncryptionPair(boolean acknowledged) {
@@ -13,9 +15,10 @@ public class EncryptionPair {
 		this.acknowledged = acknowledged;
 	}
 	
-	public EncryptionPair(int prime, int generator, boolean acknowledged) {
+	public EncryptionPair(int prime, int generator, int secretInteger, boolean acknowledged) {
 		this.prime = prime;
 		this.generator = generator;
+		this.localHalfKey = (int) (Math.pow(generator, secretInteger) % prime);
 		this.acknowledged = acknowledged;
 	}
 	
@@ -33,6 +36,18 @@ public class EncryptionPair {
 
 	public void setAcknowledged(boolean acknowledged) {
 		this.acknowledged = acknowledged;
+	}
+	
+	public void setRemoteHalfKey(int remoteHalfKey) {
+		this.remoteHalfKey = remoteHalfKey;
+	}
+
+	public int getLocalHalfKey() {
+		return localHalfKey;
+	}
+
+	public int getRemoteHalfKey() {
+		return remoteHalfKey;
 	}
 	
 

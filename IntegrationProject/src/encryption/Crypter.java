@@ -1,13 +1,78 @@
 package encryption;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.apache.commons.codec.binary.Base64;
+
 public class Crypter {
+	
+	public static final String INIT_VECTOR = "0123456789123456";
+	
+	public static String encrypt(String key, String value) {
+        try {
+            IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
 
-	public static String decrypt(String cipher, int decryptionKey) {
-		return cipher;
-	}
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
 
-	public static String encrypt(String msg, int midWayKey) {
-		return msg;
-	}
+            byte[] encrypted = cipher.doFinal(value.getBytes());
 
+            return Base64.encodeBase64String(encrypted);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public static String decrypt(String key, String encrypted) {
+        try {
+            IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
+            SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING");
+            cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+
+            byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
+
+            return new String(original);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        return null;
+    }
+    
+    public static String getKey(EncryptionPair ep, int secretInteger) {
+    	int key = (int) (Math.pow(ep.getRemoteHalfKey(), secretInteger) % ep.getPrime());
+    	StringBuilder resultKey = new StringBuilder();
+    	resultKey.append(Integer.toString(key));
+    	
+    	int length = resultKey.toString().length();
+    	for (int i = 0; i < 16 - length; i++) {
+    		resultKey.append("0");
+    	}
+    	
+    	return resultKey.toString();
+    }
+    
+//    public static void main(String[] args) {
+//    	int prime = 23;
+//    	int generator = 5;
+//		EncryptionPair a = new EncryptionPair(prime, generator, 12, true);
+//		EncryptionPair b = new EncryptionPair(prime, generator, 6, true);
+//
+//		a.setRemoteHalfKey((int) (Math.pow(generator, 6) % prime));
+//		b.setRemoteHalfKey((int) (Math.pow(generator, 12) % prime));
+//		
+//		String plainText = "Person A is sending a hugeeeeeeeee message";
+//		String encrypted = Crypter.encrypt(Crypter.getKey(a, 12), plainText);
+//		System.out.println(encrypted);
+//		
+//		String decrypted = Crypter.decrypt(Crypter.getKey(b, 6), encrypted);
+//		System.out.println(decrypted);
+//	}
 }

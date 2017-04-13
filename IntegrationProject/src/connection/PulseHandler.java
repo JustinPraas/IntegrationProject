@@ -68,7 +68,7 @@ public class PulseHandler extends Thread {
 					session.getSecretKeysForPerson().put(entry.getKey(), DiffieHellman.produceSecretKey(ep.getPrime()));	
 					
 					// Send the packet
-					EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator());
+					EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator(), ep.getLocalHalfKey());
 					Packet packet = new Packet(session.getID(), entry.getValue().getID(), 
 							session.getNextSeq(), Payload.ENCRYPTION_PAIR, epe);
 					session.getConnection().getSender().send(packet);
@@ -77,7 +77,7 @@ public class PulseHandler extends Thread {
 			} else if (!entry.getValue().getPrivateChatPair().isAcknowledged()) {
 				// Send the packet
 				EncryptionPair ep = entry.getValue().getPrivateChatPair();
-				EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator());
+				EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator(), ep.getLocalHalfKey());
 				Packet packet = new Packet(session.getID(), entry.getValue().getID(), 
 						session.getNextSeq(), Payload.ENCRYPTION_PAIR, epe);
 				session.getConnection().getSender().send(packet);

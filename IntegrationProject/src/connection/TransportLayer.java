@@ -77,6 +77,7 @@ public class TransportLayer {
 		case Payload.ENCRYPTION_PAIR:
 			length += EncryptionPairExchange.PRIME_LENGTH;
 			length += EncryptionPairExchange.GENERATOR_LENGTH;
+			length += EncryptionPairExchange.HALF_KEY_LENGTH;
 			break;
 		case Payload.ENCRYPTED_MESSAGE:
 			length += EncryptedMessage.MESSAGE_ID_LENGTH;
@@ -258,11 +259,12 @@ public class TransportLayer {
 		// Get the messageID
 		int messageID = payload.getMessageID();
 		
-		// Decrypt the message
-		int decryptionKey = (int) Math.pow(payload.getMidWayKey(), 
-				session.getSecretKeysForPerson().get(sender.getID())) % 
-				sender.getPrivateChatPair().getPrime();
-		String decryptedMessage = Crypter.decrypt(payload.getCipher(), decryptionKey);
+		// Create EncryptedMessage
+		EncryptionPair ep = session.getKnownPersons().get(sender.getID()).getPrivateChatPair();
+		int secretInteger = session.getSecretKeysForPerson().get(session.getSecretKeysForPerson().get(sender.getID()));
+		String cipher = Crypter.encrypt(Crypter.getKey(ep, secretInteger), payload.getCipher());
+				
+		String decryptedMessage = Crypter.decrypt(cipher, Crypter.getKey(ep, secretInteger));
 		
 		// Construct a message
 		Message message = new Message(sender.getID(), session.getID(), messageID, decryptedMessage, false);
@@ -438,21 +440,23 @@ public class TransportLayer {
 		
 		if (session.getKnownPersons().containsKey(senderID)) {
 			if (senderID >= session.getID()) {
-				// Add the EncryptionPair to the person
-				EncryptionPair ep = new EncryptionPair(epe.getPrime(), epe.getGenerator(), true);
-				ep.setAcknowledged(true);
+				// Add the EncryptionPair to the person// Set a secretInteger for messages with this person
+				session.getSecretKeysForPerson().put(senderID, DiffieHellman.produceSecretKey(epe.getPrime()));
+				int secretInteger = session.getSecretKeysForPerson().get(senderID);
+				
+				EncryptionPair ep = new EncryptionPair(epe.getPrime(), epe.getGenerator(), secretInteger, true);
+				ep.setRemoteHalfKey(epe.getLocalHalfKey());
 				session.getKnownPersons().get(senderID).setPrivateChatPair(ep);
 				
-				// Set a secretInteger for messages with this person
-				session.getSecretKeysForPerson().put(senderID, DiffieHellman.produceSecretKey(ep.getPrime()));
 				
 				// Send the same EncryptionPairExchange packet back as acknowledgement
-				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator());
+				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator(), epe.getLocalHalfKey());
 				Packet packet = new Packet(session.getID(), senderID, session.getNextSeq(), Payload.ENCRYPTION_PAIR, epeResponse);
 				session.getConnection().getSender().send(packet);
 			} else {
 				// Set the PrivateChatPair to be acknowlegded
 				session.getKnownPersons().get(senderID).getPrivateChatPair().setAcknowledged(true);
+				session.getKnownPersons().get(senderID).getPrivateChatPair().setRemoteHalfKey(epe.getLocalHalfKey());
 			}
 		}
 	}
@@ -506,19 +510,13 @@ public class TransportLayer {
 	 * @param receiver the destination person
 	 */
 	public void sendMessageFromGUI(String msg, Person receiver) {
-		int msgLength = msg.length();
 		int nextMessageID = receiver.getNextMessageID();
 		
 		// Create EncryptedMessage
 		EncryptionPair ep = session.getKnownPersons().get(receiver.getID()).getPrivateChatPair();
-		int prime = ep.getPrime();
-		int generator = ep.getGenerator();
-		int secretInt = session.getSecretKeysForPerson().get(receiver.getID());
-		int midWayKey = (int) Math.pow(generator, secretInt) % prime;
-		String cipher = Crypter.encrypt(msg, midWayKey);
-		EncryptedMessage encryptedMessage = new EncryptedMessage(nextMessageID, midWayKey, cipher.length(), cipher); // TODO: Encrypt
-		
-		
+		int secretInteger = session.getSecretKeysForPerson().get(receiver.getID());
+		String cipher = Crypter.encrypt(Crypter.getKey(ep, secretInteger), msg);
+		EncryptedMessage encryptedMessage = new EncryptedMessage(nextMessageID, ep.getLocalHalfKey(), cipher.length(), cipher);
 		
 		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, encryptedMessage);
 		session.getConnection().getSender().send(packet);
@@ -611,7 +609,8 @@ public class TransportLayer {
 		case Payload.ENCRYPTION_PAIR:
 			int prime = getPrime(payloadData);
 			int generator = getGenerator(payloadData);
-			return new EncryptionPairExchange(prime, generator);
+			int localHalfKey = getLocalHalfKey(payloadData);
+			return new EncryptionPairExchange(prime, generator, localHalfKey);
 		case Payload.ENCRYPTED_MESSAGE:
 			int MessageID = getMessageID(payloadData, Payload.ENCRYPTED_MESSAGE);
 			int midWayKey = getMidWayKey(payloadData);
@@ -945,6 +944,17 @@ public class TransportLayer {
 		
 		int generator = generatorBytebuffer.get();
 		return generator;
+	}
+	
+	private static int getLocalHalfKey(byte[] payloadData) {
+		int start = EncryptionPairExchange.PRIME_LENGTH + EncryptionPairExchange.GENERATOR_LENGTH;;
+		int end = start + EncryptionPairExchange.HALF_KEY_LENGTH;
+		
+		byte[] halfKeyArray = Arrays.copyOfRange(payloadData, start, end);	
+		ByteBuffer halfKeyBytebuffer = ByteBuffer.wrap(halfKeyArray);
+		
+		int halfKey = halfKeyBytebuffer.get();
+		return halfKey;
 	}
 
 }
