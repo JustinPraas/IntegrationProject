@@ -91,7 +91,7 @@ public class TransportLayerTest {
 	
 	@Test
 	public void getMessageLengthTest() {
-		assertEquals(14, TransportLayer.getMessageLength(encrMsgPacket.getPayload().getPayloadData()));
+		assertEquals(14, TransportLayer.getMessageLength(encrMsgPacket.getPayload().getPayloadData(), 1));
 		assertEquals(14, encryptedMessage.getMessageLength());
 	}
 	

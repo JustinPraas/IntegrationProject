@@ -1,5 +1,6 @@
 package userinterface;
 
+import java.io.File;
 import java.util.Optional;
 
 import javafx.application.Application;
@@ -21,6 +22,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public class GUI extends Application {
@@ -123,7 +125,8 @@ public class GUI extends Application {
 		
 		inputBox = new TextField();
 		Button sendButton = new Button("Send");
-		inputHBox.getChildren().addAll(inputBox, sendButton);
+		Button sendImage = new Button("Image");
+		inputHBox.getChildren().addAll(inputBox, sendImage, sendButton);
 		inputHBox.setSpacing(10);
 		leftVBox.getChildren().addAll(currentChatHeader, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
@@ -184,6 +187,19 @@ public class GUI extends Application {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
 		});
+		sendImage.setOnAction(e -> {
+			FileChooser fileChooser = new FileChooser();
+			fileChooser.setTitle("Send image");
+			fileChooser.setInitialDirectory(
+		            new File(System.getProperty("user.home"))
+		        ); 
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("JPG", "*.jpg"),
+                    new FileChooser.ExtensionFilter("PNG", "*.png")
+                );
+			GUIHandler.sendImage(fileChooser.showOpenDialog(window));
+		});
+		
 	}
 	
 	// Pass on user name if not empty, otherwise give warning

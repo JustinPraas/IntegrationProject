@@ -17,6 +17,7 @@ public class Session {
 	private Map<Integer, Person> knownPersons;
 	private Map<Integer, Integer> secretKeysForPerson;
 	private Map<Person, ArrayList<Message>> chatMessages;
+	private Map<Person, ArrayList<ArrayList<byte[]>>> fileMessages;
 	private ArrayList<Message> publicChatMessages;
 	private int nextPublicMessageID;
 	private int seq;
@@ -28,6 +29,7 @@ public class Session {
 		this.knownPersons = new HashMap<>();
 		this.secretKeysForPerson = new HashMap<>();
 		this.chatMessages = new HashMap<>();
+		this.fileMessages = new HashMap<>();
 		this.publicChatMessages = new ArrayList<>();
 		this.seq = 0;
 		this.nextPublicMessageID = 0;
@@ -54,6 +56,10 @@ public class Session {
 		return chatMessages;
 	}
 	
+	public Map<Person, ArrayList<ArrayList<byte[]>>> getFileMessages() {
+		return fileMessages;
+	}
+
 	public int getSeq() {
 		return seq;
 	}

@@ -1,15 +1,26 @@
 package userinterface;
 
+import java.awt.Desktop;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import application.Session;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -20,6 +31,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import model.Message;
 import model.Person;
+import packet.FileMessage;
 
 public class GUIHandler {
 
@@ -83,6 +95,13 @@ public class GUIHandler {
 		}
 	}
 	
+	protected static void sendImage(File img) {
+		if (currentPerson != null && img.exists() && img.length() < 1000000) {
+			Person receiver = currentPerson;
+			session.getConnection().getTransportLayer().sendImageFromGUI(img, receiver);
+		}
+	}
+	
 	// Show certain chat based on Button object
 	protected static void showChat(Button button) {
 		showChat(buttonToPerson.get(button));
@@ -130,13 +149,53 @@ public class GUIHandler {
 				messageSender = person.getName();
 			}
 			
-			// Append this message to ChatBox String
+			TextFlow flow;
 			Text senderText = new Text(messageSender);
-			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
-			Text messageText = new Text(message.getText());
 			senderText.getStyleClass().add("sender");
-			TextFlow flow = new TextFlow();
-			flow.getChildren().addAll(senderText, timestampText, messageText);
+			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
+			
+			if (message.getText().startsWith(FileMessage.FILEMESSAGE_INDICATOR)) {
+				int fileID = Integer.parseInt(message.getText().replace(FileMessage.FILEMESSAGE_INDICATOR, ""));
+				ArrayList<byte[]> segmentedImage = session.getFileMessages().get(person).get(fileID - 1);
+				ArrayList<Byte> imageBytes = new ArrayList<>();
+				for (int j = 0; j < segmentedImage.size(); j++) {
+					for (int k = 0; k < segmentedImage.get(j).length; k++) {
+						imageBytes.add(segmentedImage.get(j)[k]);
+					}
+				}
+				System.out.println(imageBytes.toString());
+				File imageFile = null;
+				try {
+					FileOutputStream fos = new FileOutputStream(imageFile = new File(System.getProperty("user.home") + "/" + fileID + ".png"));
+					for (Byte b : imageBytes) {
+						fos.write(b);
+					}
+					fos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				Image image = null;
+				try {
+					image = new Image(imageFile.toURI().toURL().toExternalForm());
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				}
+				ImageView imageView = new ImageView();
+		        imageView.setImage(image);
+		        imageView.setFitWidth(100);
+		        imageView.setPreserveRatio(true);
+		        imageView.setSmooth(true);
+		        imageView.setCache(true);
+				flow = new TextFlow();
+				flow.getChildren().addAll(senderText, timestampText, imageView);
+			} else {
+				// Append this message to ChatBox String
+
+				Text messageText = new Text(message.getText());
+				
+				flow = new TextFlow();
+				flow.getChildren().addAll(senderText, timestampText, messageText);
+			}
 			HBox box = new HBox();
 			if (message.getSenderID() == session.getID()) {
 				flow.getStyleClass().add("local");
