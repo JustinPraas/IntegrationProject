@@ -828,7 +828,7 @@ public class TransportLayer {
 	}
 
 	public void sendImageFromGUI(File img, Person receiver) {
-		new FileSender(img, receiver, session);
+		new FileSender(img, receiver, session).start();
 	}
 		
 
