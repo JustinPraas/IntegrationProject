@@ -42,9 +42,11 @@ public class GUIHandler {
 	private static HashMap<Person, Button> personToButton;
 	private static HashMap<Person, String> textBoxText;
 	private static HashMap<Person, Boolean> personUnreadMessages;
+	private static HashMap<Message, File> files;
 	private static Person currentPerson;
 	private static String globalTextBoxText;
 	private static boolean unreadGlobalChatMessages;
+	
 	
 	// Constructor to launch the GUI
 	public GUIHandler(String name) {
@@ -157,24 +159,31 @@ public class GUIHandler {
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
 			
 			if (message.getText().startsWith(FileMessage.FILEMESSAGE_INDICATOR)) {
-				int fileID = Integer.parseInt(message.getText().replace(FileMessage.FILEMESSAGE_INDICATOR, ""));
-				ArrayList<byte[]> segmentedImage = session.getFileMessages().get(person).get(fileID);
-				ArrayList<Byte> imageBytes = new ArrayList<>();
-				for (int j = 0; j < segmentedImage.size(); j++) {
-					for (int k = 0; k < segmentedImage.get(j).length; k++) {
-						imageBytes.add(segmentedImage.get(j)[k]);
-					}
-				}
 				File imageFile = null;
-				try {
-					FileOutputStream fos = new FileOutputStream(imageFile = new File(System.getProperty("user.home") + "/" + messageSender + fileID + ".png"));
-					for (Byte b : imageBytes) {
-						fos.write(b);
+				if (files.containsKey(message)) {
+					imageFile = files.get(message);
+				} else {
+					int fileID = Integer.parseInt(message.getText().replace(FileMessage.FILEMESSAGE_INDICATOR, ""));
+					ArrayList<byte[]> segmentedImage = session.getFileMessages().get(person).get(fileID);
+					ArrayList<Byte> imageBytes = new ArrayList<>();
+					for (int j = 0; j < segmentedImage.size(); j++) {
+						for (int k = 0; k < segmentedImage.get(j).length; k++) {
+							imageBytes.add(segmentedImage.get(j)[k]);
+						}
 					}
-					fos.close();
-				} catch (IOException e) {
-					e.printStackTrace();
+					
+					try {
+						FileOutputStream fos = new FileOutputStream(imageFile = new File(System.getProperty("user.home") + "/" + messageSender + fileID + ".png"));
+						for (Byte b : imageBytes) {
+							fos.write(b);
+						}
+						fos.flush();
+						fos.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
+				
 				Image image = null;
 				try {
 					image = new Image(imageFile.toURI().toURL().toExternalForm());
@@ -186,7 +195,6 @@ public class GUIHandler {
 		        imageView.setFitWidth(100);
 		        imageView.setPreserveRatio(true);
 		        imageView.setSmooth(true);
-		        imageView.setCache(true);
 				flow = new TextFlow();
 				flow.getChildren().addAll(senderText, timestampText, imageView);
 			} else {
