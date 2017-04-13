@@ -11,7 +11,7 @@ public class Main {
 	/**
 	 * Launches the main application by creating a <code>GUIHandler</code>
 	 * and a <code>Session</code>
-	 * @param args unused
+	 * @param args unused arguments
 	 */
 	@SuppressWarnings("unused")
 	public static void main(String[] args) {		

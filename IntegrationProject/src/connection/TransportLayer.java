@@ -447,11 +447,10 @@ public class TransportLayer {
 				
 				EncryptionPair ep = new EncryptionPair(epe.getPrime(), epe.getGenerator(), secretInteger, true);
 				ep.setRemoteHalfKey(epe.getLocalHalfKey());
-				session.getKnownPersons().get(senderID).setPrivateChatPair(ep);
-				
+				session.getKnownPersons().get(senderID).setPrivateChatPair(ep);				
 				
 				// Send the same EncryptionPairExchange packet back as acknowledgement
-				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator(), epe.getLocalHalfKey());
+				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator(), ep.getLocalHalfKey());
 				Packet packet = new Packet(session.getID(), senderID, session.getNextSeq(), Payload.ENCRYPTION_PAIR, epeResponse);
 				session.getConnection().getSender().send(packet);
 			} else {

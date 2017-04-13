@@ -1,5 +1,7 @@
 package encryption;
 
+import java.math.BigInteger;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -30,6 +32,7 @@ public class Crypter {
     }
 
     public static String decrypt(String key, String encrypted) {
+    	System.out.println("Key at decrypt: " + key);
         try {
             IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
             SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
@@ -48,9 +51,13 @@ public class Crypter {
     }
     
     public static String getKey(EncryptionPair ep, int secretInteger) {
-    	int key = (int) (Math.pow(ep.getRemoteHalfKey(), secretInteger) % ep.getPrime());
+    	BigInteger remoteHalfKey = new BigInteger(Integer.toString(ep.getRemoteHalfKey()));
+    	BigInteger secretInt = new BigInteger(Integer.toString(secretInteger));
+    	BigInteger prime = new BigInteger(Integer.toString(ep.getPrime()));
+    	BigInteger bigKey = remoteHalfKey.modPow(secretInt, prime);
+    	long key = bigKey.intValue();
     	StringBuilder resultKey = new StringBuilder();
-    	resultKey.append(Integer.toString(key));
+    	resultKey.append(Long.toString(key));
     	
     	int length = resultKey.toString().length();
     	for (int i = 0; i < 16 - length; i++) {
@@ -61,19 +68,19 @@ public class Crypter {
     }
     
 //    public static void main(String[] args) {
-//    	int prime = 23;
-//    	int generator = 5;
-//		EncryptionPair a = new EncryptionPair(prime, generator, 12, true);
-//		EncryptionPair b = new EncryptionPair(prime, generator, 6, true);
+//    	int prime = 19;
+//    	int generator = 2;
+//		EncryptionPair Justin = new EncryptionPair(prime, generator, 11, true);
+//		EncryptionPair Tim = new EncryptionPair(prime, generator, 18, true);
 //
-//		a.setRemoteHalfKey((int) (Math.pow(generator, 6) % prime));
-//		b.setRemoteHalfKey((int) (Math.pow(generator, 12) % prime));
+//		Tim.setRemoteHalfKey((int) (Math.pow(generator, 11) % prime));
+//		Justin.setRemoteHalfKey((int) (Math.pow(generator, 18) % prime));
 //		
-//		String plainText = "Person A is sending a hugeeeeeeeee message";
-//		String encrypted = Crypter.encrypt(Crypter.getKey(a, 12), plainText);
+//		String plainText = "Person Justin is se";
+//		String encrypted = Crypter.encrypt(Crypter.getKey(Justin, 11), plainText);
 //		System.out.println(encrypted);
-//		
-//		String decrypted = Crypter.decrypt(Crypter.getKey(b, 6), encrypted);
+//
+//		String decrypted = Crypter.decrypt(Crypter.getKey(Tim, 18), encrypted);
 //		System.out.println(decrypted);
 //	}
 }
