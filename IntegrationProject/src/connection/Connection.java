@@ -26,7 +26,8 @@ public class Connection {
 			sendSocket.setSendBufferSize(1024000);
 			this.receiveSocket = new MulticastSocket(port);
 			receiveSocket.setReceiveBufferSize(1024000);
-			this.joinGroup("default");
+			joinGroup(sendSocket, "default");
+			joinGroup(receiveSocket, "default");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -36,16 +37,14 @@ public class Connection {
 		this.receiver = new Receiver(this);
 	}
 	
-	public void joinGroup(String address) {
+	public static void joinGroup(MulticastSocket socket, String address) {
 		try {
 			if (address.equals("default")) {
 				group = InetAddress.getByName("228.0.0.0");
-				sendSocket.joinGroup(group);
-				receiveSocket.joinGroup(group);
+				socket.joinGroup(group);
 			} else {
 				group = InetAddress.getByName(address);
-				sendSocket.joinGroup(group);
-				receiveSocket.joinGroup(group);
+				socket.joinGroup(group);
 			}
 		} catch (UnknownHostException e) {
 			System.out.println("Not a valid multicast address");

@@ -828,62 +828,7 @@ public class TransportLayer {
 	}
 
 	public void sendImageFromGUI(File img, Person receiver) {
-		Path path = Paths.get(img.getPath());
-		byte[] imgData;
-		try {
-			imgData = Files.readAllBytes(path);
-			int chunkSize = 64000;
-			int numOfChunks = (int)Math.ceil((double)imgData.length / chunkSize);
-			byte[][] output = new byte[numOfChunks][];
-			
-			for(int i = 0; i < numOfChunks; i++) {
-				int start = i * chunkSize;
-				int length = Math.min(imgData.length - start, chunkSize);
-				
-				byte[] temp = new byte[length];
-				System.arraycopy(imgData, start, temp, 0, length);
-				output[i] = temp;
-			}
-			int nextMessageID = receiver.getNextMessageID();
-			int nextFileID = receiver.getNextFileID();
-			int counter = output.length - 1;
-			ArrayList<byte[]> file = new ArrayList<>();
-			for (byte[] data : output) {
-				FileMessage payload = new FileMessage(nextMessageID, data.length, nextFileID, counter, data);
-				Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.FILE_MESSAGE, payload);
-				session.getConnection().sendSocket.send(packet.getDatagramPacket());
-				
-				synchronized (this.unacknowledgedPackets) {
-				unacknowledgedPackets.add(packet);
-				new RetransmissionThread(this, packet);
-				}	
-				counter--;
-				file.add(data);
-			}
-			
-			if (!session.getFileMessages().containsKey(receiver)) {
-				Map<Integer, ArrayList<byte[]>> files = new HashMap<>();
-				files.put(nextFileID, file);
-				session.getFileMessages().put(receiver, files);
-			} else {
-				Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(receiver);
-				currentFiles.put(nextFileID, file);
-				session.getFileMessages().put(receiver, currentFiles);
-			}
-			Message message = new Message(session.getID(), receiver.getID(), nextMessageID, FileMessage.FILEMESSAGE_INDICATOR + nextFileID, true);
-			if (!session.getChatMessages().containsKey(receiver)) {
-				ArrayList<Message> messages = new ArrayList<>();
-				messages.add(message);
-				session.getChatMessages().put(receiver, messages);
-			} else {
-				ArrayList<Message> currentMessages = session.getChatMessages().get(receiver);
-				currentMessages.add(message);
-				session.getChatMessages().put(receiver, currentMessages);
-			}
-		} catch (IOException e) {
-			
-		}
-		GUIHandler.messagePutInMap(receiver);
+		new FileSender(img, receiver, session);
 	}
 		
 
