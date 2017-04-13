@@ -158,7 +158,7 @@ public class GUIHandler {
 			
 			if (message.getText().startsWith(FileMessage.FILEMESSAGE_INDICATOR)) {
 				int fileID = Integer.parseInt(message.getText().replace(FileMessage.FILEMESSAGE_INDICATOR, ""));
-				ArrayList<byte[]> segmentedImage = session.getFileMessages().get(person).get(fileID - 1);
+				ArrayList<byte[]> segmentedImage = session.getFileMessages().get(person).get(fileID);
 				ArrayList<Byte> imageBytes = new ArrayList<>();
 				for (int j = 0; j < segmentedImage.size(); j++) {
 					for (int k = 0; k < segmentedImage.get(j).length; k++) {

@@ -328,22 +328,21 @@ public class TransportLayer {
 		if (!session.getFileMessages().containsKey(person)) {
 			ArrayList<byte[]> segmentedFile = new ArrayList<>();
 			segmentedFile.add(payload.getMessage());
-			ArrayList<ArrayList<byte[]>> files = new ArrayList<>();
-			files.add(segmentedFile);
+			HashMap<Integer, ArrayList<byte[]>> files = new HashMap<>();
+			files.put(payload.getFileID(), segmentedFile);
 			session.getFileMessages().put(person, files);
 		} else {
-			ArrayList<ArrayList<byte[]>> currentFiles = session.getFileMessages().get(person);
+			Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(person);
 			ArrayList<byte[]> segmentedFile = null;
-			if (currentFiles.size() < payload.getFileID()) {
+			if (currentFiles.containsKey(payload.getFileID()) && !currentFiles.get(payload.getFileID()).contains(payload.getMessage())) {
+				segmentedFile = currentFiles.get(payload.getFileID());
+				segmentedFile.add(payload.getMessage());
+				currentFiles.put(payload.getFileID(), segmentedFile);
+			} else {
 				segmentedFile = new ArrayList<>();
 				segmentedFile.add(payload.getMessage());
-			} else {
-				segmentedFile = currentFiles.get(payload.getFileID());
-				if (!segmentedFile.contains(payload.getMessage())) {
-					segmentedFile.add(payload.getMessage());
-				}
+				currentFiles.put(payload.getFileID(), segmentedFile);
 			}
-			currentFiles.add(segmentedFile);
 			session.getFileMessages().put(person, currentFiles);
 		}
 		Message message = new Message(receivedPacket.getSenderID(), 
@@ -831,8 +830,6 @@ public class TransportLayer {
 	public void sendImageFromGUI(File img, Person receiver) {
 		Path path = Paths.get(img.getPath());
 		byte[] imgData;
-		
-		
 		try {
 			imgData = Files.readAllBytes(path);
 			int chunkSize = 64000;
@@ -881,44 +878,12 @@ public class TransportLayer {
 			} else {
 				ArrayList<Message> currentMessages = session.getChatMessages().get(receiver);
 				currentMessages.add(message);
-				session.getChatMessages().put(receiver, currentMessages);falti
+				session.getChatMessages().put(receiver, currentMessages);
 			}
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-//			System.out.println(ret.length - i);
-//			FileMessage fileMessage = new FileMessage(nextMessageID, ret[i].length, nextFileID, ret.length - i -1, ret[i]);
-//			message = new Message(session.getID(), receiver.getID(), nextMessageID, FileMessage.FILEMESSAGE_INDICATOR + nextFileID, true); 
-//			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.FILE_MESSAGE, fileMessage);
-//			session.getConnection().getSender().send(packet);
-//			synchronized (this.unacknowledgedPackets) {
-//				unacknowledgedPackets.add(packet);
-//				new RetransmissionThread(this, packet);
-//			}
-//			image.add(ret[i]);
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//		}
-//		if (!session.getChatMessages().containsKey(receiver)) {
-//			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
-//		} else {
-//			ArrayList<Message> currentMessageList = session.getChatMessages().get(receiver);
-//			currentMessageList.add(message);
-//			session.getChatMessages().put(receiver, currentMessageList);
-//		}
-//		if (!session.getFileMessages().containsKey(receiver)) {
-//			ArrayList<ArrayList<byte[]>> images = new ArrayList<>();
-//			images.add(image);
-//			session.getFileMessages().put(receiver, images);
-//		} else {
-//			ArrayList<ArrayList<byte[]>> currentFileMessageList = session.getFileMessages().get(receiver);
-//			currentFileMessageList.add(image);
-//			session.getFileMessages().put(receiver, currentFileMessageList);
-//		}
-//		GUIHandler.messagePutInMap(receiver);
+			
+		}
+		GUIHandler.messagePutInMap(receiver);
 	}
 		
 
