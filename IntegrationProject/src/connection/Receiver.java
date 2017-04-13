@@ -19,13 +19,13 @@ public class Receiver extends Thread {
 	}
 
 	private void receive() {
-		byte buf[] = new byte[512000];
+		byte buf[] = new byte[1024000];
 		DatagramPacket packet = new DatagramPacket(buf, buf.length);
 		while (!connection.receiveSocket.isClosed()) {
 			try {
 				connection.receiveSocket.receive(packet);
 				transportLayer.handlePacket(packet);
-				packet = new DatagramPacket(new byte[512000], buf.length);
+				packet = new DatagramPacket(new byte[1024000], buf.length);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
