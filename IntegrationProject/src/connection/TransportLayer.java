@@ -69,13 +69,6 @@ public class TransportLayer {
 		case Payload.ACKNOWLEDGEMENT:
 			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
 			break;
-		case Payload.FILE_MESSAGE:
-			length += FileMessage.MESSAGE_ID_LENGTH;
-			length += FileMessage.MESSAGE_LENGTH_LENGTH;
-			length += FileMessage.FILE_ID_LENGTH;
-			length += FileMessage.FILE_SEQ_LENGTH;
-			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.FILE_MESSAGE);
-			break;
 		case Payload.ENCRYPTION_PAIR:
 			length += EncryptionPairExchange.PRIME_LENGTH;
 			length += EncryptionPairExchange.GENERATOR_LENGTH;
@@ -128,9 +121,6 @@ public class TransportLayer {
 			case Payload.PULSE:
 				forwardPacket(receivedPacket);
 				handlePulse(receivedPacket);
-				break;
-			case Payload.FILE_MESSAGE:
-				handleFileMessage(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
 				handleAcknowledgement(receivedPacket);
@@ -321,81 +311,6 @@ public class TransportLayer {
 		sendAcknowledgement(receivedPacket, message);
 	}
 	
-	public void handleFileMessage(Packet receivedPacket) {
-		FileMessage payload = (FileMessage) receivedPacket.getPayload();
-		System.out.println(payload.getMessage());
-		Person person = session.getKnownPersons().get(receivedPacket.getSenderID());
-		if (!session.getFileMessages().containsKey(person.getID())) {
-			ArrayList<byte[]> segmentedFile = new ArrayList<>();
-			segmentedFile.add(payload.getMessage());
-			HashMap<Integer, ArrayList<byte[]>> files = new HashMap<>();
-			files.put(payload.getFileID(), segmentedFile);
-			session.getFileMessages().put(person.getID(), files);
-		} else {
-			Map<Integer, ArrayList<byte[]>> currentFiles = session.getFileMessages().get(person.getID());
-			ArrayList<byte[]> segmentedFile = null;
-			if (currentFiles.containsKey(payload.getFileID()) && !currentFiles.get(payload.getFileID()).contains(payload.getMessage())) {
-				segmentedFile = currentFiles.get(payload.getFileID());
-				segmentedFile.add(payload.getMessage());
-				currentFiles.put(payload.getFileID(), segmentedFile);
-			} else {
-				segmentedFile = new ArrayList<>();
-				segmentedFile.add(payload.getMessage());
-				currentFiles.put(payload.getFileID(), segmentedFile);
-			}
-			session.getFileMessages().put(person.getID(), currentFiles);
-		}
-		Message message = new Message(receivedPacket.getSenderID(), 
-				receivedPacket.getReceiverID(), payload.getMessageID(), FileMessage.FILEMESSAGE_INDICATOR + payload.getFileID(), false);
-		boolean addMessageToList = true;
-		if (payload.getFileSeq() == 0) {
-			if (!session.getChatMessages().containsKey(person)) {
-				session.getChatMessages().put(person, new ArrayList<>(Arrays.asList(new Message[]{message})));
-			} else {
-				ArrayList<Message> currentMessageList = session.getChatMessages().get(person);
-				
-				for (Message msg : currentMessageList) {
-					if (msg.getMessageID() == message.getMessageID() && message.getSenderID() == msg.getSenderID()) {
-						addMessageToList = false;
-						break;
-					}
-				}
-				
-				if (addMessageToList) {
-					int insertPosition = currentMessageList.size();
-					int receivedMessageID = message.getMessageID();
-					boolean continues = true;
-					for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
-						if (currentMessageList.get(i).getSenderID() != session.getID()) {
-							if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
-								insertPosition = i;
-							} else {
-								if (insertPosition == currentMessageList.size()) {
-									currentMessageList.add(message);
-									continues = false;
-								} else {
-									currentMessageList.add(insertPosition, message);
-									continues = false;
-								}
-							}
-						}
-					}
-					if (continues) {
-						currentMessageList.add(message);
-					}
-					session.getChatMessages().put(person, currentMessageList);
-				}
-			}
-			// Update GUI
-			if (addMessageToList) {
-				GUIHandler.messagePutInMap(person);
-			}
-		}
-
-		// Send acknowledgement
-		sendAcknowledgement(receivedPacket, message);
-	}
-
 	/**
 	 * Processes an <code>Acknowledgment</code> packet. If the message with 
 	 * the messageID of this acknowledgement packet was unacknowledged, remove it from
@@ -828,12 +743,6 @@ public class TransportLayer {
 		}
 	}
 
-	public void sendImageFromGUI(File img, Person receiver) {
-		new FileSender(img, receiver, session).start();
-	}
-		
-
-	
 	private static int getCipherLength(byte[] payloadData) {
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MID_WAY_KEY_LENGTH;
 		int end = start + EncryptedMessage.CIPHER_LENGTH_LENGTH;

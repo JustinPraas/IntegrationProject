@@ -11,7 +11,6 @@ public class Person {
 	public int ID;
 	private int timeToLive;
 	private int nextMessageID;
-	private int nextFileID;
 	
 
 
@@ -28,7 +27,6 @@ public class Person {
 		this.name = name;
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
 		this.nextMessageID = 0;
-		this.nextFileID = 0;
 	}
 
 	/**
@@ -60,11 +58,6 @@ public class Person {
 	public int getNextMessageID() {
 		nextMessageID++;
 		return nextMessageID;
-	}
-	
-	public int getNextFileID() {
-		nextFileID++;
-		return nextFileID;
 	}
 
 	public int getSecretInteger() {

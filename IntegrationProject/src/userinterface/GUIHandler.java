@@ -31,7 +31,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import model.Message;
 import model.Person;
-import packet.FileMessage;
 
 public class GUIHandler {
 
@@ -42,7 +41,6 @@ public class GUIHandler {
 	private static HashMap<Person, Button> personToButton;
 	private static HashMap<Person, String> textBoxText;
 	private static HashMap<Person, Boolean> personUnreadMessages;
-	private static HashMap<Message, File> files;
 	private static Person currentPerson;
 	private static String globalTextBoxText;
 	private static boolean unreadGlobalChatMessages;
@@ -53,7 +51,6 @@ public class GUIHandler {
 		buttonToPerson = new HashMap<>();
 		textBoxText = new HashMap<>();
 		personUnreadMessages = new HashMap<>();
-		files = new HashMap<>();
 		GUIThread thread = new GUIThread();
 		unreadGlobalChatMessages = false;
 		thread.start();
@@ -96,13 +93,6 @@ public class GUIHandler {
 			} else {
 				session.getConnection().getTransportLayer().sendMessageFromGUI(msg);
 			}
-		}
-	}
-	
-	protected static void sendImage(File img) {
-		if (currentPerson != null && img != null && img.exists() && img.length() < 1000000) {
-			Person receiver = currentPerson;
-			session.getConnection().getTransportLayer().sendImageFromGUI(img, receiver);
 		}
 	}
 	
@@ -158,58 +148,12 @@ public class GUIHandler {
 			senderText.getStyleClass().add("sender");
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
 			
-			if (message.getText().startsWith(FileMessage.FILEMESSAGE_INDICATOR)) {
-				File imageFile = null;
-				if (files.containsKey(message)) {
-					imageFile = files.get(message);
-				} else {
-					int fileID = Integer.parseInt(message.getText().replace(FileMessage.FILEMESSAGE_INDICATOR, ""));
-					ArrayList<byte[]> segmentedImage;
-					if (messageSender == username) {
-						segmentedImage = session.getFileMessages().get(0).get(fileID);
-					} else {
-						segmentedImage = session.getFileMessages().get(person.getID()).get(fileID);
-					}
-					ArrayList<Byte> imageBytes = new ArrayList<>();
-					for (int j = 0; j < segmentedImage.size(); j++) {
-						for (int k = 0; k < segmentedImage.get(j).length; k++) {
-							imageBytes.add(segmentedImage.get(j)[k]);
-						}
-					}
-					
-					try {
-						FileOutputStream fos = new FileOutputStream(imageFile = new File(System.getProperty("user.home") + "/" + messageSender + fileID + ".png"));
-						for (Byte b : imageBytes) {
-							fos.write(b);
-						}
-						fos.flush();
-						fos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-				
-				Image image = null;
-				try {
-					image = new Image(imageFile.toURI().toURL().toExternalForm());
-				} catch (MalformedURLException e) {
-					e.printStackTrace();
-				}
-				ImageView imageView = new ImageView();
-		        imageView.setImage(image);
-		        imageView.setFitWidth(100);
-		        imageView.setPreserveRatio(true);
-		        imageView.setSmooth(true);
-				flow = new TextFlow();
-				flow.getChildren().addAll(senderText, timestampText, imageView);
-			} else {
-				// Append this message to ChatBox String
-
-				Text messageText = new Text(message.getText());
-				
-				flow = new TextFlow();
-				flow.getChildren().addAll(senderText, timestampText, messageText);
-			}
+			// Append this message to ChatBox String
+			Text messageText = new Text(message.getText());
+			
+			flow = new TextFlow();
+			flow.getChildren().addAll(senderText, timestampText, messageText);
+			
 			HBox box = new HBox();
 			if (message.getSenderID() == session.getID()) {
 				flow.getStyleClass().add("local");

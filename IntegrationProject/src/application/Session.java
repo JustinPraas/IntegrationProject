@@ -17,10 +17,8 @@ public class Session {
 	private Map<Integer, Person> knownPersons;
 	private Map<Integer, Integer> secretKeysForPerson;
 	private Map<Person, ArrayList<Message>> chatMessages;
-	private Map<Integer, Map<Integer, ArrayList<byte[]>>> fileMessages;
 	private ArrayList<Message> publicChatMessages;
 	private int nextPublicMessageID;
-	private int nextFileID;
 	private int seq;
 
 	public Session(String name) {
@@ -30,11 +28,9 @@ public class Session {
 		this.knownPersons = new HashMap<>();
 		this.secretKeysForPerson = new HashMap<>();
 		this.chatMessages = new HashMap<>();
-		this.fileMessages = new HashMap<>();
 		this.publicChatMessages = new ArrayList<>();
 		this.seq = 0;
 		this.nextPublicMessageID = 0;
-		this.nextFileID = 0;
 		new PulseHandler(this);
 	}
 
@@ -58,9 +54,6 @@ public class Session {
 		return chatMessages;
 	}
 	
-	public synchronized Map<Integer, Map<Integer, ArrayList<byte[]>>> getFileMessages() {
-		return fileMessages;
-	}
 
 	public int getSeq() {
 		return seq;
@@ -82,14 +75,6 @@ public class Session {
 	public int getNextPublicMessageID() {
 		nextPublicMessageID++;
 		return nextPublicMessageID;
-	}
-
-	public int getNextFileID() {
-		return nextFileID;
-	}
-
-	public void setNextFileID(int id) {
-		nextFileID = id;
 	}
 	
 	public void setPublicChatMessages(ArrayList<Message> publicChatMessageList) {
