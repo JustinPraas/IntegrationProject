@@ -90,6 +90,7 @@ public class TransportLayer {
 			length += FileMessage.TOTAL_PACKETS_LENGTH;
 			length += FileMessage.EXTENSION_LENGTH;
 			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.FILE_MESSAGE);
+			break;
 		default: 
 			System.err.println("Unknown type identifier at shortenDatagramContents(): " + typeIdentifier);
 		}
@@ -698,7 +699,7 @@ public class TransportLayer {
 		byte[] fileSequenceArray = Arrays.copyOfRange(payloadData, start, end);
 		ByteBuffer fileSequenceByteBuffer = ByteBuffer.wrap(fileSequenceArray);
 		
-		int fileSequenceNumber = fileSequenceByteBuffer.getInt();
+		int fileSequenceNumber = fileSequenceByteBuffer.get();
 		return fileSequenceNumber;
 	}
 
@@ -951,7 +952,8 @@ public class TransportLayer {
 		int nextFileID = receiver.getNextMessageID();
 		ByteBuffer byteBuffer = ByteBuffer.wrap(Files.readAllBytes(file.toPath()));
 		int chunkSize = 63000;
-		int totalPackets = (int) Math.ceil(file.length()/chunkSize);
+		System.out.println(file.length());
+		double totalPackets = Math.ceil(file.length()/(double)chunkSize);
 		String extension = file.getName().substring(file.getName().lastIndexOf("."));
 		byte[] data;
 		for (int i = 0; i < totalPackets; i++) {
@@ -961,7 +963,7 @@ public class TransportLayer {
 				data = new byte[byteBuffer.remaining()];
 			}
 			byteBuffer.get(data);
-			FileMessage fileMessage = new FileMessage(nextFileID, i, data.length, totalPackets, extension, data);
+			FileMessage fileMessage = new FileMessage(nextFileID, i, data.length, (int) totalPackets, extension, data);
 			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.FILE_MESSAGE, fileMessage);
 			session.getConnection().getSender().send(packet);
 			
