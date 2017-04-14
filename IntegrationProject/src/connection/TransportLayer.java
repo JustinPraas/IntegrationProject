@@ -335,11 +335,6 @@ public class TransportLayer {
 							((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
 						removePacket = packet;
 					}
-				} else if (packet.getTypeIdentifier() == Payload.FILE_MESSAGE){
-					if (packet.getReceiverID() == senderID && 
-							((FileMessage) packet.getPayload()).getMessageID() == messageID) {
-						removePacket = packet;
-					}
 				}
 			}
 			// To prevent ConcurrentModificationException
@@ -515,14 +510,7 @@ public class TransportLayer {
 			return new PlainMessage(messageID, messageLength, message);
 		case Payload.ACKNOWLEDGEMENT:
 			int acknowledgeMessageID = getMessageID(payloadData, Payload.ACKNOWLEDGEMENT);
-			return new Acknowledgement(acknowledgeMessageID);	
-		case Payload.FILE_MESSAGE:
-			byte[] fileData = getFileData(payloadData);
-			int fileMessageID = getMessageID(payloadData, Payload.FILE_MESSAGE);
-			int fileMessageLength = getMessageLength(payloadData, Payload.FILE_MESSAGE);
-			int fileID = getFileID(payloadData);
-			int fileSeq = getFileSequenceNumber(payloadData);
-			return new FileMessage(fileMessageID, fileMessageLength, fileID, fileSeq, fileData);
+			return new Acknowledgement(acknowledgeMessageID);
 		case Payload.ENCRYPTION_PAIR:
 			int prime = getPrime(payloadData);
 			int generator = getGenerator(payloadData);
@@ -587,29 +575,7 @@ public class TransportLayer {
 		int seqNum = seqNumByteBuffer.getShort();
 		return seqNum;
 	}
-	
-	public static int getFileSequenceNumber(byte[] filePayloadData) {
-		int start = FileMessage.MESSAGE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + FileMessage.FILE_ID_LENGTH;
-		int end = start + FileMessage.FILE_SEQ_LENGTH;
-		
-		byte[] fileSeqArray = Arrays.copyOfRange(filePayloadData, start, end);	
-		ByteBuffer fileSeqByteBuffer = ByteBuffer.wrap(fileSeqArray);
-		
-		int fileSeq = fileSeqByteBuffer.get();
-		return fileSeq;
-	}
-	
-	public static int getFileID(byte[] filePayloadData) {
-		int start = FileMessage.MESSAGE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH;
-		int end = start + FileMessage.FILE_ID_LENGTH;
-		
-		byte[] fileIDArray = Arrays.copyOfRange(filePayloadData, start, end);	
-		ByteBuffer fileIDByteBuffer = ByteBuffer.wrap(fileIDArray);
-		
-		int fileID = fileIDByteBuffer.get();
-		return fileID;
-	}
-	
+
 	/**
 	 * Returns the type identifier of the packet, representing the payload type.
 	 * @param datagramContents the packet contents
@@ -678,14 +644,7 @@ public class TransportLayer {
 		
 		return message;
 	}
-
-	public static byte[] getFileData(byte[] filePayloadData) {
-		int length = getMessageLength(filePayloadData, Payload.FILE_MESSAGE);
-		int start = FileMessage.MESSAGE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + FileMessage.FILE_ID_LENGTH + FileMessage.FILE_SEQ_LENGTH;
-		int end = start + length;
-		byte[] fileData = Arrays.copyOfRange(filePayloadData, start, end);
-		return fileData;
-	}
+	
 	/**
 	 * Returns the messageID of an encrypted message packet.
 	 * @param payloadData the payload data of the packet
@@ -703,9 +662,6 @@ public class TransportLayer {
 		} else if (typeIdentifier == Payload.ACKNOWLEDGEMENT) {
 			start = 0;
 			end = start + Acknowledgement.ACK_PAYLOAD_LENGHT;
-		} else if (typeIdentifier == Payload.FILE_MESSAGE) {
-			start = 0;
-			end = start + FileMessage.MESSAGE_ID_LENGTH;
 		}
 		
 		byte[] messageIdArray = Arrays.copyOfRange(payloadData, start, end);
@@ -729,16 +685,6 @@ public class TransportLayer {
 				int messageLength = encryptedMessageLengthBytebuffer.getShort();
 				
 				return messageLength;
-			case Payload.FILE_MESSAGE:
-				start = FileMessage.MESSAGE_ID_LENGTH;
-				end = start + FileMessage.MESSAGE_LENGTH_LENGTH;
-				
-				byte[] fileMessageLengthArray = Arrays.copyOfRange(payloadData, start, end);
-				ByteBuffer fileMessageLengthBytebuffer = ByteBuffer.wrap(fileMessageLengthArray);
-				
-				int fileMessageLength = fileMessageLengthBytebuffer.getInt();
-				
-				return fileMessageLength;
 			default: return 0;
 		}
 	}
