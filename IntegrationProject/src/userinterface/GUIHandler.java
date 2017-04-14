@@ -1,6 +1,7 @@
 package userinterface;
 
 import java.awt.Desktop;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -31,6 +32,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import model.Message;
 import model.Person;
+import packet.FileMessage;
 
 public class GUIHandler {
 
@@ -142,27 +144,48 @@ public class GUIHandler {
 			} else {
 				messageSender = person.getName();
 			}
-			
-			TextFlow flow;
-			Text senderText = new Text(messageSender);
-			senderText.getStyleClass().add("sender");
-			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
-			
-			// Append this message to ChatBox String
-			Text messageText = new Text(message.getText());
-			
-			flow = new TextFlow();
-			flow.getChildren().addAll(senderText, timestampText, messageText);
-			
-			HBox box = new HBox();
-			if (message.getSenderID() == session.getID()) {
-				flow.getStyleClass().add("local");
+			if (message.getText().startsWith(FileMessage.FILE_IDENTIFIER)) {
+				
+				Text senderText = new Text(messageSender);
+				senderText.getStyleClass().add("sender");
+				Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
+				ByteArrayInputStream inputStream = new ByteArrayInputStream(message.getFileData());
+				Image image = new Image(inputStream);
+				ImageView view = new ImageView(image);
+				view.setFitWidth(100);
+				view.setPreserveRatio(true);
+				view.setCache(true);
+				TextFlow flow = new TextFlow(senderText, timestampText, view);
+				if (message.getSenderID() == session.getID()) {
+					flow.getStyleClass().add("local");
+				} else {
+					flow.getStyleClass().add("remote");
+				}
+				HBox box = new HBox(flow);
+				total.add(box);
+				
 			} else {
-				flow.getStyleClass().add("remote");
+				TextFlow flow;
+				Text senderText = new Text(messageSender);
+				senderText.getStyleClass().add("sender");
+				Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
+				
+				// Append this message to ChatBox String
+				Text messageText = new Text(message.getText());
+				
+				flow = new TextFlow();
+				flow.getChildren().addAll(senderText, timestampText, messageText);
+				
+				HBox box = new HBox();
+				if (message.getSenderID() == session.getID()) {
+					flow.getStyleClass().add("local");
+				} else {
+					flow.getStyleClass().add("remote");
+				}
+				box.getChildren().add(flow);
+				
+				total.add(box);
 			}
-			box.getChildren().add(flow);
-			
-			total.add(box);
 		}
 		
 		// Set the chatbox to all the hbox elements
@@ -408,6 +431,20 @@ public class GUIHandler {
 			// If not, mark chat with the global chat as containing unread messages
 			unreadGlobalChatMessages = true;
 			GUI.globalChatButton.setFont(Font.font(null, FontWeight.BOLD, 14.5));
+		}
+	}
+
+
+	public static void sendFile(File file) {
+		if (file != null && file.exists() && file.length() <= 1000000) {
+			if (currentPerson != null) {
+				Person receiver = currentPerson;
+				try {
+				session.getConnection().getTransportLayer().sendFileFromGUI(file, receiver);
+				} catch (IOException e) {
+					System.out.println("Couldn't send file");
+				}
+			}
 		}
 	}
 	

@@ -188,18 +188,17 @@ public class GUI extends Application {
 			inputBox.clear();
 		});
 		sendImage.setOnAction(e -> {
-			System.out.print("comming soon!");
-//			FileChooser fileChooser = new FileChooser();
-//			fileChooser.setTitle("Send image");
-//			fileChooser.setInitialDirectory(
-//		            new File(System.getProperty("user.home"))
-//		        ); 
-//            fileChooser.getExtensionFilters().addAll(
-//          	new FileChooser.ExtensionFilter("PNG", "*.png"),          
-//				new FileChooser.ExtensionFilter("JPG", "*.jpg")
-//                    
-//                );
-//			GUIHandler.sendImage(fileChooser.showOpenDialog(window));
+			FileChooser fileChooser = new FileChooser();
+			fileChooser.setTitle("Send file");
+			fileChooser.setInitialDirectory(
+		            new File(System.getProperty("user.home"))
+		        ); 
+            fileChooser.getExtensionFilters().addAll(
+          	new FileChooser.ExtensionFilter("PNG", "*.png"),          
+				new FileChooser.ExtensionFilter("JPG", "*.jpg")
+                    
+                );
+			GUIHandler.sendFile(fileChooser.showOpenDialog(window));
 		});
 		
 	}
