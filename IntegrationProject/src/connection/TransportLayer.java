@@ -157,7 +157,7 @@ public class TransportLayer {
 		int fileID = payload.getFileID();
 		int totalPackets = payload.getTotalPackets();
 		String extension = payload.getExtensiion();
-		
+		Message message = new Message(senderID, session.getID(), fileID, extension, payload.getData());
 		if (totalPackets > 1) {
 			if (!fileBuffer.containsKey(senderID)) {
 				HashMap<Integer, ArrayList<FileMessage>> senderFiles = new HashMap<>();
@@ -194,57 +194,57 @@ public class TransportLayer {
 				}
 				byte[] file = outputStream.toByteArray();
 				fileBuffer.get(senderID).remove(fileID);
-				Message message = new Message(senderID, session.getID(), fileID, extension, file);
+				Message endMessage = new Message(senderID, session.getID(), fileID, extension, file);
 				handleFileMessage(message);
 			}
 		} else {
-			Message message = new Message(senderID, session.getID(), fileID, extension, payload.getData());
 			handleFileMessage(message);
 		}
+		// Send an acknowledgement
+		sendAcknowledgement(receivedPacket, message);
 	}
 
 	private void handleFileMessage(Message receivedMessage) {
+		Person sender = session.getKnownPersons().get(receivedMessage.getSenderID());
 		boolean addMessageToList = true;		
 		// Add it to the chatmessages map
-		ArrayList<Message> publicChatMessageList = session.getPublicChatMessages();		
-		for (Message message : publicChatMessageList) {
-			if (message.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == message.getSenderID()) {
-				addMessageToList = false;
-				break;
+		if (!session.getChatMessages().containsKey(sender)) {
+			session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{receivedMessage})));
+		} else {
+			ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
+			
+			for (Message msg : currentMessageList) {
+				if (msg.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == msg.getSenderID()) {
+					addMessageToList = false;
+					break;
+				}
 			}
-		}
-		
-		if (addMessageToList) {
-			int insertPosition = publicChatMessageList.size();
-			int receivedMessageID = receivedMessage.getMessageID();
-			boolean continues = true;
-			for (int i = publicChatMessageList.size() - 1; i >= 0 && continues; i--) {
-				if (publicChatMessageList.get(i).getSenderID() != session.getID()) {
-					if (publicChatMessageList.get(i).getMessageID() > receivedMessageID) {
-						insertPosition = i;
-					} else {
-						if (insertPosition == publicChatMessageList.size()) {
-							publicChatMessageList.add(receivedMessage);
-							continues = false;
+			
+			if (addMessageToList) {
+				int insertPosition = currentMessageList.size();
+				int receivedMessageID = receivedMessage.getMessageID();
+				boolean continues = true;
+				for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
+					if (currentMessageList.get(i).getSenderID() != session.getID()) {
+						if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
+							insertPosition = i;
 						} else {
-							publicChatMessageList.add(insertPosition, receivedMessage);
-							continues = false;							
+							if (insertPosition == currentMessageList.size()) {
+								currentMessageList.add(receivedMessage);
+								continues = false;
+							} else {
+								currentMessageList.add(insertPosition, receivedMessage);
+								continues = false;
+							}
 						}
 					}
 				}
-			}
-		
-			if (continues) {
-				publicChatMessageList.add(receivedMessage);
-			}
-			
-			session.setPublicChatMessages(publicChatMessageList);
+				if (continues) {
+					currentMessageList.add(receivedMessage);
+				}
+				session.getChatMessages().put(sender, currentMessageList);
+			}				
 		}
-		
-		// Update GUI
-		if (addMessageToList) {
-			GUIHandler.messagePutInMap(session.getKnownPersons().get(receivedMessage.getSenderID()));
-		}		
 	}
 
 	/**
@@ -952,8 +952,7 @@ public class TransportLayer {
 		int nextFileID = receiver.getNextMessageID();
 		ByteBuffer byteBuffer = ByteBuffer.wrap(Files.readAllBytes(file.toPath()));
 		int chunkSize = 63000;
-		System.out.println(file.length());
-		double totalPackets = Math.ceil(file.length()/(double)chunkSize);
+		int totalPackets = (int) Math.ceil(file.length()/(double)chunkSize);
 		String extension = file.getName().substring(file.getName().lastIndexOf("."));
 		byte[] data;
 		for (int i = 0; i < totalPackets; i++) {
