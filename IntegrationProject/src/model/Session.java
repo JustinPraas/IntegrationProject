@@ -51,12 +51,6 @@ public class Session {
 	private Map<Person, ArrayList<Message>> chatMessages;
 	
 	/**
-	 * A map that keeps track of the files shared with the contact person:
-	 * Map<The contact person's ID, the array of files<the array of file-messages>>.
-	 */
-	private Map<Person, ArrayList<ArrayList<byte[]>>> fileMessages;
-	
-	/**
 	 * A list that keeps track of the public chat messages (a.k.a. global chat messages).
 	 */
 	private ArrayList<Message> publicChatMessages;
@@ -85,7 +79,6 @@ public class Session {
 		this.knownPersons = new HashMap<>();
 		this.secretKeysForPerson = new HashMap<>();
 		this.chatMessages = new HashMap<>();
-		this.fileMessages = new HashMap<>();
 		this.publicChatMessages = new ArrayList<>();
 		this.sequenceNumber = 0;
 		this.nextPublicMessageID = 0;
@@ -129,10 +122,6 @@ public class Session {
 
 	public Map<Person, ArrayList<Message>> getChatMessages() {
 		return chatMessages;
-	}
-	
-	public Map<Person, ArrayList<ArrayList<byte[]>>> getFileMessages() {
-		return fileMessages;
 	}
 
 	public int getSeq() {

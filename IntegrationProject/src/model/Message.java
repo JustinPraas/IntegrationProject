@@ -13,7 +13,6 @@ public class Message {
 	private long timestamp;
 	//private long timestampDiff;
 	private String text;
-	private byte[] fileData;
 	
 	public Message(int senderID, int receiverID, int messageID, String text, boolean myMessage) {
 		this.senderID = senderID;
@@ -21,14 +20,6 @@ public class Message {
 		this.messageID = messageID;
 		timestamp = new Date().getTime();
 		this.text = text;		
-	}
-	
-	public Message(int senderID, int receiverID, int fileID, String extension, byte[] fileData) {
-		this.senderID = senderID;
-		this.receiverID = receiverID;
-		this.messageID = fileID;
-		this.text = FileMessage.FILE_IDENTIFIER + extension;
-		this.fileData = fileData;
 	}
 	
 	public String getText() {
@@ -49,10 +40,6 @@ public class Message {
 	
 	public String getTimestampString() {
 		return new SimpleDateFormat("HH:mm").format(timestamp);
-	}
-
-	public byte[] getFileData() {
-		return fileData;
 	}
 	
 	// TODO: Message order with timestamp differences
