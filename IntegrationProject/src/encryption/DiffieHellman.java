@@ -19,7 +19,7 @@ public class DiffieHellman {
 	 * @return secretKey the random secret key produced from the given prime
 	 */
 	public static int produceSecretKey(int prime) {
-		return (int) (5 + Math.random() * (prime - 1));
+		return (int) (5 + Math.random() * (prime - 1)); //TODO TEST, changed prime-5 to prime-1
 	}
 
 	/**
