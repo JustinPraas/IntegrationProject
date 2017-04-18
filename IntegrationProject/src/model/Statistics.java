@@ -5,6 +5,7 @@ public class Statistics {
 	int sessionTime,
 		packetsForwarded,
 		packetsIgnored,
+		retransmissionsDone,
 		pulsesSent,
 		privateMessagesSent,
 		globalMessagesSent,
@@ -18,14 +19,14 @@ public class Statistics {
 
 	// GET SUMS OF FIELDS
 	public int getTotalPacketsSent() {
-		return getPacketsForwarded() + + getPulsesSent() + getPrivateMessagesSent() 
-				+ getGlobalMessagesSent() + getAcknowledgementsSent() 
-				+ getSecurityMessagesSent();
+		return getPacketsForwarded() + + getRetransmissionsDone() + getPulsesSent() 
+				+ getPrivateMessagesSent() + getGlobalMessagesSent() 
+				+ getAcknowledgementsSent() + getSecurityMessagesSent();
 	}
 	
 	public int getTotalPacketsReceived() {
 		return getPacketsIgnored() + getPulsesReceived() + getPrivateMessagesReceived()
-				+ getGlobalMessagesReceived() + getAcknowledgementsReceived() 
+				+ getGlobalMessagesReceived() + getAcknowledgementsReceived()
 				+ getSecurityMessagesReceived();
 	}
 	
@@ -40,6 +41,10 @@ public class Statistics {
 
 	public int getPacketsIgnored() {
 		return packetsIgnored;
+	}
+	
+	public int getRetransmissionsDone() {
+		return retransmissionsDone;
 	}
 
 	public int getPulsesSent() {
@@ -61,7 +66,7 @@ public class Statistics {
 	public int getSecurityMessagesSent() {
 		return securityMessagesSent;
 	}
-
+	
 	public int getPulsesReceived() {
 		return pulsesReceived;
 	}
@@ -93,6 +98,10 @@ public class Statistics {
 	
 	public void increasePacketsIgnored() {
 		packetsIgnored++;
+	}
+	
+	public void increaseRetransmissionsDone() {
+		retransmissionsDone++;
 	}
 	
 	public void increasePulsesSent() {

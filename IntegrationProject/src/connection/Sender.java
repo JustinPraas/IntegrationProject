@@ -15,6 +15,7 @@ public class Sender {
 	public void send(Packet packet) {
 		try {
 			connection.getSendSocket().send(packet.getDatagramPacket());
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

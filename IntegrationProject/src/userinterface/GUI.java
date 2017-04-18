@@ -217,38 +217,39 @@ public class GUI extends Application {
 			Alert statisticsWindow = new Alert(AlertType.INFORMATION);
 			statisticsWindow.setTitle("Statistics");
 			statisticsWindow.setHeaderText("Usage statistics");
-			statisticsWindow.getDialogPane().autosize();
 			statisticsWindow.getDialogPane().getStylesheets().add(getClass().getResource("Test.css").toExternalForm());
 			statisticsWindow.getDialogPane().getStyleClass().add("statisticsScreen");
 			
 			Statistics stats = GUIHandler.session.getStatistics();
 			
 			String statisticsString = "";
-			String format = "%1$20s %2$10s %3$10s\n";
+			String format = "%1$21s %2$9s %3$9s\n";
 			
 			statisticsString += String.format(format, "Session time", "", 
 					stats.getSessionTime());
 			statisticsString += String.format(format, "Experience gained", "", 
 					GUIHandler.session.getTotalExperience());
 			statisticsString += String.format(format, "Packets forwarded", "", 
-					stats.getPacketsForwarded()); // TODO
+					stats.getPacketsForwarded());
 			statisticsString += String.format(format, "Packets ignored", "", 
-					stats.getPacketsIgnored()); // TODO
+					stats.getPacketsIgnored());
+			statisticsString += String.format(format, "Packets retransmitted", "", 
+					stats.getRetransmissionsDone());
 			statisticsString += String.format(format, "", "", "");
 			
 			statisticsString += String.format(format, "", "Sent", "Received");
-			statisticsString += String.format(format, "Packets", 
-					stats.getTotalPacketsSent(), stats.getTotalPacketsReceived()); // TODO
+			statisticsString += String.format(format, "Total packets", 
+					stats.getTotalPacketsSent(), stats.getTotalPacketsReceived());
 			statisticsString += String.format(format, "Pulses", 
-					stats.getPulsesSent(), stats.getPulsesReceived()); // TODO
+					stats.getPulsesSent(), stats.getPulsesReceived());
 			statisticsString += String.format(format, "Private messages", 
-					stats.getPrivateMessagesSent(), stats.getPrivateMessagesReceived()); // TODO
+					stats.getPrivateMessagesSent(), stats.getPrivateMessagesReceived());
 			statisticsString += String.format(format, "Global messages", 
-					stats.getGlobalMessagesSent(), stats.getGlobalMessagesReceived()); // TODO
+					stats.getGlobalMessagesSent(), stats.getGlobalMessagesReceived());
 			statisticsString += String.format(format, "Acknowledgements", 
-					stats.getAcknowledgementsSent(), stats.getAcknowledgementsReceived()); // TODO
+					stats.getAcknowledgementsSent(), stats.getAcknowledgementsReceived());
 			statisticsString += String.format(format, "Security messages", 
-					stats.getSecurityMessagesSent(), stats.getSecurityMessagesReceived()); // TODO
+					stats.getSecurityMessagesSent(), stats.getSecurityMessagesReceived());
 			
 			statisticsWindow.setContentText(statisticsString);
 			statisticsWindow.showAndWait();
