@@ -162,7 +162,7 @@ public class GUI extends Application {
 		inputBox = new TextField();
 		Button sendButton = new Button("Send");
 		inputHBox.setBottom(bottomBox);
-		leftVBox.getChildren().addAll(currentChatHeader, scrollingChatBox, inputHBox);
+		leftVBox.getChildren().addAll(headerArea, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
 		
 		File dir = new File("emoticons/");
