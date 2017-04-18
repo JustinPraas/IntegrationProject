@@ -6,11 +6,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import connection.TransportLayer;
+import encryption.Crypter;
+import encryption.EncryptionPair;
 import packet.*;
 
 public class TransportLayerTest {
 	
 	Pulse pulse;
+	PlainMessage plainMessage;
 	EncryptedMessage encryptedMessage;
 	Acknowledgement acknowledgement;
 	
@@ -18,10 +21,26 @@ public class TransportLayerTest {
 	Packet encrMsgPacket;
 	Packet ackPacket;
 	
+	// For the encryption test
+	String plainText = "Hello A, this is B";
+	int prime = 23;
+	int generator = 5;
+	int secretKeyA = 18;
+	int secretKeyB = 21;
+	
+	EncryptionPair epA = new EncryptionPair(23, 5, 18, true);
+	EncryptionPair epB = new EncryptionPair(23, 5, 21, true);
+	
+	String midWayKeyA = Crypter.getKey(epA, secretKeyA);
+	String midWayKeyB = Crypter.getKey(epB, secretKeyB);
+	
+	String cipher = Crypter.encrypt(midWayKeyA, plainText);
+	
 	@Before
 	public void setUp() {
 		pulse = new Pulse(3, "Bob");
-		encryptedMessage = new EncryptedMessage(20, 14, "This is a test");
+		plainMessage = new PlainMessage(20, 5, "Hello");
+		encryptedMessage = new EncryptedMessage(33, Integer.parseInt(midWayKeyA), cipher.length(), cipher);
 		acknowledgement = new Acknowledgement(20);
 		
 		pulsePacket = new Packet(1, 2, 1, 0, pulse);
