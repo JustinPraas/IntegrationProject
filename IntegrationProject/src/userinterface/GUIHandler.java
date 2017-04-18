@@ -329,7 +329,8 @@ public class GUIHandler {
 		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
 			Person person = entry.getValue();
 			
-			Button button = new Button(person.getName());
+			Button button = new Button(person.getName() 
+					+ " (level " + person.getLevelString() + ")");
 			
 			// Check if the Button should be marked as containing unread messages
 			if (personUnreadMessages.containsKey(person) && personUnreadMessages.get(person) 

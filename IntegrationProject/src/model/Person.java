@@ -11,6 +11,7 @@ public class Person {
 	public int ID;
 	private int timeToLive;
 	private int nextMessageID;
+	private int level;
 	
 
 
@@ -34,9 +35,10 @@ public class Person {
 	 * @param name the outsider's name
 	 * @param ID the outsider's ID
 	 */
-	public Person(String name, int ID) {
+	public Person(String name, int ID, int level) {
 		this.name = name;
 		this.ID = ID;
+		this.level = level;
 	}
 	
 	public int getTimeToLive() {
@@ -66,6 +68,18 @@ public class Person {
 
 	public EncryptionPair getPrivateChatPair() {
 		return privateChatPair;
+	}
+	
+	public int getLevel() {
+		return level;
+	}
+	
+	public String getLevelString() {
+		return Integer.toString(level);
+	}
+	
+	public void setLevel(int level) {
+		this.level = level;
 	}
 
 	public void setPrivateChatPair(EncryptionPair privateChatPair) {
