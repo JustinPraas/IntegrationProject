@@ -96,9 +96,7 @@ public class TransportLayer {
 		// Else: add the packet to the seenPackets list
 		if (seenPackets.contains(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
 			return;
-		} else {
-			addPacketToSeenPackets(receivedPacket);
-		}		
+		}	
 		
 		// If the packet has PLAIN_MESSAGE payload contents, handle it
 		// Else, if it's NOT a Pulse AND we are NOT the destination, foward it
@@ -128,6 +126,8 @@ public class TransportLayer {
 				System.err.println("Unknown type identifier at handlePacket(): " + receivedPacket.getTypeIdentifier());
 			}
 		}
+		
+		addPacketToSeenPackets(receivedPacket);
 	}
 
 	/**
