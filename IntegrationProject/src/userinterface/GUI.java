@@ -245,6 +245,8 @@ public class GUI extends Application {
 					stats.getPrivateMessagesSent(), stats.getPrivateMessagesReceived());
 			statisticsString += String.format(format, "Global messages", 
 					stats.getGlobalMessagesSent(), stats.getGlobalMessagesReceived());
+			statisticsString += String.format(format, "Acknowledgements", 
+					stats.getAcknowledgementsSent(), stats.getAcknowledgementsReceived());
 			statisticsString += String.format(format, "Security messages", 
 					stats.getSecurityMessagesSent(), stats.getSecurityMessagesReceived());
 			

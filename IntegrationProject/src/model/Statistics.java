@@ -8,20 +8,24 @@ public class Statistics {
 		pulsesSent,
 		privateMessagesSent,
 		globalMessagesSent,
+		acknowledgementsSent,
 		securityMessagesSent,
 		pulsesReceived,
 		privateMessagesReceived,
 		globalMessagesReceived,
+		acknowledgementsReceived,
 		securityMessagesReceived;
 
 	public int getTotalPacketsSent() {
 		return getPacketsForwarded() + + getPulsesSent() + getPrivateMessagesSent() 
-				+ getGlobalMessagesSent() + getSecurityMessagesSent();
+				+ getGlobalMessagesSent() + getAcknowledgementsSent() 
+				+ getSecurityMessagesSent();
 	}
 	
 	public int getTotalPacketsReceived() {
 		return getPacketsIgnored() + getPulsesReceived() + getPrivateMessagesReceived()
-				+ getGlobalMessagesReceived() + getSecurityMessagesReceived();
+				+ getGlobalMessagesReceived() + getAcknowledgementsReceived() 
+				+ getSecurityMessagesReceived();
 	}
 	
 	public int getSessionTime() {
@@ -47,6 +51,10 @@ public class Statistics {
 	public int getGlobalMessagesSent() {
 		return globalMessagesSent;
 	}
+	
+	public int getAcknowledgementsSent() {
+		return acknowledgementsSent;
+	}
 
 	public int getSecurityMessagesSent() {
 		return securityMessagesSent;
@@ -62,6 +70,10 @@ public class Statistics {
 
 	public int getGlobalMessagesReceived() {
 		return globalMessagesReceived;
+	}
+	
+	public int getAcknowledgementsReceived() {
+		return acknowledgementsReceived;
 	}
 
 	public int getSecurityMessagesReceived() {
