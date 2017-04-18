@@ -386,10 +386,7 @@ public class TransportLayer {
 	 * been seen before.
 	 * @param receivedPacket the packet that has been received
 	 */
-	public void forwardPacket(Packet receivedPacket) {
-			
-		System.out.println("Forward packet"); // TODO
-		
+	public void forwardPacket(Packet receivedPacket) {		
 		// Update experience bar
 		if (receivedPacket.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE) {
 			session.getExperienceTracker().forwardMessage();
