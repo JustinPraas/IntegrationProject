@@ -186,26 +186,26 @@ public class GUI extends Application {
 		topBox.setPadding(new Insets(0, 0, 15, 0));
 		Button emoticons = new Button("");
 		if (directoryListing != null && directoryListing.length > 0) {
-		  for (File child : directoryListing) {
-			  ImageView ImgVwtemp = new ImageView(child.toURI().toString());
-			  ImgVwtemp.setFitHeight(18);
-			  ImgVwtemp.setPreserveRatio(true);
-			  ImgVwtemp.setSmooth(true);
-			  Button temp = new Button("", ImgVwtemp);
-			  String fileName = child.getName();
-          	  String displayName = fileName.substring(fileName.indexOf("_")+1, fileName.indexOf("."));
-          	  myEmoticons.put(displayName, child);
-		      temp.setOnAction(new EventHandler<ActionEvent>() {
-		            @Override public void handle(ActionEvent e) {
-		            	inputBox.appendText("::" + displayName + "::");
+			for (File child : directoryListing) {
+				ImageView ImgVwtemp = new ImageView(child.toURI().toString());
+				ImgVwtemp.setFitHeight(18);
+				ImgVwtemp.setPreserveRatio(true);
+				ImgVwtemp.setSmooth(true);
+				Button temp = new Button("", ImgVwtemp);
+				String fileName = child.getName();
+				String displayName = fileName.substring(fileName.indexOf("_")+1, fileName.indexOf("."));
+				myEmoticons.put(displayName, child);
+				temp.setOnAction(new EventHandler<ActionEvent>() {
+					@Override public void handle(ActionEvent e) {
+						inputBox.appendText("::" + displayName + "::");
 		            }
-		        });
-			  topBox.getChildren().add(temp);
-		  }
-		  emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
-		  bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
+				});
+				topBox.getChildren().add(temp);
+				}
+			emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
+			bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
 		} else {
-		  bottomBox.getChildren().addAll(inputBox, sendButton);
+			bottomBox.getChildren().addAll(inputBox, sendButton);
 		}
 
 		// Initialize elements of right VBox
