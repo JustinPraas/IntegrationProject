@@ -314,7 +314,7 @@ public class GUIHandler {
 		
 		// Set Header Label
 		Platform.runLater(() -> {
-			GUI.currentChatHeader.setText("Unreliable Global Chat");
+			GUI.currentChatHeader.setText("Best-effort Global Chat");
 		});
 		
 		// Set TextBox text (if exists)

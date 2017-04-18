@@ -183,7 +183,7 @@ public class GUI extends Application {
 		myEmoticons = new HashMap<>();
 		Arrays.sort(directoryListing);
 		FlowPane topBox = new FlowPane();
-		topBox.setPadding(new Insets(0, 0, 5, 0));
+		topBox.setPadding(new Insets(0, 0, 15, 0));
 		Button emoticons = new Button("");
 		if (directoryListing != null && directoryListing.length > 0) {
 		  for (File child : directoryListing) {
@@ -259,10 +259,12 @@ public class GUI extends Application {
 		inputBox.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
+			inputHBox.setTop(null);
 		});
 		sendButton.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
+			inputHBox.setTop(null);
 		});
 
 		emoticons.setOnAction(e -> Platform.runLater(() -> {
