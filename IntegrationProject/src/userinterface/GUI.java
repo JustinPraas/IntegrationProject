@@ -179,7 +179,7 @@ public class GUI extends Application {
 		if (directoryListing != null && directoryListing.length > 0) {
 		  for (File child : directoryListing) {
 			  ImageView ImgVwtemp = new ImageView(child.toURI().toString());
-			  ImgVwtemp.setFitWidth(18);
+			  ImgVwtemp.setFitHeight(18);
 			  ImgVwtemp.setPreserveRatio(true);
 			  ImgVwtemp.setSmooth(true);
 			  Button temp = new Button("", ImgVwtemp);

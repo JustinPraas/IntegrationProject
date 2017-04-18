@@ -269,6 +269,8 @@ public class GUIHandler {
 					if (GUI.myEmoticons.containsKey(s)) {
 						File emoticon = GUI.myEmoticons.get(s);
 						ImageView view = new ImageView(new Image(emoticon.toURI().toString()));
+						view.setFitWidth(18);
+						view.setPreserveRatio(true);
 						emoticonBox.getChildren().add(view);
 					} else {
 						emoticonBox.getChildren().add(new Text(s));
