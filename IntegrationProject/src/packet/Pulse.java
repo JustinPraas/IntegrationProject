@@ -11,7 +11,7 @@ public class Pulse implements Payload {
 	private String name;
 	private int level;
 
-	public Pulse(int nameLength, String name, int level) {
+	public Pulse(int nameLength, int level, String name) {
 		this.nameLength = nameLength;
 		this.name = name;
 		this.level = level;

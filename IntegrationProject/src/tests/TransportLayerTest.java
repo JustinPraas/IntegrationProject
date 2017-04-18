@@ -14,7 +14,7 @@ import packet.*;
 
 public class TransportLayerTest {
 	
-	Pulse pulse = new Pulse(3, "Bob");
+	Pulse pulse = new Pulse(3, 2, "Bob");
 	Packet pulsePacket = new Packet(2, 5, 4, Payload.PULSE, pulse);
 	
 	GlobalMessage globalMessage = new GlobalMessage(1, 3, "Hey");
@@ -162,6 +162,11 @@ public class TransportLayerTest {
 		assertEquals(Payload.ACKNOWLEDGEMENT, acknowledgementPacket.getTypeIdentifier());
 		assertEquals(Payload.ENCRYPTED_MESSAGE, encryptedMessagePacket.getTypeIdentifier());
 		assertEquals(Payload.ENCRYPTION_PAIR, encryptionPairExchangePacket.getTypeIdentifier());
+	}
+	
+	@Test
+	public void getLevelTest() {
+		assertEquals(2, pulse.getLevel());
 	}
 	
 	@Test

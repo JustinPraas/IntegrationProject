@@ -513,7 +513,7 @@ public class TransportLayer {
 			int nameLength = getNameLength(payloadData);
 			String name = getName(payloadData);
 			int level = getLevel(payloadData);
-			return new Pulse(nameLength, name, level);
+			return new Pulse(nameLength, level, name);
 		case Payload.GLOBAL_MESSAGE:
 			String message = getPlainMessage(payloadData);
 			int messageID = getMessageID(payloadData, Payload.GLOBAL_MESSAGE);
