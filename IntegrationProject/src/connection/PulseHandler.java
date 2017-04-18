@@ -52,6 +52,8 @@ public class PulseHandler extends Thread {
 		while (!connection.sendSocket.isClosed()) {
 			pulse();
 			decreaseTimeToLive();
+			session.getStatistics().increaseSessionTime();
+			session.getStatistics().increasePulsesSent();
 			sendEncryptionPair();
 			try { Thread.sleep(PULSE_INTERVAL); } catch (InterruptedException e) { e.printStackTrace(); }
 		}
@@ -106,6 +108,7 @@ public class PulseHandler extends Thread {
 					entry.getValue().setPrivateChatPair(ep);
 					
 					// Send the packet
+					session.getStatistics().increaseSecurityMessagesSent();
 					EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator(), ep.getLocalHalfKey());
 					Packet packet = new Packet(session.getID(), entry.getValue().getID(), 
 							session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epe);
@@ -116,6 +119,7 @@ public class PulseHandler extends Thread {
 				// Send the packet
 				EncryptionPair ep = entry.getValue().getPrivateChatPair();
 				EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator(), ep.getLocalHalfKey());
+				session.getStatistics().increaseSecurityMessagesSent();
 				Packet packet = new Packet(session.getID(), entry.getValue().getID(), 
 						session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epe);
 				session.getConnection().getSender().send(packet);

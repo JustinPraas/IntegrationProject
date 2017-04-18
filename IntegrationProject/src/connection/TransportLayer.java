@@ -97,6 +97,7 @@ public class TransportLayer {
 		// Don't do anything if: we've already seen this packet OR if this packet is from ourself
 		// Else: add the packet to the seenPackets list
 		if (seenPacket(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
+			session.getStatistics().increasePacketsIgnored();
 			return;
 		}	
 		
@@ -104,6 +105,7 @@ public class TransportLayer {
 		// Else, if it's NOT a Pulse AND we are NOT the destination, foward it
 		// Else process the packet accordingly
 		if (receivedPacket.getTypeIdentifier() == Payload.GLOBAL_MESSAGE) {
+			session.getStatistics().increaseGlobalMessagesReceived();
 			handleGlobalMessage(receivedPacket);
 			forwardPacket(receivedPacket);
 		} else if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
@@ -112,17 +114,21 @@ public class TransportLayer {
 		} else {	
 			switch (receivedPacket.getTypeIdentifier()) {
 			case Payload.PULSE:
+				session.getStatistics().increasePulsesReceived();
 				forwardPacket(receivedPacket);
 				handlePulse(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
+				session.getStatistics().increaseAcknowlegdementsReceived();
 				handleAcknowledgement(receivedPacket);
 				break;
 			case Payload.ENCRYPTION_PAIR:
+				session.getStatistics().increaseSecurityMessagesReceived();
 				handleEncryptionPair(receivedPacket);
 				break;
 			case Payload.ENCRYPTED_MESSAGE:
 				handleEncryptedMessage(receivedPacket);
+				session.getStatistics().increasePrivateMessagesReceived();
 				break;
 			default: 
 				System.err.println("Unknown type identifier at handlePacket(): " + receivedPacket.getTypeIdentifier());
@@ -168,7 +174,7 @@ public class TransportLayer {
 		if (session.getKnownPersons().containsKey(senderID)) {
 			person = session.getKnownPersons().get(senderID);
 			
-			if (level != person.getLevel()) {//TODO
+			if (level != person.getLevel()) {
 				person.setLevel(level);
 				String notificationString = person.getName() + " reached level " + level;
 				Message notificationMessage = new Message(-1, -1, -1, notificationString, false);
@@ -319,6 +325,7 @@ public class TransportLayer {
 		}
 		
 		// Send an acknowledgement
+		session.getStatistics().increaseAcknowlegdementsSent();
 		sendAcknowledgement(receivedPacket, message);
 	}
 	
@@ -374,6 +381,7 @@ public class TransportLayer {
 				
 				// Send the same EncryptionPairExchange packet back as acknowledgement
 				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator(), ep.getLocalHalfKey());
+				session.getStatistics().increaseSecurityMessagesSent();
 				Packet packet = new Packet(session.getID(), senderID, session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epeResponse);
 				session.getConnection().getSender().send(packet);
 			} else {
@@ -408,6 +416,7 @@ public class TransportLayer {
 			GUIHandler.updateProgressBar();
 		}
 		
+		session.getStatistics().increasePacketsForwarded();
 		session.getConnection().getSender().send(receivedPacket);
 	}
 
@@ -439,6 +448,7 @@ public class TransportLayer {
 	public void sendMessageFromGUI(String msg, Person receiver) {
 		
 		// Update experience bar
+		session.getStatistics().increasePrivateMessagesSent();
 		session.getExperienceTracker().sendMessage();
 		GUIHandler.updateProgressBar();
 		
@@ -474,6 +484,8 @@ public class TransportLayer {
 	}
 	
 	public void sendMessageFromGUI(String msg) {
+		
+		session.getStatistics().increaseGlobalMessagesSent();
 		
 		// Update experience bar
 		session.getExperienceTracker().sendMessage();

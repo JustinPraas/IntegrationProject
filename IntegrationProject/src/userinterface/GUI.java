@@ -1,6 +1,8 @@
 package userinterface;
 
 import java.io.File;
+import java.util.Formatter;
+import java.util.Locale;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,6 +46,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
+import jdk.management.resource.internal.inst.SocketOutputStreamRMHooks;
+import model.Statistics;
 
 public class GUI extends Application {
 
@@ -134,9 +138,12 @@ public class GUI extends Application {
 		
 		// Initialize elements of left VBox
 		HBox headerArea = new HBox();
+		headerArea.setSpacing(10);
 		currentChatHeader = new Label();
 		Label fillerLabel = new Label();
-		Label spaceLabel = new Label("  ");
+		Button statisticsButton = new Button("Stats");
+		statisticsButton.setMaxHeight(Double.MAX_VALUE);
+		initializeStatisticsWindow(statisticsButton);
 		fillerLabel.setMaxWidth(Double.MAX_VALUE);
 		levelLabel = new Label("Level 0");
 		levelLabel.setFont(Font.font(null, FontWeight.NORMAL, 24));
@@ -145,7 +152,7 @@ public class GUI extends Application {
 		experienceProgressBar.setPrefWidth(200);
 		HBox.setHgrow(fillerLabel, Priority.ALWAYS);
 		headerArea.getChildren().addAll(currentChatHeader, fillerLabel, levelLabel, 
-				spaceLabel, experienceProgressBar);
+				experienceProgressBar, statisticsButton);
 		
 		chatBox = new VBox();
 		chatBox.setSpacing(2);
@@ -160,7 +167,9 @@ public class GUI extends Application {
 		HBox bottomBox = new HBox();
 		bottomBox.setSpacing(10);
 		inputBox = new TextField();
+		inputBox.setMaxHeight(Double.MAX_VALUE);
 		Button sendButton = new Button("Send");
+		sendButton.setMaxHeight(Double.MAX_VALUE);
 		inputHBox.setBottom(bottomBox);
 		leftVBox.getChildren().addAll(headerArea, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
@@ -174,29 +183,29 @@ public class GUI extends Application {
 		myEmoticons = new HashMap<>();
 		Arrays.sort(directoryListing);
 		FlowPane topBox = new FlowPane();
-		topBox.setPadding(new Insets(0, 0, 5, 0));
+		topBox.setPadding(new Insets(0, 0, 15, 0));
 		Button emoticons = new Button("");
 		if (directoryListing != null && directoryListing.length > 0) {
-		  for (File child : directoryListing) {
-			  ImageView ImgVwtemp = new ImageView(child.toURI().toString());
-			  ImgVwtemp.setFitHeight(18);
-			  ImgVwtemp.setPreserveRatio(true);
-			  ImgVwtemp.setSmooth(true);
-			  Button temp = new Button("", ImgVwtemp);
-			  String fileName = child.getName();
-          	  String displayName = fileName.substring(fileName.indexOf("_")+1, fileName.indexOf("."));
-          	  myEmoticons.put(displayName, child);
-		      temp.setOnAction(new EventHandler<ActionEvent>() {
-		            @Override public void handle(ActionEvent e) {
-		            	inputBox.appendText("::" + displayName + "::");
+			for (File child : directoryListing) {
+				ImageView ImgVwtemp = new ImageView(child.toURI().toString());
+				ImgVwtemp.setFitHeight(18);
+				ImgVwtemp.setPreserveRatio(true);
+				ImgVwtemp.setSmooth(true);
+				Button temp = new Button("", ImgVwtemp);
+				String fileName = child.getName();
+				String displayName = fileName.substring(fileName.indexOf("_")+1, fileName.indexOf("."));
+				myEmoticons.put(displayName, child);
+				temp.setOnAction(new EventHandler<ActionEvent>() {
+					@Override public void handle(ActionEvent e) {
+						inputBox.appendText("::" + displayName + "::");
 		            }
-		        });
-			  topBox.getChildren().add(temp);
-		  }
-		  emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
-		  bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
+				});
+				topBox.getChildren().add(temp);
+				}
+			emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
+			bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
 		} else {
-		  bottomBox.getChildren().addAll(inputBox, sendButton);
+			bottomBox.getChildren().addAll(inputBox, sendButton);
 		}
 
 		// Initialize elements of right VBox
@@ -250,17 +259,71 @@ public class GUI extends Application {
 		inputBox.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
+			inputHBox.setTop(null);
 		});
 		sendButton.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
+			inputHBox.setTop(null);
 		});
+
 		emoticons.setOnAction(e -> Platform.runLater(() -> {
 		if (inputHBox.getChildren().contains(topBox)) {
 			inputHBox.setTop(null);
 		} else {
 			inputHBox.setTop(topBox);
 		}}));
+		
+	}
+	
+	private void initializeStatisticsWindow(Button statisticsButton) {
+		
+		statisticsButton.setOnAction(e -> {
+			
+			Alert statisticsWindow = new Alert(AlertType.INFORMATION);
+			statisticsWindow.setTitle("Statistics");
+			statisticsWindow.setHeaderText("Usage statistics");
+			statisticsWindow.getDialogPane().getStylesheets().add(getClass().getResource("Test.css").toExternalForm());
+			statisticsWindow.getDialogPane().getStyleClass().add("statisticsScreen");
+			
+			Statistics stats = GUIHandler.session.getStatistics();
+			
+			String statisticsString = "";
+			String format = "%1$21s %2$9s %3$9s\n";
+			
+			statisticsString += String.format(format, "Session time", "", 
+					stats.getSessionTime());
+			statisticsString += String.format(format, "Levels increased", "", 
+					GUIHandler.session.getExperienceTracker().getCurrentLevel());
+			statisticsString += String.format(format, "Experience gained", "", 
+					GUIHandler.session.getExperienceTracker().getTotalExperience());
+			statisticsString += String.format(format, "Packets forwarded", "", 
+					stats.getPacketsForwarded());
+			statisticsString += String.format(format, "Packets ignored", "", 
+					stats.getPacketsIgnored());
+			statisticsString += String.format(format, "Packets retransmitted", "", 
+					stats.getRetransmissionsDone());
+			statisticsString += String.format(format, "", "", "");
+			
+			statisticsString += String.format(format, "", "Sent", "Received");
+			statisticsString += String.format(format, "Total packets", 
+					stats.getTotalPacketsSent(), stats.getTotalPacketsReceived());
+			statisticsString += String.format(format, "Pulses", 
+					stats.getPulsesSent(), stats.getPulsesReceived());
+			statisticsString += String.format(format, "Private messages", 
+					stats.getPrivateMessagesSent(), stats.getPrivateMessagesReceived());
+			statisticsString += String.format(format, "Global messages", 
+					stats.getGlobalMessagesSent(), stats.getGlobalMessagesReceived());
+			statisticsString += String.format(format, "Acknowledgements", 
+					stats.getAcknowledgementsSent(), stats.getAcknowledgementsReceived());
+			statisticsString += String.format(format, "Security messages", 
+					stats.getSecurityMessagesSent(), stats.getSecurityMessagesReceived());
+			
+			statisticsWindow.setContentText(statisticsString);
+			statisticsWindow.showAndWait();
+			
+		});
+		
 	}
 	
 	// Pass on user name if not empty, otherwise give warning

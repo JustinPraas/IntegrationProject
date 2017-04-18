@@ -46,6 +46,14 @@ public class ExperienceTracker {
 		return (double) getCurrentExperience() / getExperienceRequiredNextLevel();
 	}
 	
+	public int getTotalExperience() {
+		int total = getCurrentExperience();
+		for (int i = getCurrentLevel(); i > 0; i--) {
+			total += getExperienceRequired(i);
+		}
+		return total;
+	}
+	
 	public void sendMessage() {
 		currentExperience += EXP_SEND;
 		checkLevelIncrease();
