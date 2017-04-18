@@ -37,7 +37,7 @@ import model.Session;
 public class GUIHandler {
 
 	private static String applicationName;
-	private static Session session;
+	protected static Session session;
 	protected static String username;
 	private static HashMap<Button, Person> buttonToPerson;
 	private static HashMap<Person, Button> personToButton;

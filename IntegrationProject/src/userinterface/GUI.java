@@ -1,6 +1,8 @@
 package userinterface;
 
 import java.io.File;
+import java.util.Formatter;
+import java.util.Locale;
 import java.util.Optional;
 
 import javafx.application.Application;
@@ -25,6 +27,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import jdk.management.resource.internal.inst.SocketOutputStreamRMHooks;
+import model.Statistics;
 
 public class GUI extends Application {
 
@@ -114,9 +118,12 @@ public class GUI extends Application {
 		
 		// Initialize elements of left VBox
 		HBox headerArea = new HBox();
+		headerArea.setSpacing(10);
 		currentChatHeader = new Label();
 		Label fillerLabel = new Label();
-		Label spaceLabel = new Label("  ");
+		Button statisticsButton = new Button("Stats");
+		statisticsButton.setMaxHeight(Double.MAX_VALUE);
+		initializeStatisticsWindow(statisticsButton);
 		fillerLabel.setMaxWidth(Double.MAX_VALUE);
 		levelLabel = new Label("Level 0");
 		levelLabel.setFont(Font.font(null, FontWeight.NORMAL, 24));
@@ -125,7 +132,7 @@ public class GUI extends Application {
 		experienceProgressBar.setPrefWidth(200);
 		HBox.setHgrow(fillerLabel, Priority.ALWAYS);
 		headerArea.getChildren().addAll(currentChatHeader, fillerLabel, levelLabel, 
-				spaceLabel, experienceProgressBar);
+				experienceProgressBar, statisticsButton);
 		
 		chatBox = new VBox();
 		chatBox.setSpacing(2);
@@ -199,6 +206,50 @@ public class GUI extends Application {
 		sendButton.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
+		});
+		
+	}
+	
+	private void initializeStatisticsWindow(Button statisticsButton) {
+		
+		statisticsButton.setOnAction(e -> {
+			
+			Alert statisticsWindow = new Alert(AlertType.INFORMATION);
+			statisticsWindow.setTitle("Statistics");
+			statisticsWindow.setHeaderText("Usage statistics");
+			statisticsWindow.getDialogPane().autosize();
+			statisticsWindow.getDialogPane().getStylesheets().add(getClass().getResource("Test.css").toExternalForm());
+			statisticsWindow.getDialogPane().getStyleClass().add("statisticsScreen");
+			
+			Statistics stats = GUIHandler.session.getStatistics();
+			
+			String statisticsString = "";
+			String format = "%1$20s %2$10s %3$10s\n";
+			
+			statisticsString += String.format(format, "Session time", "", 
+					stats.getSessionTime());
+			statisticsString += String.format(format, "Experience gained", "", 
+					GUIHandler.session.getTotalExperience());
+			statisticsString += String.format(format, "Packets forwarded", "", 
+					stats.getPacketsForwarded());
+			statisticsString += String.format(format, "Packets ignored", "", 
+					stats.getPacketsIgnored());
+			statisticsString += String.format(format, "", "", "");
+			
+			statisticsString += String.format(format, "", "Sent", "Received");
+			statisticsString += String.format(format, "Packets", 
+					stats.getTotalPacketsSent(), stats.getTotalPacketsReceived());
+			statisticsString += String.format(format, "Pulses", 
+					stats.getPulsesSent(), stats.getPulsesReceived());
+			statisticsString += String.format(format, "Private messages", 
+					stats.getPrivateMessagesSent(), stats.getPrivateMessagesReceived());
+			statisticsString += String.format(format, "Global messages", 
+					stats.getGlobalMessagesSent(), stats.getGlobalMessagesReceived());
+			statisticsString += String.format(format, "Security messages", 
+					stats.getSecurityMessagesSent(), stats.getSecurityMessagesReceived());
+			
+			statisticsWindow.setContentText(statisticsString);
+			statisticsWindow.showAndWait();
 		});
 	}
 	
