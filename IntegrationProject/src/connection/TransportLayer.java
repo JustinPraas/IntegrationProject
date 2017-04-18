@@ -1,20 +1,10 @@
 package connection;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
 
 import encryption.Crypter;
 import encryption.DiffieHellman;
@@ -37,7 +27,6 @@ public class TransportLayer {
 	public Session session;
 	public ArrayList<Packet> seenPackets = new ArrayList<>();
 	public ArrayList<Packet> unacknowledgedPackets = new ArrayList<>();
-	public HashMap<Integer, Map<Integer, ArrayList<FileMessage>>> fileBuffer = new HashMap<>();
 
 	/**
 	 * Creates a <code>TransportLayer</code> object that acts on a session.

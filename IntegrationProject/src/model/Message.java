@@ -3,8 +3,6 @@ package model;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import packet.FileMessage;
-
 public class Message {
 
 	private int senderID;
