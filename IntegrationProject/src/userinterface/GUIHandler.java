@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
@@ -15,6 +16,8 @@ import java.util.Map;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -138,27 +141,48 @@ public class GUIHandler {
 				messageSender = person.getName();
 			}
 			
-			TextFlow flow;
+			String messageText = message.getText();
 			Text senderText = new Text(messageSender);
 			senderText.getStyleClass().add("sender");
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
-			
-			// Append this message to ChatBox String
-			Text messageText = new Text(message.getText());
-			
-			flow = new TextFlow();
-			flow.getChildren().addAll(senderText, timestampText, messageText);
-			
-			HBox box = new HBox();
-			if (message.getSenderID() == session.getID()) {
-				flow.getStyleClass().add("local");
+			if (messageText.contains("::")) {				
+				String[] splittedText = messageText.split("::");
+				HBox emoticonBox = new HBox();
+				emoticonBox.getChildren().addAll(senderText, timestampText);
+				for (String s : splittedText) {
+					if (GUI.myEmoticons.containsKey(s)) {
+						File emoticon = GUI.myEmoticons.get(s);
+						ImageView view = new ImageView(new Image(emoticon.toURI().toString()));
+						emoticonBox.getChildren().add(view);
+					} else {
+						emoticonBox.getChildren().add(new Text(s));
+					}
+				}
+				if (message.getSenderID() == session.getID()) {
+					emoticonBox.getStyleClass().add("local");
+				} else {
+					emoticonBox.getStyleClass().add("remote");
+				}
+				total.add(emoticonBox);
 			} else {
-				flow.getStyleClass().add("remote");
+				TextFlow flow;
+				
+				// Append this message to ChatBox String
+				Text messageTextBox = new Text(message.getText());
+				
+				flow = new TextFlow();
+				flow.getChildren().addAll(senderText, timestampText, messageTextBox);
+				
+				HBox chatBoxEntry = new HBox();
+				if (message.getSenderID() == session.getID()) {
+					flow.getStyleClass().add("local");
+				} else {
+					flow.getStyleClass().add("remote");
+				}
+				chatBoxEntry.getChildren().add(flow);
+				
+				total.add(chatBoxEntry);
 			}
-			box.getChildren().add(flow);
-			
-			total.add(box);
-			
 		}
 		
 		// Set the chatbox to all the hbox elements
@@ -228,22 +252,50 @@ public class GUIHandler {
 			} else {
 				messageSenderName = session.getKnownPersons().get(message.getSenderID()).getName();
 			}
-			
-			// Append this message to ChatBox String
-			Text senderNameText = new Text(messageSenderName);
+
+			String messageText = message.getText();
+			Text senderText = new Text(messageSenderName);
+			senderText.getStyleClass().add("sender");
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
-			Text messageText = new Text(message.getText());
-			senderNameText.getStyleClass().add("sender");
-			TextFlow flow = new TextFlow();
-			flow.getChildren().addAll(senderNameText, timestampText, messageText);
-			HBox chatBoxEntry = new HBox();
-			if (message.getSenderID() == session.getID()) {
-				flow.getStyleClass().add("local");
+			
+			if (messageText.contains("::")) {				
+				String[] splittedText = messageText.split("::");
+				HBox emoticonBox = new HBox();
+				emoticonBox.getChildren().addAll(senderText, timestampText);
+				for (String s : splittedText) {
+					if (GUI.myEmoticons.containsKey(s)) {
+						File emoticon = GUI.myEmoticons.get(s);
+						ImageView view = new ImageView(new Image(emoticon.toURI().toString()));
+						emoticonBox.getChildren().add(view);
+					} else {
+						emoticonBox.getChildren().add(new Text(s));
+					}
+				}
+				if (message.getSenderID() == session.getID()) {
+					emoticonBox.getStyleClass().add("local");
+				} else {
+					emoticonBox.getStyleClass().add("remote");
+				}
+				total.add(emoticonBox);
 			} else {
-				flow.getStyleClass().add("remote");
+				TextFlow flow;
+				
+				// Append this message to ChatBox String
+				Text messageTextBox = new Text(message.getText());
+				
+				flow = new TextFlow();
+				flow.getChildren().addAll(senderText, timestampText, messageTextBox);
+				
+				HBox chatBoxEntry = new HBox();
+				if (message.getSenderID() == session.getID()) {
+					flow.getStyleClass().add("local");
+				} else {
+					flow.getStyleClass().add("remote");
+				}
+				chatBoxEntry.getChildren().add(flow);
+				
+				total.add(chatBoxEntry);
 			}
-			chatBoxEntry.getChildren().add(flow);			
-			total.add(chatBoxEntry);
 		}
 		
 		// Set the chatbox to all the hbox elements
