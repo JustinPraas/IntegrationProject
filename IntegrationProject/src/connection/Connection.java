@@ -8,7 +8,7 @@ import java.net.UnknownHostException;
 import model.Session;
 
 /**
- * A class that stores 
+ * A class that stores this application's connection settings.
  * @author Justin Praas, Daan Kooij, Casper Plentinger, Tim van Brederode
  */
 public class Connection {
