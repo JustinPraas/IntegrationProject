@@ -199,42 +199,17 @@ public class TransportLayer {
 		boolean addMessageToList = true;		
 		// Add it to the chatmessages map
 		ArrayList<Message> publicChatMessageList = session.getPublicChatMessages();		
-		for (Message message : publicChatMessageList) {
-			if (message.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == message.getSenderID()) {
-				addMessageToList = false;
-				break;
-			}
-		}
-		
-		if (addMessageToList) {
-			int insertPosition = publicChatMessageList.size();
-			int receivedMessageID = receivedMessage.getMessageID();
-			boolean continues = true;
-			for (int i = publicChatMessageList.size() - 1; i >= 0 && continues; i--) {
-				if (publicChatMessageList.get(i).getSenderID() != session.getID()) {
-					if (publicChatMessageList.get(i).getMessageID() > receivedMessageID) {
-						insertPosition = i;
-					} else {
-						if (insertPosition == publicChatMessageList.size()) {
-							publicChatMessageList.add(receivedMessage);
-							continues = false;
-						} else {
-							publicChatMessageList.add(insertPosition, receivedMessage);
-							continues = false;							
-						}
-					}
-				}
-			}
-		
-			if (continues) {
-				publicChatMessageList.add(receivedMessage);
-			}
-			
-			session.setPublicChatMessages(publicChatMessageList);
-		}
-		
+//		for (Message message : publicChatMessageList) {
+//			if (message.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == message.getSenderID()) {
+//				addMessageToList = false;
+//				break;
+//			}
+//		}
+
 		// Update GUI
 		if (addMessageToList) {
+			publicChatMessageList.add(receivedMessage);
+			session.setPublicChatMessages(publicChatMessageList);
 			GUIHandler.messagePutInMap();
 		}		
 	}
@@ -464,11 +439,6 @@ public class TransportLayer {
 		GlobalMessage plainMessage = new GlobalMessage(nextPublicMessageID, msgLength, msg);
 		Packet packet = new Packet(session.getID(), 0, session.getNextSeqNumber(), Payload.PLAIN_MESSAGE, plainMessage);
 		session.getConnection().getSender().send(packet);
-		
-		synchronized (this.unacknowledgedPackets) {
-			unacknowledgedPackets.add(packet);
-			new RetransmissionThread(this, packet);
-		}
 		
 		Message message = new Message(session.getID(), 0, nextPublicMessageID, msg, true);
 		session.getPublicChatMessages().add(message);
