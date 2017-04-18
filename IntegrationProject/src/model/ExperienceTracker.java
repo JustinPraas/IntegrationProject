@@ -65,10 +65,5 @@ public class ExperienceTracker {
 		currentExperience += EXP_FORWARD;
 		checkLevelIncrease();
 	}
-	
-//	public static void main(String[] args) {
-//		ExperienceTracker test = new ExperienceTracker();
-//		test.sendMessage();
-//		System.out.println(test.getLevelProgress());
-//	} TODO: remove
+
 }

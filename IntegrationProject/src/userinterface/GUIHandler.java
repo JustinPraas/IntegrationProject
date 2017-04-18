@@ -226,6 +226,8 @@ public class GUIHandler {
 			String messageSenderName = "";
 			if (message.getSenderID() == session.getID()) {
 				messageSenderName = username;
+			} else if (message.getSenderID() == -1) {
+				messageSenderName = "System";
 			} else {
 				messageSenderName = session.getKnownPersons().get(message.getSenderID()).getName();
 			}
@@ -411,9 +413,21 @@ public class GUIHandler {
 	
 	public static void updateProgressBar() {
 		int level = session.getExperienceTracker().getCurrentLevel();
+		String levelString = "Level " + level;
 		double levelProgress = session.getExperienceTracker().getLevelProgress();
+		
+		// Notify about level increase in Global Chat
+		if (!levelString.equals(GUI.levelLabel.getText())) {
+			String notificationString = "You reached level " + level;
+			Message notificationMessage = new Message(-1, -1, -1, notificationString, false);
+			session.getPublicChatMessages().add(notificationMessage);
+			GUIHandler.messagePutInMap();
+			GUIHandler.changedPersonList();
+		}
+		
+		// Update GUI
 		Platform.runLater(() -> {
-			GUI.levelLabel.setText("Level " + level);
+			GUI.levelLabel.setText(levelString);
 			GUI.experienceProgressBar.setProgress(levelProgress);
 		});
 	}
