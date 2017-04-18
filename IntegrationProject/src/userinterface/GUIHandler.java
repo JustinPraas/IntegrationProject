@@ -32,6 +32,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import model.ExperienceTracker;
 import model.Message;
 import model.Person;
 import model.Session;
@@ -249,6 +250,8 @@ public class GUIHandler {
 			String messageSenderName = "";
 			if (message.getSenderID() == session.getID()) {
 				messageSenderName = username;
+			} else if (message.getSenderID() == -1) {
+				messageSenderName = "System";
 			} else {
 				messageSenderName = session.getKnownPersons().get(message.getSenderID()).getName();
 			}
@@ -380,7 +383,8 @@ public class GUIHandler {
 		for (Map.Entry<Integer, Person> entry : session.getKnownPersons().entrySet()) {
 			Person person = entry.getValue();
 			
-			Button button = new Button(person.getName());
+			Button button = new Button(person.getName() 
+					+ " (level " + person.getLevelString() + ")");
 			
 			// Check if the Button should be marked as containing unread messages
 			if (personUnreadMessages.containsKey(person) && personUnreadMessages.get(person) 
@@ -457,6 +461,27 @@ public class GUIHandler {
 			unreadGlobalChatMessages = true;
 			GUI.globalChatButton.setFont(Font.font(null, FontWeight.BOLD, 14.5));
 		}
+	}
+	
+	public static void updateProgressBar() {
+		int level = session.getExperienceTracker().getCurrentLevel();
+		String levelString = "Level " + level;
+		double levelProgress = session.getExperienceTracker().getLevelProgress();
+		
+		// Notify about level increase in Global Chat
+		if (!levelString.equals(GUI.levelLabel.getText())) {
+			String notificationString = "You reached level " + level;
+			Message notificationMessage = new Message(-1, -1, -1, notificationString, false);
+			session.getPublicChatMessages().add(notificationMessage);
+			GUIHandler.messagePutInMap();
+			GUIHandler.changedPersonList();
+		}
+		
+		// Update GUI
+		Platform.runLater(() -> {
+			GUI.levelLabel.setText(levelString);
+			GUI.experienceProgressBar.setProgress(levelProgress);
+		});
 	}
 	
 }

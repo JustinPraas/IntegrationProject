@@ -12,7 +12,6 @@ public class EncryptionPair {
 		int[] primeToGenerator = DiffieHellman.PRIME_TO_PRIMITIVE_ROOT[(int) (Math.random() * DiffieHellman.PRIME_TO_PRIMITIVE_ROOT.length)];
 		this.prime = primeToGenerator[0];
 		this.generator = primeToGenerator[1];
-		this.acknowledged = acknowledged;
 		this.acknowledged = false;
 	}
 	

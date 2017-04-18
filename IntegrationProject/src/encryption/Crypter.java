@@ -10,10 +10,17 @@ import org.apache.commons.codec.binary.Base64;
 
 public class Crypter {
 	
+	// If this were to be a widely distributed application, a random IV would be sent with each message
+	// We use a static IV for simplicity
 	public static final String INIT_VECTOR = "0123456789123456";
 	
+	/**
+	 * Encrypts a String using AES/CBC/PKCS5PADDING with the given key String.
+	 * @param key the key to be used in the encryption process
+	 * @param value the String to be encrypted
+	 * @return cipherString the cipher that resulted from the encryption process
+	 */
 	public static String encrypt(String key, String value) {
-		System.out.println("Key at encrypt: " + key);
         try {
             IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
             SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
@@ -22,17 +29,23 @@ public class Crypter {
             cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
 
             byte[] encrypted = cipher.doFinal(value.getBytes());
+            String cipherString = Base64.encodeBase64String(encrypted);
 
-            return Base64.encodeBase64String(encrypted);
+            return cipherString;
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
         return value;
     }
 
+	/**
+	 * Decrypts a String (encrypted value) using AES/CBC/PKCS5PADDING with
+	 * the given key String.
+	 * @param key the key to be used in the decryption process
+	 * @param encryptedthe String to be decrypted
+	 * @return originalString the original plain text of the message
+	 */
     public static String decrypt(String key, String encrypted) {
-    	System.out.println("Key at decrypt: " + key);
         try {
             IvParameterSpec iv = new IvParameterSpec(INIT_VECTOR.getBytes("UTF-8"));
             SecretKeySpec skeySpec = new SecretKeySpec(key.getBytes("UTF-8"), "AES");
@@ -42,7 +55,9 @@ public class Crypter {
 
             byte[] original = cipher.doFinal(Base64.decodeBase64(encrypted));
 
-            return new String(original);
+            String originalString = new String(original);
+            
+            return originalString;
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -50,6 +65,13 @@ public class Crypter {
         return encrypted;
     }
     
+    /**
+     * Gets the encryption/decryption key, specific for the contact person's 
+     * <code>EncryptionPair</code> and the corresponding secretInteger. 
+     * @param ep the <code>EncryptionPair</code> of the current contact person
+     * @param secretInteger the secretInteger linked to the current contact person
+     * @return resultKey.toString() the key to be used by the encryption/decryption method
+     */
     public static String getKey(EncryptionPair ep, int secretInteger) {
     	BigInteger remoteHalfKey = new BigInteger(Integer.toString(ep.getRemoteHalfKey()));
     	BigInteger secretInt = new BigInteger(Integer.toString(secretInteger));
@@ -66,21 +88,4 @@ public class Crypter {
     	
     	return resultKey.toString();
     }
-    
-//    public static void main(String[] args) {
-//    	int prime = 19;
-//    	int generator = 2;
-//		EncryptionPair Justin = new EncryptionPair(prime, generator, 11, true);
-//		EncryptionPair Tim = new EncryptionPair(prime, generator, 18, true);
-//
-//		Tim.setRemoteHalfKey((int) (Math.pow(generator, 11) % prime));
-//		Justin.setRemoteHalfKey((int) (Math.pow(generator, 18) % prime));
-//		
-//		String plainText = "Person Justin is se";
-//		String encrypted = Crypter.encrypt(Crypter.getKey(Justin, 11), plainText);
-//		System.out.println(encrypted);
-//
-//		String decrypted = Crypter.decrypt(Crypter.getKey(Tim, 18), encrypted);
-//		System.out.println(decrypted);
-//	}
 }

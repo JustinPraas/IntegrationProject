@@ -51,6 +51,7 @@ public class TransportLayer {
 		switch (typeIdentifier) {
 		case Payload.PULSE:
 			length += Pulse.NAME_LENGTH_LENGTH;
+			length += Pulse.LEVEL_LENGTH;
 			length += getNameLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		case Payload.GLOBAL_MESSAGE:
@@ -94,11 +95,9 @@ public class TransportLayer {
 		
 		// Don't do anything if: we've already seen this packet OR if this packet is from ourself
 		// Else: add the packet to the seenPackets list
-		if (seenPackets.contains(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
+		if (seenPacket(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
 			return;
-		} else {
-			addPacketToSeenPackets(receivedPacket);
-		}		
+		}	
 		
 		// If the packet has PLAIN_MESSAGE payload contents, handle it
 		// Else, if it's NOT a Pulse AND we are NOT the destination, foward it
@@ -128,6 +127,23 @@ public class TransportLayer {
 				System.err.println("Unknown type identifier at handlePacket(): " + receivedPacket.getTypeIdentifier());
 			}
 		}
+		
+		addPacketToSeenPackets(receivedPacket);
+	}
+
+	/**
+	 * Checks if the session has seen this packet before.
+	 * @param receivedPacket the received packet
+	 * @return true if this packet has been seen before, otherwise false
+	 */
+	private boolean seenPacket(Packet receivedPacket) {
+		for (int i = 0; i < seenPackets.size(); i++) {
+			if (seenPackets.get(i).getSenderID() == receivedPacket.getSenderID() &&
+					seenPackets.get(i).getSequenceNumber() == receivedPacket.getSequenceNumber()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -143,6 +159,7 @@ public class TransportLayer {
 		Pulse payload = (Pulse) receivedPacket.getPayload();
 		Person person;
 		int senderID = receivedPacket.getSenderID();
+		int level = payload.getLevel();
 		boolean updateGUI = false;
 		
 		// If the sender is known: use this Person object as person
@@ -150,12 +167,24 @@ public class TransportLayer {
 		if (session.getKnownPersons().containsKey(senderID)) {
 			person = session.getKnownPersons().get(senderID);
 			
-			if (person.getTimeToLive() <= 0) {
+			if (level != person.getLevel()) {//TODO
+				person.setLevel(level);
+				String notificationString = person.getName() + " reached level " + level;
+				Message notificationMessage = new Message(-1, -1, -1, notificationString, false);
+				session.getPublicChatMessages().add(notificationMessage);
+				GUIHandler.messagePutInMap();
 				updateGUI = true;
 			}
 			
+			// Please do not merge these two if-statements into one if-else ^v
+			if (person.getTimeToLive() <= 0) {
+				updateGUI = true;
+			}
+	
+			
+			
 		} else {
-			person = new Person(payload.getName(), senderID);
+			person = new Person(payload.getName(), senderID, payload.getLevel());
 			updateGUI = true;
 		}
 		
@@ -177,6 +206,7 @@ public class TransportLayer {
 	 * @param receivedPacket
 	 */
 	public void handleGlobalMessage(Packet receivedPacket) {
+		
 		GlobalMessage payload = (GlobalMessage) receivedPacket.getPayload();
 		
 		// The person that sent the message
@@ -198,6 +228,11 @@ public class TransportLayer {
 
 		// Update GUI
 		if (addMessageToList) {
+			
+			// Update experience bar
+			session.getExperienceTracker().receiveGlobalMessage();
+			GUIHandler.updateProgressBar();
+			
 			publicChatMessageList.add(receivedMessage);
 			session.setPublicChatMessages(publicChatMessageList);
 			GUIHandler.messagePutInMap();
@@ -212,6 +247,7 @@ public class TransportLayer {
 	 * @param receivedPacket
 	 */
 	public void handleEncryptedMessage(Packet receivedPacket) {
+		
 		EncryptedMessage payload = (EncryptedMessage) receivedPacket.getPayload();
 		
 		// The person that sent the message
@@ -273,6 +309,11 @@ public class TransportLayer {
 		
 		// Update GUI
 		if (addMessageToList) {
+			
+			// Update experience bar
+			session.getExperienceTracker().receivePrivateMessage();
+			GUIHandler.updateProgressBar();
+			
 			GUIHandler.messagePutInMap(sender);
 		}
 		
@@ -359,10 +400,14 @@ public class TransportLayer {
 	 * been seen before.
 	 * @param receivedPacket the packet that has been received
 	 */
-	public void forwardPacket(Packet receivedPacket) {
-		if (!seenPackets.contains(receivedPacket)) {
-			session.getConnection().getSender().send(receivedPacket);
+	public void forwardPacket(Packet receivedPacket) {		
+		// Update experience bar
+		if (receivedPacket.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE) {
+			session.getExperienceTracker().forwardMessage();
+			GUIHandler.updateProgressBar();
 		}
+		
+		session.getConnection().getSender().send(receivedPacket);
 	}
 
 	/**
@@ -391,6 +436,11 @@ public class TransportLayer {
 	 * @param receiver the destination person
 	 */
 	public void sendMessageFromGUI(String msg, Person receiver) {
+		
+		// Update experience bar
+		session.getExperienceTracker().sendMessage();
+		GUIHandler.updateProgressBar();
+		
 		int nextMessageID = receiver.getNextMessageID();
 		
 		// Create EncryptedMessage
@@ -423,6 +473,11 @@ public class TransportLayer {
 	}
 	
 	public void sendMessageFromGUI(String msg) {
+		
+		// Update experience bar
+		session.getExperienceTracker().sendMessage();
+		GUIHandler.updateProgressBar();
+		
 		int msgLength = msg.length();
 		int nextPublicMessageID = session.getNextPublicMessageID();
 		
@@ -442,7 +497,7 @@ public class TransportLayer {
 	 * @param datagramContents the datagram contents of a shortened <code>DatagramPacket</code>
 	 * @return resultPacket the <code>Packet</code> resulting from the datagram contents
 	 */
-	public Packet getPacket(byte[] datagramContents) {
+	public static Packet getPacket(byte[] datagramContents) {
 		int senderID = getSenderID(datagramContents);
 		int receiverID = getReceiverID(datagramContents);
 		int sequenceNumber = getSequenceNumber(datagramContents);
@@ -466,7 +521,8 @@ public class TransportLayer {
 		case Payload.PULSE:
 			int nameLength = getNameLength(payloadData);
 			String name = getName(payloadData);
-			return new Pulse(nameLength, name);
+			int level = getLevel(payloadData);
+			return new Pulse(nameLength, level, name);
 		case Payload.GLOBAL_MESSAGE:
 			String message = getPlainMessage(payloadData);
 			int messageID = getMessageID(payloadData, Payload.GLOBAL_MESSAGE);
@@ -563,7 +619,7 @@ public class TransportLayer {
 	 */
 	public static String getName(byte[] pulsePayloadData) {
 		int length = getNameLength(pulsePayloadData);
-		int start = Pulse.NAME_LENGTH_LENGTH;
+		int start = Pulse.NAME_LENGTH_LENGTH + Pulse.LEVEL_LENGTH;
 		int end = start + length;
 		
 		byte[] nameArray = Arrays.copyOfRange(pulsePayloadData, start, end);
@@ -576,6 +632,12 @@ public class TransportLayer {
 		}
 		
 		return name;
+	}
+	
+	public static int getLevel(byte[] pulsePayloadData) {
+		int position = Pulse.NAME_LENGTH_LENGTH;
+		
+		return pulsePayloadData[position];
 	}
 
 	/**
