@@ -483,7 +483,7 @@ public class TransportLayer {
 	 * @param datagramContents the datagram contents of a shortened <code>DatagramPacket</code>
 	 * @return resultPacket the <code>Packet</code> resulting from the datagram contents
 	 */
-	public Packet getPacket(byte[] datagramContents) {
+	public static Packet getPacket(byte[] datagramContents) {
 		int senderID = getSenderID(datagramContents);
 		int receiverID = getReceiverID(datagramContents);
 		int sequenceNumber = getSequenceNumber(datagramContents);
