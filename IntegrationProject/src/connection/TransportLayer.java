@@ -167,12 +167,21 @@ public class TransportLayer {
 		if (session.getKnownPersons().containsKey(senderID)) {
 			person = session.getKnownPersons().get(senderID);
 			
-			if (person.getTimeToLive() <= 0) {
-				updateGUI = true;
-			} else if (level != person.getLevel()) {
+			if (level != person.getLevel()) {//TODO
 				person.setLevel(level);
+				String notificationString = person.getName() + " reached level " + level;
+				Message notificationMessage = new Message(-1, -1, -1, notificationString, false);
+				session.getPublicChatMessages().add(notificationMessage);
+				GUIHandler.messagePutInMap();
 				updateGUI = true;
 			}
+			
+			// Please do not merge these two if-statements into one if-else ^v
+			if (person.getTimeToLive() <= 0) {
+				updateGUI = true;
+			}
+	
+			
 			
 		} else {
 			person = new Person(payload.getName(), senderID, payload.getLevel());
