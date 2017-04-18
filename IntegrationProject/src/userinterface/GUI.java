@@ -11,6 +11,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
@@ -32,6 +33,8 @@ public class GUI extends Application {
 	protected static Scene chatScreen;
 	protected static VBox chatBox;
 	protected static Label currentChatHeader;
+	protected static Label levelLabel;
+	protected static ProgressBar experienceProgressBar;
 	protected static TextField inputBox;
 	protected static VBox rightVBox;
 	protected static ScrollPane scrollingChatBox;
@@ -110,8 +113,19 @@ public class GUI extends Application {
 		outerHBox.setSpacing(20);
 		
 		// Initialize elements of left VBox
+		HBox headerArea = new HBox();
 		currentChatHeader = new Label();
-		
+		Label fillerLabel = new Label();
+		Label spaceLabel = new Label("  ");
+		fillerLabel.setMaxWidth(Double.MAX_VALUE);
+		levelLabel = new Label("Level 0");
+		levelLabel.setFont(Font.font(null, FontWeight.NORMAL, 24));
+		experienceProgressBar = new ProgressBar(0.0);
+		experienceProgressBar.setMaxHeight(Double.MAX_VALUE);
+		experienceProgressBar.setPrefWidth(200);
+		headerArea.setHgrow(fillerLabel, Priority.ALWAYS);
+		headerArea.getChildren().addAll(currentChatHeader, fillerLabel, levelLabel, 
+				spaceLabel, experienceProgressBar);
 		
 		chatBox = new VBox();
 		chatBox.setSpacing(2);
@@ -127,7 +141,7 @@ public class GUI extends Application {
 		Button sendButton = new Button("Send");
 		inputHBox.getChildren().addAll(inputBox, sendButton);
 		inputHBox.setSpacing(10);
-		leftVBox.getChildren().addAll(currentChatHeader, scrollingChatBox, inputHBox);
+		leftVBox.getChildren().addAll(headerArea, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
 		
 		// Initialize elements of right VBox

@@ -33,6 +33,11 @@ public class Session {
 	private Connection connection;
 	
 	/**
+	 * The experience tracker of this session.
+	 */
+	private ExperienceTracker experienceTracker;
+	
+	/**
 	 * A map consisting of known persons: 
 	 * Map<the person's ID, the person itself>.
 	 */
@@ -82,6 +87,7 @@ public class Session {
 		this.publicChatMessages = new ArrayList<>();
 		this.sequenceNumber = 0;
 		this.nextPublicMessageID = 0;
+		this.experienceTracker = new ExperienceTracker();
 		new PulseHandler(this);
 	}
 
@@ -114,6 +120,10 @@ public class Session {
 
 	public Connection getConnection() {
 		return connection;
+	}
+	
+	public ExperienceTracker getExperienceTracker() {
+		return experienceTracker;
 	}
 
 	public Map<Integer, Person> getKnownPersons() {

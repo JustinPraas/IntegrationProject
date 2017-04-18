@@ -29,6 +29,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import model.ExperienceTracker;
 import model.Message;
 import model.Person;
 import model.Session;
@@ -405,6 +406,15 @@ public class GUIHandler {
 			unreadGlobalChatMessages = true;
 			GUI.globalChatButton.setFont(Font.font(null, FontWeight.BOLD, 14.5));
 		}
+	}
+	
+	public static void updateProgressBar() {
+		int level = session.getExperienceTracker().getCurrentLevel();
+		double levelProgress = session.getExperienceTracker().getLevelProgress();
+		Platform.runLater(() -> {
+			GUI.levelLabel.setText("Level " + level);
+			GUI.experienceProgressBar.setProgress(levelProgress);
+		});
 	}
 	
 }

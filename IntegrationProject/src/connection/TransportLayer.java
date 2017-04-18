@@ -177,6 +177,7 @@ public class TransportLayer {
 	 * @param receivedPacket
 	 */
 	public void handleGlobalMessage(Packet receivedPacket) {
+		
 		GlobalMessage payload = (GlobalMessage) receivedPacket.getPayload();
 		
 		// The person that sent the message
@@ -198,6 +199,11 @@ public class TransportLayer {
 
 		// Update GUI
 		if (addMessageToList) {
+			
+			// Update experience bar
+			session.getExperienceTracker().receiveGlobalMessage();
+			GUIHandler.updateProgressBar();
+			
 			publicChatMessageList.add(receivedMessage);
 			session.setPublicChatMessages(publicChatMessageList);
 			GUIHandler.messagePutInMap();
@@ -212,6 +218,7 @@ public class TransportLayer {
 	 * @param receivedPacket
 	 */
 	public void handleEncryptedMessage(Packet receivedPacket) {
+		
 		EncryptedMessage payload = (EncryptedMessage) receivedPacket.getPayload();
 		
 		// The person that sent the message
@@ -273,6 +280,11 @@ public class TransportLayer {
 		
 		// Update GUI
 		if (addMessageToList) {
+			
+			// Update experience bar
+			session.getExperienceTracker().receivePrivateMessage();
+			GUIHandler.updateProgressBar();
+			
 			GUIHandler.messagePutInMap(sender);
 		}
 		
@@ -361,6 +373,15 @@ public class TransportLayer {
 	 */
 	public void forwardPacket(Packet receivedPacket) {
 		if (!seenPackets.contains(receivedPacket)) {
+			
+			System.out.println("Forward packet"); // TODO
+			
+			// Update experience bar
+			if (receivedPacket.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE) {
+				session.getExperienceTracker().forwardMessage();
+				GUIHandler.updateProgressBar();
+			}
+			
 			session.getConnection().getSender().send(receivedPacket);
 		}
 	}
@@ -391,6 +412,11 @@ public class TransportLayer {
 	 * @param receiver the destination person
 	 */
 	public void sendMessageFromGUI(String msg, Person receiver) {
+		
+		// Update experience bar
+		session.getExperienceTracker().sendMessage();
+		GUIHandler.updateProgressBar();
+		
 		int nextMessageID = receiver.getNextMessageID();
 		
 		// Create EncryptedMessage
@@ -423,6 +449,11 @@ public class TransportLayer {
 	}
 	
 	public void sendMessageFromGUI(String msg) {
+		
+		// Update experience bar
+		session.getExperienceTracker().sendMessage();
+		GUIHandler.updateProgressBar();
+		
 		int msgLength = msg.length();
 		int nextPublicMessageID = session.getNextPublicMessageID();
 		
