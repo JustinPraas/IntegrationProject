@@ -17,6 +17,7 @@ import userinterface.GUIHandler;
 
 public class TransportLayer {
 	
+	//TODO JAVADOC
 	// Constants
 	public static final int PULSE_TTL = 5;
 	public static final int MAX_SEEN_PACKETS_SIZE = 300;
