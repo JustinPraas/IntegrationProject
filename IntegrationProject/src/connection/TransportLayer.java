@@ -94,7 +94,7 @@ public class TransportLayer {
 		
 		// Don't do anything if: we've already seen this packet OR if this packet is from ourself
 		// Else: add the packet to the seenPackets list
-		if (seenPackets.contains(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
+		if (seenPacket(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
 			return;
 		}	
 		
@@ -128,6 +128,21 @@ public class TransportLayer {
 		}
 		
 		addPacketToSeenPackets(receivedPacket);
+	}
+
+	/**
+	 * Checks if the session has seen this packet before.
+	 * @param receivedPacket the received packet
+	 * @return true if this packet has been seen before, otherwise false
+	 */
+	private boolean seenPacket(Packet receivedPacket) {
+		for (int i = 0; i < seenPackets.size(); i++) {
+			if (seenPackets.get(i).getSenderID() == receivedPacket.getSenderID() &&
+					seenPackets.get(i).getSequenceNumber() == receivedPacket.getSequenceNumber()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -372,18 +387,16 @@ public class TransportLayer {
 	 * @param receivedPacket the packet that has been received
 	 */
 	public void forwardPacket(Packet receivedPacket) {
-		if (!seenPackets.contains(receivedPacket)) {
 			
-			System.out.println("Forward packet"); // TODO
-			
-			// Update experience bar
-			if (receivedPacket.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE) {
-				session.getExperienceTracker().forwardMessage();
-				GUIHandler.updateProgressBar();
-			}
-			
-			session.getConnection().getSender().send(receivedPacket);
+		System.out.println("Forward packet"); // TODO
+		
+		// Update experience bar
+		if (receivedPacket.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE) {
+			session.getExperienceTracker().forwardMessage();
+			GUIHandler.updateProgressBar();
 		}
+		
+		session.getConnection().getSender().send(receivedPacket);
 	}
 
 	/**
