@@ -65,8 +65,8 @@ public class TransportLayer {
 			length += getNameLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		case Payload.PLAIN_MESSAGE:
-			length += PlainMessage.MESSAGE_ID_LENGTH;
-			length += PlainMessage.MESSAGE_LENGTH_LENGTH;
+			length += GlobalMessage.MESSAGE_ID_LENGTH;
+			length += GlobalMessage.MESSAGE_LENGTH_LENGTH;
 			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.PLAIN_MESSAGE);
 			break;
 		case Payload.ACKNOWLEDGEMENT:
@@ -123,7 +123,7 @@ public class TransportLayer {
 		// Else, if it's NOT a Pulse AND we are NOT the destination, foward it
 		// Else process the packet accordingly
 		if (receivedPacket.getTypeIdentifier() == Payload.PLAIN_MESSAGE) {
-			handlePlainMessage(receivedPacket);
+			handleGlobalMessage(receivedPacket);
 		} else if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
 				receivedPacket.getReceiverID() != session.getID()) {
 			forwardPacket(receivedPacket);
@@ -292,8 +292,8 @@ public class TransportLayer {
 	 * an acknowledgement.
 	 * @param receivedPacket
 	 */
-	public void handlePlainMessage(Packet receivedPacket) {
-		PlainMessage payload = (PlainMessage) receivedPacket.getPayload();
+	public void handleGlobalMessage(Packet receivedPacket) {
+		GlobalMessage payload = (GlobalMessage) receivedPacket.getPayload();
 		
 		// The person that sent the message
 		Person sender = session.getKnownPersons().get(receivedPacket.getSenderID());
@@ -437,7 +437,7 @@ public class TransportLayer {
 			for (Packet packet : unacknowledgedPackets) {
 				if (packet.getTypeIdentifier() == Payload.PLAIN_MESSAGE) {
 					if (packet.getReceiverID() == senderID && 
-							((PlainMessage) packet.getPayload()).getMessageID() == messageID) {
+							((GlobalMessage) packet.getPayload()).getMessageID() == messageID) {
 						removePacket = packet;
 					}
 				} else if (packet.getTypeIdentifier() == Payload.ENCRYPTED_MESSAGE){ 
@@ -567,7 +567,7 @@ public class TransportLayer {
 		int msgLength = msg.length();
 		int nextPublicMessageID = session.getNextPublicMessageID();
 		
-		PlainMessage plainMessage = new PlainMessage(nextPublicMessageID, msgLength, msg);
+		GlobalMessage plainMessage = new GlobalMessage(nextPublicMessageID, msgLength, msg);
 		Packet packet = new Packet(session.getID(), 0, session.getNextSeqNumber(), Payload.PLAIN_MESSAGE, plainMessage);
 		session.getConnection().getSender().send(packet);
 		
@@ -617,7 +617,7 @@ public class TransportLayer {
 			String message = getPlainMessage(payloadData);
 			int messageID = getMessageID(payloadData, Payload.PLAIN_MESSAGE);
 			int messageLength = getMessageLength(payloadData, Payload.PLAIN_MESSAGE);
-			return new PlainMessage(messageID, messageLength, message);
+			return new GlobalMessage(messageID, messageLength, message);
 		case Payload.ACKNOWLEDGEMENT:
 			int acknowledgeMessageID = getMessageID(payloadData, Payload.ACKNOWLEDGEMENT);
 			return new Acknowledgement(acknowledgeMessageID);
@@ -806,7 +806,7 @@ public class TransportLayer {
 
 	public static String getPlainMessage(byte[] payloadData) {
 		int length = getMessageLength(payloadData, Payload.PLAIN_MESSAGE);
-		int start = PlainMessage.MESSAGE_ID_LENGTH + PlainMessage.MESSAGE_LENGTH_LENGTH;
+		int start = GlobalMessage.MESSAGE_ID_LENGTH + GlobalMessage.MESSAGE_LENGTH_LENGTH;
 		int end = start + length;
 		byte[] messageArray = Arrays.copyOfRange(payloadData, start, end);
 		
@@ -830,7 +830,7 @@ public class TransportLayer {
 		
 		if (typeIdentifier == Payload.PLAIN_MESSAGE) {
 			start = 0;
-			end = start + PlainMessage.MESSAGE_ID_LENGTH;
+			end = start + GlobalMessage.MESSAGE_ID_LENGTH;
 		} else if (typeIdentifier == Payload.ENCRYPTED_MESSAGE) {
 			start = 0;
 			end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
@@ -854,8 +854,8 @@ public class TransportLayer {
 		int end = 0;
 		switch (payloadType) {
 			case Payload.PLAIN_MESSAGE:
-				start = PlainMessage.MESSAGE_ID_LENGTH;
-				end = start + PlainMessage.MESSAGE_LENGTH_LENGTH;
+				start = GlobalMessage.MESSAGE_ID_LENGTH;
+				end = start + GlobalMessage.MESSAGE_LENGTH_LENGTH;
 				
 				byte[] encryptedMessageLengthArray = Arrays.copyOfRange(payloadData, start, end);
 				ByteBuffer encryptedMessageLengthBytebuffer = ByteBuffer.wrap(encryptedMessageLengthArray);

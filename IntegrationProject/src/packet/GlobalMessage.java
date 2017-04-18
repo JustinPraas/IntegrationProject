@@ -3,20 +3,20 @@ package packet;
 import java.util.ArrayList;
 
 public class GlobalMessage implements Payload {
-
+	
 	public static final int MESSAGE_ID_LENGTH = 2;
 	public static final int MESSAGE_LENGTH_LENGTH = 2;
 	
 	private int messageID;
 	private int messageLength;
-	private String message;
-	
-	public GlobalMessage(int messageID, int messageLength, String message) {
+	private String plainText;
+
+	public GlobalMessage(int messageID, int messageLength, String plainText) {
 		this.messageID = messageID;
 		this.messageLength = messageLength;
-		this.message = message;
+		this.plainText = plainText;
 	}
-	
+
 	@Override
 	public byte[] getPayloadData() {
 		ArrayList<Byte> resultList = new ArrayList<>();
@@ -25,13 +25,12 @@ public class GlobalMessage implements Payload {
 		resultList.add((byte) (messageID >> 8));
 		resultList.add((byte) messageID);
 		
-		// Message length to binary
 		resultList.add((byte) (messageLength >> 8));
 		resultList.add((byte) messageLength);
 		
-		// message to binary
-		for (int i = 0; i < message.length(); i++) {
-			resultList.add((byte)message.charAt(i));
+		// encryptedMessage to binary
+		for (int i = 0; i < plainText.length(); i++) {
+			resultList.add((byte)plainText.charAt(i));
 		}
 		
 		// Convert ArrayList to byte[]
@@ -42,6 +41,16 @@ public class GlobalMessage implements Payload {
 		
 		return result;
 	}
+
+	public int getMessageID() {
+		return messageID;
+	}
+
+	public String getPlainText() {
+		return plainText;
+	}
 	
-	
+	public int getMessageLength() {
+		return messageLength;
+	}
 }
