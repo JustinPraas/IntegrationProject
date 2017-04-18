@@ -9,7 +9,7 @@ public class EncryptionPair {
 	private boolean acknowledged;
 	
 	public EncryptionPair() {
-		int[] primeToGenerator = DiffieHellman.PRIME_TO_PRIMITIVE_ROOT[(int) (Math.random() * DiffieHellman.PRIME_TO_PRIMITIVE_ROOT.length)];
+		int[] primeToGenerator = DiffieHellman.PRIME_GENERATOR[(int) (Math.random() * DiffieHellman.PRIME_GENERATOR.length)];
 		this.prime = primeToGenerator[0];
 		this.generator = primeToGenerator[1];
 		this.acknowledged = false;

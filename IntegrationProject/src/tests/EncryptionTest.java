@@ -14,7 +14,7 @@ public class EncryptionTest {
 	
 	@Test
 	public void encryptionDecryptionTest() {
-		int[] randomPair = DiffieHellman.PRIME_TO_PRIMITIVE_ROOT[(int) Math.random() * DiffieHellman.PRIME_TO_PRIMITIVE_ROOT.length];
+		int[] randomPair = DiffieHellman.PRIME_GENERATOR[(int) Math.random() * DiffieHellman.PRIME_GENERATOR.length];
 		int prime = randomPair[0];
 		int generator = randomPair[1];
 		
