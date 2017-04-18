@@ -167,7 +167,9 @@ public class GUI extends Application {
 		HBox bottomBox = new HBox();
 		bottomBox.setSpacing(10);
 		inputBox = new TextField();
+		inputBox.setMaxHeight(Double.MAX_VALUE);
 		Button sendButton = new Button("Send");
+		sendButton.setMaxHeight(Double.MAX_VALUE);
 		inputHBox.setBottom(bottomBox);
 		leftVBox.getChildren().addAll(headerArea, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
