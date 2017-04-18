@@ -3,6 +3,10 @@ package encryption;
 import model.Person;
 import model.Session;
 
+/**
+ * A class that deals with most of the work of exchanging encryption keys/pairs.
+ * @author Justin Praas, Daan Kooij, Casper Plentinger, Tim van Brederode
+ */
 public class DiffieHellman {
 	
 	/**
