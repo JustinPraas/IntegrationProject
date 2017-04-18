@@ -125,8 +125,7 @@ public class GUI extends Application {
 		
 		inputBox = new TextField();
 		Button sendButton = new Button("Send");
-		Button sendImage = new Button("Image");
-		inputHBox.getChildren().addAll(inputBox, sendImage, sendButton);
+		inputHBox.getChildren().addAll(inputBox, sendButton);
 		inputHBox.setSpacing(10);
 		leftVBox.getChildren().addAll(currentChatHeader, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
@@ -187,20 +186,6 @@ public class GUI extends Application {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
 		});
-		sendImage.setOnAction(e -> {
-			FileChooser fileChooser = new FileChooser();
-			fileChooser.setTitle("Send file");
-			fileChooser.setInitialDirectory(
-		            new File(System.getProperty("user.home"))
-		        ); 
-            fileChooser.getExtensionFilters().addAll(
-          	new FileChooser.ExtensionFilter("PNG", "*.png"),          
-				new FileChooser.ExtensionFilter("JPG", "*.jpg")
-                    
-                );
-			GUIHandler.sendFile(fileChooser.showOpenDialog(window));
-		});
-		
 	}
 	
 	// Pass on user name if not empty, otherwise give warning
