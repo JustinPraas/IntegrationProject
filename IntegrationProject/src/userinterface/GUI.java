@@ -293,8 +293,10 @@ public class GUI extends Application {
 			
 			statisticsString += String.format(format, "Session time", "", 
 					stats.getSessionTime());
+			statisticsString += String.format(format, "Levels increased", "", 
+					GUIHandler.session.getExperienceTracker().getCurrentLevel());
 			statisticsString += String.format(format, "Experience gained", "", 
-					GUIHandler.session.getTotalExperience());
+					GUIHandler.session.getExperienceTracker().getTotalExperience());
 			statisticsString += String.format(format, "Packets forwarded", "", 
 					stats.getPacketsForwarded());
 			statisticsString += String.format(format, "Packets ignored", "", 

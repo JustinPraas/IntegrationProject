@@ -132,10 +132,6 @@ public class Session {
 		return experienceTracker;
 	}
 	
-	public int getTotalExperience() {
-		return getExperienceTracker().getTotalExperience();
-	}
-	
 	public Statistics getStatistics() {
 		return statistics;
 	}
