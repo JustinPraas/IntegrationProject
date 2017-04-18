@@ -64,10 +64,10 @@ public class TransportLayer {
 			length += Pulse.NAME_LENGTH_LENGTH;
 			length += getNameLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
-		case Payload.PLAIN_MESSAGE:
+		case Payload.GLOBAL_MESSAGE:
 			length += GlobalMessage.MESSAGE_ID_LENGTH;
 			length += GlobalMessage.MESSAGE_LENGTH_LENGTH;
-			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.PLAIN_MESSAGE);
+			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.GLOBAL_MESSAGE);
 			break;
 		case Payload.ACKNOWLEDGEMENT:
 			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
@@ -122,8 +122,9 @@ public class TransportLayer {
 		// If the packet has PLAIN_MESSAGE payload contents, handle it
 		// Else, if it's NOT a Pulse AND we are NOT the destination, foward it
 		// Else process the packet accordingly
-		if (receivedPacket.getTypeIdentifier() == Payload.PLAIN_MESSAGE) {
+		if (receivedPacket.getTypeIdentifier() == Payload.GLOBAL_MESSAGE) {
 			handleGlobalMessage(receivedPacket);
+			forwardPacket(receivedPacket);
 		} else if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
 				receivedPacket.getReceiverID() != session.getID()) {
 			forwardPacket(receivedPacket);
@@ -410,7 +411,7 @@ public class TransportLayer {
 		synchronized (this.unacknowledgedPackets) {
 			Packet removePacket = null;
 			for (Packet packet : unacknowledgedPackets) {
-				if (packet.getTypeIdentifier() == Payload.PLAIN_MESSAGE) {
+				if (packet.getTypeIdentifier() == Payload.GLOBAL_MESSAGE) {
 					if (packet.getReceiverID() == senderID && 
 							((GlobalMessage) packet.getPayload()).getMessageID() == messageID) {
 						removePacket = packet;
@@ -543,7 +544,7 @@ public class TransportLayer {
 		int nextPublicMessageID = session.getNextPublicMessageID();
 		
 		GlobalMessage plainMessage = new GlobalMessage(nextPublicMessageID, msgLength, msg);
-		Packet packet = new Packet(session.getID(), 0, session.getNextSeqNumber(), Payload.PLAIN_MESSAGE, plainMessage);
+		Packet packet = new Packet(session.getID(), 0, session.getNextSeqNumber(), Payload.GLOBAL_MESSAGE, plainMessage);
 		session.getConnection().getSender().send(packet);
 		
 		Message message = new Message(session.getID(), 0, nextPublicMessageID, msg, true);
@@ -583,10 +584,10 @@ public class TransportLayer {
 			int nameLength = getNameLength(payloadData);
 			String name = getName(payloadData);
 			return new Pulse(nameLength, name);
-		case Payload.PLAIN_MESSAGE:
+		case Payload.GLOBAL_MESSAGE:
 			String message = getPlainMessage(payloadData);
-			int messageID = getMessageID(payloadData, Payload.PLAIN_MESSAGE);
-			int messageLength = getMessageLength(payloadData, Payload.PLAIN_MESSAGE);
+			int messageID = getMessageID(payloadData, Payload.GLOBAL_MESSAGE);
+			int messageLength = getMessageLength(payloadData, Payload.GLOBAL_MESSAGE);
 			return new GlobalMessage(messageID, messageLength, message);
 		case Payload.ACKNOWLEDGEMENT:
 			int acknowledgeMessageID = getMessageID(payloadData, Payload.ACKNOWLEDGEMENT);
@@ -775,7 +776,7 @@ public class TransportLayer {
 	 */
 
 	public static String getPlainMessage(byte[] payloadData) {
-		int length = getMessageLength(payloadData, Payload.PLAIN_MESSAGE);
+		int length = getMessageLength(payloadData, Payload.GLOBAL_MESSAGE);
 		int start = GlobalMessage.MESSAGE_ID_LENGTH + GlobalMessage.MESSAGE_LENGTH_LENGTH;
 		int end = start + length;
 		byte[] messageArray = Arrays.copyOfRange(payloadData, start, end);
@@ -798,7 +799,7 @@ public class TransportLayer {
 	public static int getMessageID(byte[] payloadData, int typeIdentifier) {
 		int start = 0, end = 0;
 		
-		if (typeIdentifier == Payload.PLAIN_MESSAGE) {
+		if (typeIdentifier == Payload.GLOBAL_MESSAGE) {
 			start = 0;
 			end = start + GlobalMessage.MESSAGE_ID_LENGTH;
 		} else if (typeIdentifier == Payload.ENCRYPTED_MESSAGE) {
@@ -823,7 +824,7 @@ public class TransportLayer {
 		int start = 0;
 		int end = 0;
 		switch (payloadType) {
-			case Payload.PLAIN_MESSAGE:
+			case Payload.GLOBAL_MESSAGE:
 				start = GlobalMessage.MESSAGE_ID_LENGTH;
 				end = start + GlobalMessage.MESSAGE_LENGTH_LENGTH;
 				
