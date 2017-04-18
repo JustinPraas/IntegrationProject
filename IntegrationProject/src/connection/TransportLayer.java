@@ -302,47 +302,14 @@ public class TransportLayer {
 		Message receivedMessage = new Message(receivedPacket.getSenderID(), 
 				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getPlainText(), false);		
 		
-		boolean addMessageToList = true;		
 		// Add it to the chatmessages map
 		ArrayList<Message> publicChatMessageList = session.getPublicChatMessages();		
-		for (Message message : publicChatMessageList) {
-			if (message.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == message.getSenderID()) {
-				addMessageToList = false;
-				break;
-			}
-		}
 		
-		if (addMessageToList) {
-			int insertPosition = publicChatMessageList.size();
-			int receivedMessageID = receivedMessage.getMessageID();
-			boolean continues = true;
-			for (int i = publicChatMessageList.size() - 1; i >= 0 && continues; i--) {
-				if (publicChatMessageList.get(i).getSenderID() != session.getID()) {
-					if (publicChatMessageList.get(i).getMessageID() > receivedMessageID) {
-						insertPosition = i;
-					} else {
-						if (insertPosition == publicChatMessageList.size()) {
-							publicChatMessageList.add(receivedMessage);
-							continues = false;
-						} else {
-							publicChatMessageList.add(insertPosition, receivedMessage);
-							continues = false;							
-						}
-					}
-				}
-			}
-		
-			if (continues) {
-				publicChatMessageList.add(receivedMessage);
-			}
-			
-			session.setPublicChatMessages(publicChatMessageList);
-		}
+		publicChatMessageList.add(receivedMessage);
+		session.setPublicChatMessages(publicChatMessageList);
 		
 		// Update GUI
-		if (addMessageToList) {
-			GUIHandler.messagePutInMap();
-		}		
+		GUIHandler.messagePutInMap();	
 	}
 	
 	/**
