@@ -302,14 +302,22 @@ public class TransportLayer {
 		Message receivedMessage = new Message(receivedPacket.getSenderID(), 
 				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getPlainText(), false);		
 		
+		boolean addMessageToList = true;		
 		// Add it to the chatmessages map
 		ArrayList<Message> publicChatMessageList = session.getPublicChatMessages();		
-		
-		publicChatMessageList.add(receivedMessage);
-		session.setPublicChatMessages(publicChatMessageList);
-		
+//		for (Message message : publicChatMessageList) {
+//			if (message.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == message.getSenderID()) {
+//				addMessageToList = false;
+//				break;
+//			}
+//		}
+
 		// Update GUI
-		GUIHandler.messagePutInMap();	
+		if (addMessageToList) {
+			publicChatMessageList.add(receivedMessage);
+			session.setPublicChatMessages(publicChatMessageList);
+			GUIHandler.messagePutInMap();
+		}		
 	}
 	
 	/**
@@ -537,11 +545,6 @@ public class TransportLayer {
 		GlobalMessage plainMessage = new GlobalMessage(nextPublicMessageID, msgLength, msg);
 		Packet packet = new Packet(session.getID(), 0, session.getNextSeqNumber(), Payload.PLAIN_MESSAGE, plainMessage);
 		session.getConnection().getSender().send(packet);
-		
-		synchronized (this.unacknowledgedPackets) {
-			unacknowledgedPackets.add(packet);
-			new RetransmissionThread(this, packet);
-		}
 		
 		Message message = new Message(session.getID(), 0, nextPublicMessageID, msg, true);
 		session.getPublicChatMessages().add(message);
