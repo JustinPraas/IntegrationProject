@@ -27,6 +27,7 @@ public class PulseHandler extends Thread {
 		while (!connection.sendSocket.isClosed()) {
 			pulse();
 			decreaseTimeToLive();
+			session.getStatistics().increaseSessionTime();
 			sendEncryptionPair();
 			try { Thread.sleep(1000); } catch (InterruptedException e) { e.printStackTrace(); }
 		}

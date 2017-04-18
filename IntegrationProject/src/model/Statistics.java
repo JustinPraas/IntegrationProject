@@ -16,6 +16,7 @@ public class Statistics {
 		acknowledgementsReceived,
 		securityMessagesReceived;
 
+	// GET SUMS OF FIELDS
 	public int getTotalPacketsSent() {
 		return getPacketsForwarded() + + getPulsesSent() + getPrivateMessagesSent() 
 				+ getGlobalMessagesSent() + getAcknowledgementsSent() 
@@ -28,6 +29,7 @@ public class Statistics {
 				+ getSecurityMessagesReceived();
 	}
 	
+	// GET FIELDS
 	public int getSessionTime() {
 		return sessionTime;
 	}
@@ -80,6 +82,57 @@ public class Statistics {
 		return securityMessagesReceived;
 	}
 
-
+	// INCREASE FIELDS
+	public void increaseSessionTime() {
+		sessionTime++;
+	}
+	
+	public void increasePacketsForwarded() {
+		packetsForwarded++;
+	}
+	
+	public void increasePacketsIgnored() {
+		packetsIgnored++;
+	}
+	
+	public void increasePulsesSent() {
+		pulsesSent++;
+	}
+	
+	public void increasePrivateMessagesSent() {
+		privateMessagesSent++;
+	}
+	
+	public void increaseGlobalMessagesSent() {
+		globalMessagesSent++;
+	}
+	
+	public void increaseAcknowlegdementsSent() {
+		acknowledgementsSent++;
+	}
+	
+	public void increaseSecurityMessagesSent() {
+		securityMessagesSent++;
+	}
+	
+	public void increasePulsesReceived() {
+		pulsesReceived++;
+	}
+	
+	public void increasePrivateMessagesReceived() {
+		privateMessagesReceived++;
+	}
+	
+	public void increaseGlobalMessagesReceived() {
+		globalMessagesReceived++;
+	}
+	
+	public void increaseAcknowlegdementsReceived() {
+		acknowledgementsReceived++;
+	}
+	
+	public void increaseSecurityMessagesReceived() {
+		securityMessagesReceived++;
+	}
 	
 }

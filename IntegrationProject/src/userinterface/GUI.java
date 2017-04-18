@@ -231,24 +231,24 @@ public class GUI extends Application {
 			statisticsString += String.format(format, "Experience gained", "", 
 					GUIHandler.session.getTotalExperience());
 			statisticsString += String.format(format, "Packets forwarded", "", 
-					stats.getPacketsForwarded());
+					stats.getPacketsForwarded()); // TODO
 			statisticsString += String.format(format, "Packets ignored", "", 
-					stats.getPacketsIgnored());
+					stats.getPacketsIgnored()); // TODO
 			statisticsString += String.format(format, "", "", "");
 			
 			statisticsString += String.format(format, "", "Sent", "Received");
 			statisticsString += String.format(format, "Packets", 
-					stats.getTotalPacketsSent(), stats.getTotalPacketsReceived());
+					stats.getTotalPacketsSent(), stats.getTotalPacketsReceived()); // TODO
 			statisticsString += String.format(format, "Pulses", 
-					stats.getPulsesSent(), stats.getPulsesReceived());
+					stats.getPulsesSent(), stats.getPulsesReceived()); // TODO
 			statisticsString += String.format(format, "Private messages", 
-					stats.getPrivateMessagesSent(), stats.getPrivateMessagesReceived());
+					stats.getPrivateMessagesSent(), stats.getPrivateMessagesReceived()); // TODO
 			statisticsString += String.format(format, "Global messages", 
-					stats.getGlobalMessagesSent(), stats.getGlobalMessagesReceived());
+					stats.getGlobalMessagesSent(), stats.getGlobalMessagesReceived()); // TODO
 			statisticsString += String.format(format, "Acknowledgements", 
-					stats.getAcknowledgementsSent(), stats.getAcknowledgementsReceived());
+					stats.getAcknowledgementsSent(), stats.getAcknowledgementsReceived()); // TODO
 			statisticsString += String.format(format, "Security messages", 
-					stats.getSecurityMessagesSent(), stats.getSecurityMessagesReceived());
+					stats.getSecurityMessagesSent(), stats.getSecurityMessagesReceived()); // TODO
 			
 			statisticsWindow.setContentText(statisticsString);
 			statisticsWindow.showAndWait();
