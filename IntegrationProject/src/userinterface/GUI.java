@@ -123,7 +123,7 @@ public class GUI extends Application {
 		experienceProgressBar = new ProgressBar(0.0);
 		experienceProgressBar.setMaxHeight(Double.MAX_VALUE);
 		experienceProgressBar.setPrefWidth(200);
-		headerArea.setHgrow(fillerLabel, Priority.ALWAYS);
+		HBox.setHgrow(fillerLabel, Priority.ALWAYS);
 		headerArea.getChildren().addAll(currentChatHeader, fillerLabel, levelLabel, 
 				spaceLabel, experienceProgressBar);
 		

@@ -51,6 +51,7 @@ public class TransportLayer {
 		switch (typeIdentifier) {
 		case Payload.PULSE:
 			length += Pulse.NAME_LENGTH_LENGTH;
+			length += Pulse.LEVEL_LENGTH;
 			length += getNameLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		case Payload.GLOBAL_MESSAGE:
@@ -158,6 +159,7 @@ public class TransportLayer {
 		Pulse payload = (Pulse) receivedPacket.getPayload();
 		Person person;
 		int senderID = receivedPacket.getSenderID();
+		int level = payload.getLevel();
 		boolean updateGUI = false;
 		
 		// If the sender is known: use this Person object as person
@@ -167,10 +169,13 @@ public class TransportLayer {
 			
 			if (person.getTimeToLive() <= 0) {
 				updateGUI = true;
+			} else if (level != person.getLevel()) {
+				person.setLevel(level);
+				updateGUI = true;
 			}
 			
 		} else {
-			person = new Person(payload.getName(), senderID);
+			person = new Person(payload.getName(), senderID, payload.getLevel());
 			updateGUI = true;
 		}
 		
@@ -507,7 +512,8 @@ public class TransportLayer {
 		case Payload.PULSE:
 			int nameLength = getNameLength(payloadData);
 			String name = getName(payloadData);
-			return new Pulse(nameLength, name);
+			int level = getLevel(payloadData);
+			return new Pulse(nameLength, name, level);
 		case Payload.GLOBAL_MESSAGE:
 			String message = getPlainMessage(payloadData);
 			int messageID = getMessageID(payloadData, Payload.GLOBAL_MESSAGE);
@@ -604,7 +610,7 @@ public class TransportLayer {
 	 */
 	public static String getName(byte[] pulsePayloadData) {
 		int length = getNameLength(pulsePayloadData);
-		int start = Pulse.NAME_LENGTH_LENGTH;
+		int start = Pulse.NAME_LENGTH_LENGTH + Pulse.LEVEL_LENGTH;
 		int end = start + length;
 		
 		byte[] nameArray = Arrays.copyOfRange(pulsePayloadData, start, end);
@@ -617,6 +623,12 @@ public class TransportLayer {
 		}
 		
 		return name;
+	}
+	
+	public static int getLevel(byte[] pulsePayloadData) {
+		int position = Pulse.NAME_LENGTH_LENGTH;
+		
+		return pulsePayloadData[position];
 	}
 
 	/**
