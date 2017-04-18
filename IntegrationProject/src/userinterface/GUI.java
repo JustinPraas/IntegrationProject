@@ -1,6 +1,7 @@
 package userinterface;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +44,8 @@ import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 
 public class GUI extends Application {
@@ -160,6 +163,7 @@ public class GUI extends Application {
 		HBox bottomBox = new HBox();
 		bottomBox.setSpacing(10);
 		inputBox = new TextField();
+		Button fileTransfer = new Button("File");
 		Button sendButton = new Button("Send");
 		inputHBox.setBottom(bottomBox);
 		leftVBox.getChildren().addAll(headerArea, scrollingChatBox, inputHBox);
@@ -194,7 +198,7 @@ public class GUI extends Application {
 			  topBox.getChildren().add(temp);
 		  }
 		  emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
-		  bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
+		  bottomBox.getChildren().addAll(inputBox, fileTransfer, emoticons, sendButton);
 		} else {
 		  bottomBox.getChildren().addAll(inputBox, sendButton);
 		}
@@ -254,6 +258,13 @@ public class GUI extends Application {
 		sendButton.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
+		});
+		fileTransfer.setOnAction(e -> {
+			FileChooser fileChooser = new FileChooser();
+			fileChooser.setTitle("Open Resource File");
+			fileChooser.getExtensionFilters().add(
+			         new ExtensionFilter("Image Files", "*.png"));
+			GUIHandler.sendFile(fileChooser.showOpenDialog(window));
 		});
 		emoticons.setOnAction(e -> Platform.runLater(() -> {
 		if (inputHBox.getChildren().contains(topBox)) {

@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -484,6 +485,17 @@ public class GUIHandler {
 			GUI.levelLabel.setText(levelString);
 			GUI.experienceProgressBar.setProgress(levelProgress);
 		});
+	}
+
+
+	public static void sendFile(File file) {
+		if (file != null && file.exists() && file.canRead() && currentPerson != null) {
+			try {
+				session.getConnection().getTransportLayer().sendFile(file, currentPerson);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 }
