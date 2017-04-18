@@ -16,12 +16,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 
-import application.Session;
 import encryption.Crypter;
 import encryption.DiffieHellman;
 import encryption.EncryptionPair;
 import model.Message;
 import model.Person;
+import model.Session;
 import packet.*;
 import userinterface.GUIHandler;
 
@@ -473,7 +473,7 @@ public class TransportLayer {
 				
 				// Send the same EncryptionPairExchange packet back as acknowledgement
 				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator(), ep.getLocalHalfKey());
-				Packet packet = new Packet(session.getID(), senderID, session.getNextSeq(), Payload.ENCRYPTION_PAIR, epeResponse);
+				Packet packet = new Packet(session.getID(), senderID, session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epeResponse);
 				session.getConnection().getSender().send(packet);
 			} else {
 				// Set the PrivateChatPair to be acknowlegded
@@ -517,7 +517,7 @@ public class TransportLayer {
 		
 		int senderID = receivedPacket.getReceiverID();
 		int receiverID = receivedPacket.getSenderID();
-		int sequenceNum = session.getNextSeq();
+		int sequenceNum = session.getNextSeqNumber();
 		int typeIdentifier = Payload.ACKNOWLEDGEMENT;
 		
 		// Send an acknowledgement
@@ -540,7 +540,7 @@ public class TransportLayer {
 		String cipher = Crypter.encrypt(Crypter.getKey(ep, secretInteger), msg);
 		EncryptedMessage encryptedMessage = new EncryptedMessage(nextMessageID, ep.getLocalHalfKey(), cipher.length(), cipher);
 		
-		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.ENCRYPTED_MESSAGE, encryptedMessage);
+		Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeqNumber(), Payload.ENCRYPTED_MESSAGE, encryptedMessage);
 		session.getConnection().getSender().send(packet);
 		
 		synchronized (this.unacknowledgedPackets) {
@@ -568,7 +568,7 @@ public class TransportLayer {
 		int nextPublicMessageID = session.getNextPublicMessageID();
 		
 		PlainMessage plainMessage = new PlainMessage(nextPublicMessageID, msgLength, msg);
-		Packet packet = new Packet(session.getID(), 0, session.getNextSeq(), Payload.PLAIN_MESSAGE, plainMessage);
+		Packet packet = new Packet(session.getID(), 0, session.getNextSeqNumber(), Payload.PLAIN_MESSAGE, plainMessage);
 		session.getConnection().getSender().send(packet);
 		
 		synchronized (this.unacknowledgedPackets) {
@@ -963,7 +963,7 @@ public class TransportLayer {
 			}
 			byteBuffer.get(data);
 			FileMessage fileMessage = new FileMessage(nextFileID, i, data.length, (int) totalPackets, extension, data);
-			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeq(), Payload.FILE_MESSAGE, fileMessage);
+			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeqNumber(), Payload.FILE_MESSAGE, fileMessage);
 			session.getConnection().getSender().send(packet);
 			
 			synchronized (this.unacknowledgedPackets) {

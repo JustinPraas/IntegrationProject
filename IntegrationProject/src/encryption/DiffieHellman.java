@@ -1,7 +1,7 @@
 package encryption;
 
-import application.Session;
 import model.Person;
+import model.Session;
 
 public class DiffieHellman {
 	

@@ -31,7 +31,7 @@ public class RetransmissionThread extends Thread {
 	
 	private void retransmit() {
 		if (isUnacknowledged()) {
-			packet.setSequenceNum(transportLayer.session.getNextSeq());
+			packet.setSequenceNum(transportLayer.session.getNextSeqNumber());
 			transportLayer.session.getConnection().getSender().send(packet);
 			retransmissionsDone++;
 		} else {

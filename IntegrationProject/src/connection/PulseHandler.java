@@ -2,10 +2,10 @@ package connection;
 
 import java.util.Map;
 
-import application.Session;
 import encryption.DiffieHellman;
 import encryption.EncryptionPair;
 import model.Person;
+import model.Session;
 import packet.Packet;
 import packet.*;
 import packet.Pulse;
@@ -35,7 +35,7 @@ public class PulseHandler extends Thread {
 	public void pulse() {
 		int nameLength = session.getName().length();
 		Pulse pulse = new Pulse(nameLength, session.getName()); 
-		Packet packet = new Packet(session.getID(), 0, session.getNextSeq(), Payload.PULSE, pulse);
+		Packet packet = new Packet(session.getID(), 0, session.getNextSeqNumber(), Payload.PULSE, pulse);
 		session.getConnection().getSender().send(packet);
 	}
 	
@@ -72,7 +72,7 @@ public class PulseHandler extends Thread {
 					// Send the packet
 					EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator(), ep.getLocalHalfKey());
 					Packet packet = new Packet(session.getID(), entry.getValue().getID(), 
-							session.getNextSeq(), Payload.ENCRYPTION_PAIR, epe);
+							session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epe);
 					session.getConnection().getSender().send(packet);
 				}	
 				
@@ -81,7 +81,7 @@ public class PulseHandler extends Thread {
 				EncryptionPair ep = entry.getValue().getPrivateChatPair();
 				EncryptionPairExchange epe = new EncryptionPairExchange(ep.getPrime(), ep.getGenerator(), ep.getLocalHalfKey());
 				Packet packet = new Packet(session.getID(), entry.getValue().getID(), 
-						session.getNextSeq(), Payload.ENCRYPTION_PAIR, epe);
+						session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epe);
 				session.getConnection().getSender().send(packet);
 			}
 		}

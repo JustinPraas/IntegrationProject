@@ -1,5 +1,6 @@
 package application;
 
+import model.Session;
 import userinterface.GUIHandler;
 
 /**
