@@ -3,11 +3,24 @@ package userinterface;
 import java.io.File;
 import java.util.Formatter;
 import java.util.Locale;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+import javax.imageio.ImageIO;
+import javax.swing.JTextPane;
+
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -16,16 +29,22 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.stage.FileChooser;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import jdk.management.resource.internal.inst.SocketOutputStreamRMHooks;
 import model.Statistics;
@@ -43,6 +62,7 @@ public class GUI extends Application {
 	protected static VBox rightVBox;
 	protected static ScrollPane scrollingChatBox;
 	protected static Button globalChatButton;
+	protected static Map<String, File> myEmoticons;
 	
 	protected static void launchGUI() {
 		launch();
@@ -112,7 +132,7 @@ public class GUI extends Application {
 		HBox outerHBox = new HBox();
 		VBox leftVBox = new VBox();
 		rightVBox = new VBox();
-		HBox inputHBox = new HBox();
+		BorderPane inputHBox = new BorderPane();
 		outerHBox.setPadding(new Insets(20, 20, 20, 20));
 		outerHBox.setSpacing(20);
 		
@@ -144,13 +164,48 @@ public class GUI extends Application {
 		scrollingChatBox.setHbarPolicy(ScrollBarPolicy.NEVER);
 		scrollingChatBox.setVbarPolicy(ScrollBarPolicy.ALWAYS);
 		
+		HBox bottomBox = new HBox();
+		bottomBox.setSpacing(10);
 		inputBox = new TextField();
 		Button sendButton = new Button("Send");
-		inputHBox.getChildren().addAll(inputBox, sendButton);
-		inputHBox.setSpacing(10);
+		inputHBox.setBottom(bottomBox);
 		leftVBox.getChildren().addAll(headerArea, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
 		
+		File dir = new File("emoticons/");
+		File[] directoryListing = dir.listFiles(
+	            (directory, name) -> {
+	                return name.toLowerCase().endsWith(".png");
+	            }
+	    );
+		myEmoticons = new HashMap<>();
+		Arrays.sort(directoryListing);
+		FlowPane topBox = new FlowPane();
+		topBox.setPadding(new Insets(0, 0, 5, 0));
+		Button emoticons = new Button("");
+		if (directoryListing != null && directoryListing.length > 0) {
+		  for (File child : directoryListing) {
+			  ImageView ImgVwtemp = new ImageView(child.toURI().toString());
+			  ImgVwtemp.setFitHeight(18);
+			  ImgVwtemp.setPreserveRatio(true);
+			  ImgVwtemp.setSmooth(true);
+			  Button temp = new Button("", ImgVwtemp);
+			  String fileName = child.getName();
+          	  String displayName = fileName.substring(fileName.indexOf("_")+1, fileName.indexOf("."));
+          	  myEmoticons.put(displayName, child);
+		      temp.setOnAction(new EventHandler<ActionEvent>() {
+		            @Override public void handle(ActionEvent e) {
+		            	inputBox.appendText("::" + displayName + "::");
+		            }
+		        });
+			  topBox.getChildren().add(temp);
+		  }
+		  emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
+		  bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
+		} else {
+		  bottomBox.getChildren().addAll(inputBox, sendButton);
+		}
+
 		// Initialize elements of right VBox
 		Label personListHeader = new Label("Nearby");
 		
@@ -207,6 +262,13 @@ public class GUI extends Application {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
 		});
+
+		emoticons.setOnAction(e -> Platform.runLater(() -> {
+		if (inputHBox.getChildren().contains(topBox)) {
+			inputHBox.setTop(null);
+		} else {
+			inputHBox.setTop(topBox);
+		}}));
 		
 	}
 	
@@ -253,7 +315,9 @@ public class GUI extends Application {
 			
 			statisticsWindow.setContentText(statisticsString);
 			statisticsWindow.showAndWait();
+			
 		});
+		
 	}
 	
 	// Pass on user name if not empty, otherwise give warning
