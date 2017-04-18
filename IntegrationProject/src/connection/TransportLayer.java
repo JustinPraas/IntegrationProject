@@ -306,12 +306,12 @@ public class TransportLayer {
 		boolean addMessageToList = true;		
 		// Add it to the chatmessages map
 		ArrayList<Message> publicChatMessageList = session.getPublicChatMessages();		
-//		for (Message message : publicChatMessageList) {
-//			if (message.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == message.getSenderID()) {
-//				addMessageToList = false;
-//				break;
-//			}
-//		}
+		for (Message message : publicChatMessageList) {
+			if (message.getMessageID() == receivedMessage.getMessageID() && receivedMessage.getSenderID() == message.getSenderID()) {
+				addMessageToList = false;
+				break;
+			}
+		}
 
 		// Update GUI
 		if (addMessageToList) {
