@@ -160,7 +160,7 @@ public class GUI extends Application {
 		bottomBox.setSpacing(10);
 		inputBox = new TextField();
 		inputBox.setMaxHeight(Double.MAX_VALUE);
-		Button fileTransfer = new Button("File");
+		Button fileButton = new Button("File");
 		Button sendButton = new Button("Send");
 		sendButton.setMaxHeight(Double.MAX_VALUE);
 		inputHBox.setBottom(bottomBox);
@@ -177,7 +177,7 @@ public class GUI extends Application {
 		Arrays.sort(directoryListing);
 		FlowPane topBox = new FlowPane();
 		topBox.setPadding(new Insets(0, 0, 15, 0));
-		Button emoticons = new Button("");
+		Button emoticonButton = new Button("");
 		if (directoryListing != null && directoryListing.length > 0) {
 			for (File child : directoryListing) {
 				ImageView ImgVwtemp = new ImageView(child.toURI().toString());
@@ -197,10 +197,10 @@ public class GUI extends Application {
 				});
 				topBox.getChildren().add(temp);
 				}
-			emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
-			bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
+			emoticonButton = new Button("", new ImageView(directoryListing[0].toURI().toString()));
+			bottomBox.getChildren().addAll(inputBox, fileButton, emoticonButton, sendButton);
 		} else {
-			bottomBox.getChildren().addAll(inputBox, sendButton);
+			bottomBox.getChildren().addAll(inputBox, fileButton, sendButton);
 		}
 
 		// Initialize elements of right VBox
@@ -263,7 +263,7 @@ public class GUI extends Application {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
 		});
-		fileTransfer.setOnAction(e -> {
+		fileButton.setOnAction(e -> {
 			FileChooser fileChooser = new FileChooser();
 			fileChooser.setTitle("Open Resource File");
 			fileChooser.getExtensionFilters().add(
@@ -271,7 +271,7 @@ public class GUI extends Application {
 			GUIHandler.sendFile(fileChooser.showOpenDialog(window));
 		});
 
-		emoticons.setOnAction(e -> Platform.runLater(() -> {
+		emoticonButton.setOnAction(e -> Platform.runLater(() -> {
 			if (inputHBox.getChildren().contains(topBox)) {
 				inputHBox.setTop(null);
 			} else {

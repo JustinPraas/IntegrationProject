@@ -612,7 +612,13 @@ public class TransportLayer {
 	 */
 	public void sendAcknowledgement(Packet receivedPacket, Message message) {
 		// Prepare an acknowledgement
-		Acknowledgement acknowledgement = new Acknowledgement(message.getMessageID());
+		Acknowledgement acknowledgement;
+		if (receivedPacket.getTypeIdentifier() == Payload.FILE_MESSAGE) {
+			FileMessage payload = ((FileMessage) receivedPacket.getPayload());
+			acknowledgement = new Acknowledgement(message.getMessageID(), payload.getSequenceNumber());
+		} else {
+			acknowledgement = new Acknowledgement(message.getMessageID());
+		}
 		
 		int senderID = receivedPacket.getReceiverID();
 		int receiverID = receivedPacket.getSenderID();
