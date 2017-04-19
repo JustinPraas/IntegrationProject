@@ -198,7 +198,9 @@ public class GUI extends Application {
 				temp.setOnAction(new EventHandler<ActionEvent>() {
 					@Override public void handle(ActionEvent e) {
 						inputBox.appendText("::" + displayName + "::");
-		            }
+						inputBox.requestFocus();
+						inputBox.positionCaret(inputBox.getText().length());
+		        	}
 				});
 				topBox.getChildren().add(temp);
 				}
@@ -225,6 +227,8 @@ public class GUI extends Application {
 		globalChatButton.setTextFill(Color.BLUE);
 		globalChatButton.setOnAction(e -> {
 			GUIHandler.showChat();
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
 		});
 		
 		// Let the button fill the width of the right sidebar
@@ -260,19 +264,24 @@ public class GUI extends Application {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
 			inputHBox.setTop(null);
+			inputBox.requestFocus();
 		});
 		sendButton.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
 			inputHBox.setTop(null);
+			inputBox.requestFocus();
 		});
 
 		emoticons.setOnAction(e -> Platform.runLater(() -> {
-		if (inputHBox.getChildren().contains(topBox)) {
-			inputHBox.setTop(null);
-		} else {
-			inputHBox.setTop(topBox);
-		}}));
+			if (inputHBox.getChildren().contains(topBox)) {
+				inputHBox.setTop(null);
+			} else {
+				inputHBox.setTop(topBox);
+			}
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
+		}));
 		
 	}
 	
@@ -322,6 +331,9 @@ public class GUI extends Application {
 			statisticsWindow.setContentText(statisticsString);
 			statisticsWindow.showAndWait();
 			
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
+			
 		});
 		
 	}
@@ -347,6 +359,7 @@ public class GUI extends Application {
 			window.setTitle(GUIHandler.username + " - " + GUIHandler.getApplicationName());
 			GUIHandler.showChat();
 			window.show();
+			GUI.inputBox.requestFocus();
 		}
 	}
 	
