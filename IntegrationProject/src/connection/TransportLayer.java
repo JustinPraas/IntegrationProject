@@ -177,23 +177,109 @@ public class TransportLayer {
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
 				ArrayList<Packet> packets = files.get(fileID);
 				packets.add(receivedPacket);
-				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream(1000000);
 				int targetSequence = 0;
-				while()
-				for (Packet packet : packets) {
-					FileMessage packetPayload = (FileMessage) packet.getPayload();
-					if (packetPayload.getSequenceNumber() == targetSequence) {
-						try {
-							outputStream.write(packetPayload.getFileData());
-						} catch (IOException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+				while(targetSequence != totalPackets) {
+					for (Packet packet : packets) {
+						FileMessage packetPayload = (FileMessage) packet.getPayload();
+						if (packetPayload.getSequenceNumber() == targetSequence) {
+							try {
+								outputStream.write(packetPayload.getFileData());
+								targetSequence++;
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
 					}
 				}
+				byte[] fileData = outputStream.toByteArray();
+				Message message = new Message(senderID, session.getID(), fileID, FileMessage.FILE_INDICATOR, fileData, false);
+				Person sender = session.getKnownPersons().get(senderID);
+				boolean addMessageToList = true;		
+				// Add it to the chatmessages map
+				if (!session.getChatMessages().containsKey(sender)) {
+					session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
+				} else {
+					ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
+					
+					for (Message msg : currentMessageList) {
+						if (msg.getMessageID() == message.getMessageID() && message.getSenderID() == msg.getSenderID()) {
+							addMessageToList = false;
+							break;
+						}
+					}
+					
+					if (addMessageToList) {
+						int insertPosition = currentMessageList.size();
+						int receivedMessageID = message.getMessageID();
+						boolean continues = true;
+						for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
+							if (currentMessageList.get(i).getSenderID() != session.getID()) {
+								if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
+									insertPosition = i;
+								} else {
+									if (insertPosition == currentMessageList.size()) {
+										currentMessageList.add(message);
+										continues = false;
+									} else {
+										currentMessageList.add(insertPosition, message);
+										continues = false;
+									}
+								}
+							}
+						}
+						if (continues) {
+							currentMessageList.add(message);
+						}
+						session.getChatMessages().put(sender, currentMessageList);
+						GUIHandler.messagePutInMap(sender);
+					}			
+				}
 			}
 		} else {
-			
+			Message message = new Message(senderID, session.getID(), fileID, FileMessage.FILE_INDICATOR, packetData, false);
+			Person sender = session.getKnownPersons().get(senderID);
+			boolean addMessageToList = true;		
+			// Add it to the chatmessages map
+			if (!session.getChatMessages().containsKey(sender)) {
+				session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
+			} else {
+				ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
+				
+				for (Message msg : currentMessageList) {
+					if (msg.getMessageID() == message.getMessageID() && message.getSenderID() == msg.getSenderID()) {
+						addMessageToList = false;
+						break;
+					}
+				}
+				
+				if (addMessageToList) {
+					int insertPosition = currentMessageList.size();
+					int receivedMessageID = message.getMessageID();
+					boolean continues = true;
+					for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
+						if (currentMessageList.get(i).getSenderID() != session.getID()) {
+							if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
+								insertPosition = i;
+							} else {
+								if (insertPosition == currentMessageList.size()) {
+									currentMessageList.add(message);
+									continues = false;
+								} else {
+									currentMessageList.add(insertPosition, message);
+									continues = false;
+								}
+							}
+						}
+					}
+					if (continues) {
+						currentMessageList.add(message);
+					}
+					session.getChatMessages().put(sender, currentMessageList);
+					GUIHandler.messagePutInMap(sender);
+				}			
+			}
 		}
 	}
 
@@ -916,17 +1002,19 @@ public class TransportLayer {
 		    start += chunksize;
 		}
 		int nextFileID = receiver.getNextFileID();
+		int seqNum = 0; 
 		for (byte[] dataSegment : result) {
-			FileMessage payload = new FileMessage(nextFileID, dataSegment.length, result.size(), result.size(), dataSegment);
+			FileMessage payload = new FileMessage(nextFileID, dataSegment.length, result.size(), seqNum, dataSegment);
 			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeqNumber(), Payload.FILE_MESSAGE, payload);
 			
 			synchronized (this.unacknowledgedPackets) {
 				unacknowledgedPackets.add(packet);
 				new RetransmissionThread(this, packet);
 			}
+			seqNum++;
 		}
 		
-		Message message = new Message(session.getID(), receiver.getID(), nextFileID, FileMessage.FILE_INDICATOR, true);		
+		Message message = new Message(session.getID(), receiver.getID(), nextFileID, FileMessage.FILE_INDICATOR, fileData, true);		
 
 		// Add it to the chatmessages map
 		if (!session.getChatMessages().containsKey(receiver)) {

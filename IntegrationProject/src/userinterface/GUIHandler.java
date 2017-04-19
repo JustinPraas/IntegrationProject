@@ -1,12 +1,14 @@
 package userinterface;
 
 import java.awt.Desktop;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -14,7 +16,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
+
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -37,6 +42,7 @@ import model.ExperienceTracker;
 import model.Message;
 import model.Person;
 import model.Session;
+import packet.FileMessage;
 
 public class GUIHandler {
 
@@ -147,43 +153,68 @@ public class GUIHandler {
 			Text senderText = new Text(messageSender);
 			senderText.getStyleClass().add("sender");
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
-			if (messageText.contains("::")) {				
-				String[] splittedText = messageText.split("::");
-				HBox emoticonBox = new HBox();
-				emoticonBox.getChildren().addAll(senderText, timestampText);
-				for (String s : splittedText) {
-					if (GUI.myEmoticons.containsKey(s)) {
-						File emoticon = GUI.myEmoticons.get(s);
-						ImageView view = new ImageView(new Image(emoticon.toURI().toString()));
-						emoticonBox.getChildren().add(view);
-					} else {
-						emoticonBox.getChildren().add(new Text(s));
-					}
-				}
+			if (messageText.contains(FileMessage.FILE_INDICATOR)) {
+				byte[] fileData = message.getFileData();
+				ImageView imageView = new ImageView();
+				imageView.setFitWidth(200);
+				imageView.setPreserveRatio(true);
+				imageView.setSmooth(true);
+				imageView.setCache(true);
+		        try {
+		            InputStream inputStream = new ByteArrayInputStream(fileData);
+		            BufferedImage bufferedImage = ImageIO.read(inputStream);
+		            Image image = SwingFXUtils.toFXImage(bufferedImage, null);
+		            imageView.setImage(image);
+		        } catch (IOException e) {
+		        	e.getStackTrace();
+		        }
+				HBox fileBox = new HBox();
+				fileBox.getChildren().addAll(senderText, timestampText, imageView);
 				if (message.getSenderID() == session.getID()) {
-					emoticonBox.getStyleClass().add("local");
+					fileBox.getStyleClass().add("local");
 				} else {
-					emoticonBox.getStyleClass().add("remote");
+					fileBox.getStyleClass().add("remote");
 				}
-				total.add(emoticonBox);
+				total.add(fileBox);
 			} else {
-				TextFlow flow;
-				
-				// Append this message to ChatBox String
-				Text messageTextBox = new Text(message.getText());
-				
-				flow = new TextFlow();
-				flow.getChildren().addAll(senderText, timestampText, messageTextBox);
-				
-				HBox chatBoxEntry = new HBox();
-				if (message.getSenderID() == session.getID()) {
-					flow.getStyleClass().add("local");
+				if (messageText.contains("::")) {				
+					String[] splittedText = messageText.split("::");
+					HBox emoticonBox = new HBox();
+					emoticonBox.getChildren().addAll(senderText, timestampText);
+					for (String s : splittedText) {
+						if (GUI.myEmoticons.containsKey(s)) {
+							File emoticon = GUI.myEmoticons.get(s);
+							ImageView view = new ImageView(new Image(emoticon.toURI().toString()));
+							emoticonBox.getChildren().add(view);
+						} else {
+							emoticonBox.getChildren().add(new Text(s));
+						}
+					}
+					if (message.getSenderID() == session.getID()) {
+						emoticonBox.getStyleClass().add("local");
+					} else {
+						emoticonBox.getStyleClass().add("remote");
+					}
+					total.add(emoticonBox);
 				} else {
-					flow.getStyleClass().add("remote");
+					TextFlow flow;
+					
+					// Append this message to ChatBox String
+					Text messageTextBox = new Text(message.getText());
+					
+					flow = new TextFlow();
+					flow.getChildren().addAll(senderText, timestampText, messageTextBox);
+					
+					HBox chatBoxEntry = new HBox();
+					if (message.getSenderID() == session.getID()) {
+						flow.getStyleClass().add("local");
+					} else {
+						flow.getStyleClass().add("remote");
+					}
+					chatBoxEntry.getChildren().add(flow);
+					
+					total.add(chatBoxEntry);
 				}
-				chatBoxEntry.getChildren().add(flow);
-				
-				total.add(chatBoxEntry);
 			}
 		}
 		
