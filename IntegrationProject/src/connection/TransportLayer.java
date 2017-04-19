@@ -497,6 +497,11 @@ public class TransportLayer {
 							((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
 						removePacket = packet;
 					}
+				} else if (packet.getTypeIdentifier() == Payload.FILE_MESSAGE) {
+					if (packet.getReceiverID() == senderID && 
+							((FileMessage) packet.getPayload()).getFileID() == messageID) {
+						removePacket = packet;
+					}
 				}
 			}
 			// To prevent ConcurrentModificationException
