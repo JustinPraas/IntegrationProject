@@ -47,7 +47,7 @@ import packet.FileMessage;
 public class GUIHandler {
 
 	private static String applicationName;
-	private static Session session;
+	protected static Session session;
 	protected static String username;
 	private static HashMap<Button, Person> buttonToPerson;
 	private static HashMap<Person, Button> personToButton;
@@ -241,6 +241,8 @@ public class GUIHandler {
 			} else {
 				GUI.inputBox.setText("");
 			}
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
 		}
 		
 		// Set current person
@@ -346,12 +348,14 @@ public class GUIHandler {
 		
 		// Set Header Label
 		Platform.runLater(() -> {
-			GUI.currentChatHeader.setText("Unreliable Global Chat");
+			GUI.currentChatHeader.setText("Best-effort Global Chat");
 		});
 		
 		// Set TextBox text (if exists)
 		if (currentPerson != null) {
 			GUI.inputBox.setText(globalTextBoxText);
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
 		}
 		
 		// Set current person
@@ -385,6 +389,9 @@ public class GUIHandler {
 	
 	// To be called when the Person list of Session is changed
 	public static void changedPersonList() {
+		while (session == null) {
+			sleep(100);
+		}
 		// Create new maps to link Person objects to Button objects
 		// To prevent issues with this being executed while the GUI is not updated yet
 		HashMap<Button, Person> newButtonToPerson = new HashMap<>();
@@ -399,6 +406,8 @@ public class GUIHandler {
 		GUI.globalChatButton.setTextFill(Color.BLUE);
 		GUI.globalChatButton.setOnAction(e -> {
 			GUIHandler.showChat();
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
 		});
 		
 		// Let the button fill the width of the right sidebar
@@ -450,6 +459,8 @@ public class GUIHandler {
 			// Set the action of the Button
 			button.setOnAction(e -> {
 				showChat(person);
+				GUI.inputBox.requestFocus();
+				GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
 			});
 		}
 		

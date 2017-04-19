@@ -22,6 +22,7 @@ import userinterface.GUIHandler;
 
 public class TransportLayer {
 	
+	//TODO JAVADOC
 	// Constants
 	public static final int PULSE_TTL = 5;
 	public static final int MAX_SEEN_PACKETS_SIZE = 300;
@@ -56,28 +57,21 @@ public class TransportLayer {
 		int typeIdentifier = getTypeIdentifier(datagramArray);
 		switch (typeIdentifier) {
 		case Payload.PULSE:
-			length += Pulse.NAME_LENGTH_LENGTH;
-			length += Pulse.LEVEL_LENGTH;
+			length += Pulse.PULSE_HEADER_LENGTH;
 			length += getNameLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		case Payload.GLOBAL_MESSAGE:
-			length += GlobalMessage.MESSAGE_ID_LENGTH;
-			length += GlobalMessage.MESSAGE_LENGTH_LENGTH;
+			length += GlobalMessage.GLOBAL_MESSAGE_HEADER_LENGTH;
 			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.GLOBAL_MESSAGE);
 			break;
 		case Payload.ACKNOWLEDGEMENT:
-			length += Acknowledgement.MESSAGE_ID_LENGTH;
-			length += Acknowledgement.FILE_SEQUENCE_NUMBER;
+			length += Acknowledgement.ACK_HEADER_LENGTH;
 			break;
 		case Payload.ENCRYPTION_PAIR:
-			length += EncryptionPairExchange.PRIME_LENGTH;
-			length += EncryptionPairExchange.GENERATOR_LENGTH;
-			length += EncryptionPairExchange.HALF_KEY_LENGTH;
+			length += EncryptionPairExchange.ENCRYPTION_PAIR_HEADER_LENGTH; //TODO TEST.
 			break;
 		case Payload.ENCRYPTED_MESSAGE:
-			length += EncryptedMessage.MESSAGE_ID_LENGTH;
-			length += EncryptedMessage.MID_WAY_KEY_LENGTH;
-			length += EncryptedMessage.CIPHER_LENGTH_LENGTH;
+			length += EncryptedMessage.ENCRYPTED_MESSAGE_HEADER_LENGTH;
 			length += getCipherLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		case Payload.FILE_MESSAGE:
@@ -110,6 +104,7 @@ public class TransportLayer {
 		// Don't do anything if: we've already seen this packet OR if this packet is from ourself
 		// Else: add the packet to the seenPackets list
 		if (seenPacket(receivedPacket) || session.getID() == receivedPacket.getSenderID()) {
+			session.getStatistics().increasePacketsIgnored();
 			return;
 		}	
 		
@@ -118,6 +113,7 @@ public class TransportLayer {
 		// Else process the packet accordingly
 		if (receivedPacket.getTypeIdentifier() == Payload.GLOBAL_MESSAGE) {
 			System.out.println("Received global message: ");
+			session.getStatistics().increaseGlobalMessagesReceived();
 			handleGlobalMessage(receivedPacket);
 			forwardPacket(receivedPacket);
 		} else if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
@@ -126,19 +122,23 @@ public class TransportLayer {
 		} else {	
 			switch (receivedPacket.getTypeIdentifier()) {
 			case Payload.PULSE:
+				session.getStatistics().increasePulsesReceived();
 				forwardPacket(receivedPacket);
 				handlePulse(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
 				System.out.println("Received acknowledgement: ");
+				session.getStatistics().increaseAcknowlegdementsReceived();
 				handleAcknowledgement(receivedPacket);
 				break;
 			case Payload.ENCRYPTION_PAIR:
 				System.out.println("Received encryption pair: ");
+				session.getStatistics().increaseSecurityMessagesReceived();
 				handleEncryptionPair(receivedPacket);
 				break;
 			case Payload.ENCRYPTED_MESSAGE:
 				System.out.println("Received encrypted message: ");
+				session.getStatistics().increasePrivateMessagesReceived();
 				handleEncryptedMessage(receivedPacket);
 				break;
 			case Payload.FILE_MESSAGE:
@@ -348,7 +348,7 @@ public class TransportLayer {
 		if (session.getKnownPersons().containsKey(senderID)) {
 			person = session.getKnownPersons().get(senderID);
 			
-			if (level != person.getLevel()) {//TODO
+			if (level != person.getLevel()) {
 				person.setLevel(level);
 				String notificationString = person.getName() + " reached level " + level;
 				Message notificationMessage = new Message(-1, -1, -1, notificationString, false);
@@ -499,6 +499,7 @@ public class TransportLayer {
 		}
 		
 		// Send an acknowledgement
+		session.getStatistics().increaseAcknowlegdementsSent();
 		sendAcknowledgement(receivedPacket, message);
 	}
 	
@@ -564,6 +565,7 @@ public class TransportLayer {
 				System.out.println("      sending acknowledgement");
 				// Send the same EncryptionPairExchange packet back as acknowledgement
 				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator(), ep.getLocalHalfKey());
+				session.getStatistics().increaseSecurityMessagesSent();
 				Packet packet = new Packet(session.getID(), senderID, session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epeResponse);
 				session.getConnection().getSender().send(packet);
 			} else {
@@ -599,6 +601,7 @@ public class TransportLayer {
 			GUIHandler.updateProgressBar();
 		}
 		
+		session.getStatistics().increasePacketsForwarded();
 		session.getConnection().getSender().send(receivedPacket);
 	}
 
@@ -631,6 +634,7 @@ public class TransportLayer {
 	public void sendMessageFromGUI(String msg, Person receiver) {
 		
 		// Update experience bar
+		session.getStatistics().increasePrivateMessagesSent();
 		session.getExperienceTracker().sendMessage();
 		GUIHandler.updateProgressBar();
 		
@@ -666,6 +670,8 @@ public class TransportLayer {
 	}
 	
 	public void sendMessageFromGUI(String msg) {
+		
+		session.getStatistics().increaseGlobalMessagesSent();
 		
 		// Update experience bar
 		session.getExperienceTracker().sendMessage();
@@ -750,7 +756,7 @@ public class TransportLayer {
 	}
 
 	private static int getAckFileSequenceNumber(byte[] payloadData) {
-		int start = Acknowledgement.MESSAGE_ID_LENGTH;
+		int start = Acknowledgement.ACK_MESSAGE_ID_LENGHT;
 		int end = start + Acknowledgement.FILE_SEQUENCE_NUMBER;
 		
 		byte[] ackFileSequenceArray = Arrays.copyOfRange(payloadData, start, end);
@@ -933,7 +939,7 @@ public class TransportLayer {
 			end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
 		} else if (typeIdentifier == Payload.ACKNOWLEDGEMENT) {
 			start = 0;
-			end = start + Acknowledgement.MESSAGE_ID_LENGTH;
+			end = start + Acknowledgement.ACK_MESSAGE_ID_LENGHT;
 		} else if (typeIdentifier == Payload.FILE_MESSAGE) {
 			start = 0;
 			end = start + FileMessage.FILE_ID_LENGTH;

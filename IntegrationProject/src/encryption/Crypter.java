@@ -8,10 +8,17 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.codec.binary.Base64;
 
+/**
+ * A class that handles the encryption, decryption and key-formation.
+ * @author Justin Praas, Daan Kooij, Casper Plentinger, Tim van Brederode
+ */
 public class Crypter {
 	
-	// If this were to be a widely distributed application, a random IV would be sent with each message
-	// We use a static IV for simplicity
+	/**
+	 * The initializing vector for encryption and decryption.
+	 * If this program were to be a widely distributed application, a random IV 
+	 * would be sent with each message. We use a static IV for simplicity.
+	 */
 	public static final String INIT_VECTOR = "0123456789123456";
 	
 	/**

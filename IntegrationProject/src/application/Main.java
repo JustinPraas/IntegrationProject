@@ -5,7 +5,7 @@ import userinterface.GUIHandler;
 
 /**
  * The main class that has the sole purpose of launching the chat application.
- * @author Justin Praas, Daan Kooij, Casper Plentinger, Tim van Brederode *
+ * @author Justin Praas, Daan Kooij, Casper Plentinger, Tim van Brederode 
  */
 public class Main {
 	

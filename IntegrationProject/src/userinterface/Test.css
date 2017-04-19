@@ -12,3 +12,7 @@
 .local .sender, .remote .sender {
 	-fx-font-weight: bold;
 }
+
+.statisticsScreen > *.label.content {
+	-fx-font-family: "Monospaced";
+}

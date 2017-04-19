@@ -2,11 +2,9 @@ package tests;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.Arrays;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import connection.TransportLayer;
@@ -29,6 +27,12 @@ public class TransportLayerTest {
 	EncryptionPairExchange encryptionPairExchange = new EncryptionPairExchange(23, 5, 25);
 	Packet encryptionPairExchangePacket = new Packet(53, 23, 8, Payload.ENCRYPTION_PAIR, encryptionPairExchange);
 	
+	/**
+	 * Simulates the event of receiving a packet from the receiverSocket. Basically 
+	 * stores the packet in a DatagramPacket that is much larger than the actual packet.
+	 * @param packet the packet to be tested
+	 * @return datagramPacket the <code>DatagramPacket</code> that is much larger than the original packet
+	 */
 	public DatagramPacket simulateReceiver(Packet packet) {
 		byte buffer[] = new byte[1024000];
 		DatagramPacket datagramPacket = new DatagramPacket(buffer, buffer.length);

@@ -38,6 +38,11 @@ public class Session {
 	private ExperienceTracker experienceTracker;
 	
 	/**
+	 * The statistics tracker of this session.
+	 */
+	private Statistics statistics;
+	
+	/**
 	 * A map consisting of known persons: 
 	 * Map<the person's ID, the person itself>.
 	 */
@@ -88,6 +93,7 @@ public class Session {
 		this.sequenceNumber = 0;
 		this.nextPublicMessageID = 0;
 		this.experienceTracker = new ExperienceTracker();
+		this.statistics = new Statistics();
 		new PulseHandler(this);
 	}
 
@@ -124,6 +130,10 @@ public class Session {
 	
 	public ExperienceTracker getExperienceTracker() {
 		return experienceTracker;
+	}
+	
+	public Statistics getStatistics() {
+		return statistics;
 	}
 
 	public Map<Integer, Person> getKnownPersons() {

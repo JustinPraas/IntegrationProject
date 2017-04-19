@@ -5,13 +5,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
-import javax.imageio.ImageIO;
-import javax.swing.JTextPane;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -19,7 +15,6 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -28,11 +23,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
@@ -40,13 +33,13 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Path;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
+import model.Statistics;
 
 public class GUI extends Application {
 
@@ -137,9 +130,12 @@ public class GUI extends Application {
 		
 		// Initialize elements of left VBox
 		HBox headerArea = new HBox();
+		headerArea.setSpacing(10);
 		currentChatHeader = new Label();
 		Label fillerLabel = new Label();
-		Label spaceLabel = new Label("  ");
+		Button statisticsButton = new Button("Stats");
+		statisticsButton.setMaxHeight(Double.MAX_VALUE);
+		initializeStatisticsWindow(statisticsButton);
 		fillerLabel.setMaxWidth(Double.MAX_VALUE);
 		levelLabel = new Label("Level 0");
 		levelLabel.setFont(Font.font(null, FontWeight.NORMAL, 24));
@@ -148,7 +144,7 @@ public class GUI extends Application {
 		experienceProgressBar.setPrefWidth(200);
 		HBox.setHgrow(fillerLabel, Priority.ALWAYS);
 		headerArea.getChildren().addAll(currentChatHeader, fillerLabel, levelLabel, 
-				spaceLabel, experienceProgressBar);
+				experienceProgressBar, statisticsButton);
 		
 		chatBox = new VBox();
 		chatBox.setSpacing(2);
@@ -163,8 +159,10 @@ public class GUI extends Application {
 		HBox bottomBox = new HBox();
 		bottomBox.setSpacing(10);
 		inputBox = new TextField();
+		inputBox.setMaxHeight(Double.MAX_VALUE);
 		Button fileTransfer = new Button("File");
 		Button sendButton = new Button("Send");
+		sendButton.setMaxHeight(Double.MAX_VALUE);
 		inputHBox.setBottom(bottomBox);
 		leftVBox.getChildren().addAll(headerArea, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
@@ -178,29 +176,31 @@ public class GUI extends Application {
 		myEmoticons = new HashMap<>();
 		Arrays.sort(directoryListing);
 		FlowPane topBox = new FlowPane();
-		topBox.setPadding(new Insets(0, 0, 5, 0));
+		topBox.setPadding(new Insets(0, 0, 15, 0));
 		Button emoticons = new Button("");
 		if (directoryListing != null && directoryListing.length > 0) {
-		  for (File child : directoryListing) {
-			  ImageView ImgVwtemp = new ImageView(child.toURI().toString());
-			  ImgVwtemp.setFitHeight(18);
-			  ImgVwtemp.setPreserveRatio(true);
-			  ImgVwtemp.setSmooth(true);
-			  Button temp = new Button("", ImgVwtemp);
-			  String fileName = child.getName();
-          	  String displayName = fileName.substring(fileName.indexOf("_")+1, fileName.indexOf("."));
-          	  myEmoticons.put(displayName, child);
-		      temp.setOnAction(new EventHandler<ActionEvent>() {
-		            @Override public void handle(ActionEvent e) {
-		            	inputBox.appendText("::" + displayName + "::");
-		            }
-		        });
-			  topBox.getChildren().add(temp);
-		  }
-		  emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
-		  bottomBox.getChildren().addAll(inputBox, fileTransfer, emoticons, sendButton);
+			for (File child : directoryListing) {
+				ImageView ImgVwtemp = new ImageView(child.toURI().toString());
+				ImgVwtemp.setFitHeight(18);
+				ImgVwtemp.setPreserveRatio(true);
+				ImgVwtemp.setSmooth(true);
+				Button temp = new Button("", ImgVwtemp);
+				String fileName = child.getName();
+				String displayName = fileName.substring(fileName.indexOf("_")+1, fileName.indexOf("."));
+				myEmoticons.put(displayName, child);
+				temp.setOnAction(new EventHandler<ActionEvent>() {
+					@Override public void handle(ActionEvent e) {
+						inputBox.appendText("::" + displayName + "::");
+						inputBox.requestFocus();
+						inputBox.positionCaret(inputBox.getText().length());
+		        	}
+				});
+				topBox.getChildren().add(temp);
+				}
+			emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
+			bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
 		} else {
-		  bottomBox.getChildren().addAll(inputBox, sendButton);
+			bottomBox.getChildren().addAll(inputBox, sendButton);
 		}
 
 		// Initialize elements of right VBox
@@ -220,6 +220,8 @@ public class GUI extends Application {
 		globalChatButton.setTextFill(Color.BLUE);
 		globalChatButton.setOnAction(e -> {
 			GUIHandler.showChat();
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
 		});
 		
 		// Let the button fill the width of the right sidebar
@@ -254,6 +256,8 @@ public class GUI extends Application {
 		inputBox.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
+			inputHBox.setTop(null);
+			inputBox.requestFocus();
 		});
 		sendButton.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
@@ -266,12 +270,70 @@ public class GUI extends Application {
 			         new ExtensionFilter("Image Files", "*.png"));
 			GUIHandler.sendFile(fileChooser.showOpenDialog(window));
 		});
+
 		emoticons.setOnAction(e -> Platform.runLater(() -> {
-		if (inputHBox.getChildren().contains(topBox)) {
-			inputHBox.setTop(null);
-		} else {
-			inputHBox.setTop(topBox);
-		}}));
+			if (inputHBox.getChildren().contains(topBox)) {
+				inputHBox.setTop(null);
+			} else {
+				inputHBox.setTop(topBox);
+			}
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
+		}));
+		
+	}
+	
+	private void initializeStatisticsWindow(Button statisticsButton) {
+		
+		statisticsButton.setOnAction(e -> {
+			
+			Alert statisticsWindow = new Alert(AlertType.INFORMATION);
+			statisticsWindow.setTitle("Statistics");
+			statisticsWindow.setHeaderText("Usage statistics");
+			statisticsWindow.getDialogPane().getStylesheets().add(getClass().getResource("Test.css").toExternalForm());
+			statisticsWindow.getDialogPane().getStyleClass().add("statisticsScreen");
+			
+			Statistics stats = GUIHandler.session.getStatistics();
+			
+			String statisticsString = "";
+			String format = "%1$21s %2$9s %3$9s\n";
+			
+			statisticsString += String.format(format, "Session time", "", 
+					stats.getSessionTime());
+			statisticsString += String.format(format, "Levels increased", "", 
+					GUIHandler.session.getExperienceTracker().getCurrentLevel());
+			statisticsString += String.format(format, "Experience gained", "", 
+					GUIHandler.session.getExperienceTracker().getTotalExperience());
+			statisticsString += String.format(format, "Packets forwarded", "", 
+					stats.getPacketsForwarded());
+			statisticsString += String.format(format, "Packets ignored", "", 
+					stats.getPacketsIgnored());
+			statisticsString += String.format(format, "Packets retransmitted", "", 
+					stats.getRetransmissionsDone());
+			statisticsString += String.format(format, "", "", "");
+			
+			statisticsString += String.format(format, "", "Sent", "Received");
+			statisticsString += String.format(format, "Total packets", 
+					stats.getTotalPacketsSent(), stats.getTotalPacketsReceived());
+			statisticsString += String.format(format, "Pulses", 
+					stats.getPulsesSent(), stats.getPulsesReceived());
+			statisticsString += String.format(format, "Private messages", 
+					stats.getPrivateMessagesSent(), stats.getPrivateMessagesReceived());
+			statisticsString += String.format(format, "Global messages", 
+					stats.getGlobalMessagesSent(), stats.getGlobalMessagesReceived());
+			statisticsString += String.format(format, "Acknowledgements", 
+					stats.getAcknowledgementsSent(), stats.getAcknowledgementsReceived());
+			statisticsString += String.format(format, "Security messages", 
+					stats.getSecurityMessagesSent(), stats.getSecurityMessagesReceived());
+			
+			statisticsWindow.setContentText(statisticsString);
+			statisticsWindow.showAndWait();
+			
+			GUI.inputBox.requestFocus();
+			GUI.inputBox.positionCaret(GUI.inputBox.getText().length());
+			
+		});
+		
 	}
 	
 	// Pass on user name if not empty, otherwise give warning
@@ -295,6 +357,7 @@ public class GUI extends Application {
 			window.setTitle(GUIHandler.username + " - " + GUIHandler.getApplicationName());
 			GUIHandler.showChat();
 			window.show();
+			GUI.inputBox.requestFocus();
 		}
 	}
 	

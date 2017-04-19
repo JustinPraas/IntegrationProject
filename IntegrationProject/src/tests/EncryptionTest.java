@@ -2,10 +2,8 @@ package tests;
 
 import static org.junit.Assert.*;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import connection.TransportLayer;
 import encryption.Crypter;
 import encryption.DiffieHellman;
 import encryption.EncryptionPair;
@@ -14,7 +12,7 @@ public class EncryptionTest {
 	
 	@Test
 	public void encryptionDecryptionTest() {
-		int[] randomPair = DiffieHellman.PRIME_TO_PRIMITIVE_ROOT[(int) Math.random() * DiffieHellman.PRIME_TO_PRIMITIVE_ROOT.length];
+		int[] randomPair = DiffieHellman.PRIME_GENERATOR[(int) Math.random() * DiffieHellman.PRIME_GENERATOR.length];
 		int prime = randomPair[0];
 		int generator = randomPair[1];
 		
