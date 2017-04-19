@@ -116,6 +116,7 @@ public class TransportLayer {
 		// Else, if it's NOT a Pulse AND we are NOT the destination, foward it
 		// Else process the packet accordingly
 		if (receivedPacket.getTypeIdentifier() == Payload.GLOBAL_MESSAGE) {
+			System.out.println("Received global message: ");
 			handleGlobalMessage(receivedPacket);
 			forwardPacket(receivedPacket);
 		} else if (receivedPacket.getTypeIdentifier() != Payload.PULSE && 
@@ -128,15 +129,19 @@ public class TransportLayer {
 				handlePulse(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
+				System.out.println("Received acknowledgement: ");
 				handleAcknowledgement(receivedPacket);
 				break;
 			case Payload.ENCRYPTION_PAIR:
+				System.out.println("Received encryption pair: ");
 				handleEncryptionPair(receivedPacket);
 				break;
 			case Payload.ENCRYPTED_MESSAGE:
+				System.out.println("Received encrypted message: ");
 				handleEncryptedMessage(receivedPacket);
 				break;
 			case Payload.FILE_MESSAGE:
+				System.out.println("Received file message: ");
 				handleFileMessage(receivedPacket);
 				break;
 			default: 
@@ -153,27 +158,32 @@ public class TransportLayer {
 		byte[] packetData = payload.getFileData();
 		int totalPackets = payload.getTotalPackets();
 		int fileID = payload.getFileID();
+		System.out.println("      senderID: " + senderID + "  fileID: " + fileID + "  totalPackets: " + totalPackets);
 		sendAcknowledgement(receivedPacket, new Message(fileID));
 		if (totalPackets > 1) {
 			if (!fileBuffer.containsKey(senderID)) {
+				System.out.println("      Added user, file and packet to file buffer");
 				HashMap<Integer, ArrayList<Packet>> files = new HashMap<>();
 				ArrayList<Packet> packets = new ArrayList<>();
 				packets.add(receivedPacket);
 				files.put(fileID, packets);
 				fileBuffer.put(senderID, files);
 			} else if (!fileBuffer.get(senderID).containsKey(fileID)) {
+				System.out.println("      Added file and packet to file buffer");
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
 				ArrayList<Packet> packets = new ArrayList<>();
 				packets.add(receivedPacket);
 				files.put(fileID, packets);
 				fileBuffer.put(senderID, files);
 			} else if (fileBuffer.get(senderID).get(fileID).size() < totalPackets - 1) {
+				System.out.println("      Added packet to file buffer");
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
 				ArrayList<Packet> packets = files.get(fileID);
 				packets.add(receivedPacket);
 				files.put(fileID, packets);
 				fileBuffer.put(senderID, files);
 			} else if (fileBuffer.get(senderID).get(fileID).size() == totalPackets - 1) {
+				System.out.println("      Added LAST packet to file buffer");
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
 				ArrayList<Packet> packets = files.get(fileID);
 				packets.add(receivedPacket);
@@ -184,6 +194,7 @@ public class TransportLayer {
 						FileMessage packetPayload = (FileMessage) packet.getPayload();
 						if (packetPayload.getSequenceNumber() == targetSequence) {
 							try {
+								System.out.println("      Added " + packetPayload.getSequenceNumber() + " to result");
 								outputStream.write(packetPayload.getFileData());
 								targetSequence++;
 							} catch (IOException e) {
@@ -200,6 +211,8 @@ public class TransportLayer {
 				// Add it to the chatmessages map
 				if (!session.getChatMessages().containsKey(sender)) {
 					session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
+					GUIHandler.messagePutInMap(sender);
+					System.out.println("      Added message to list/GUI");
 				} else {
 					ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
 					
@@ -234,6 +247,7 @@ public class TransportLayer {
 						}
 						session.getChatMessages().put(sender, currentMessageList);
 						GUIHandler.messagePutInMap(sender);
+						System.out.println("      Added message to list/GUI");
 					}			
 				}
 			}
@@ -244,6 +258,7 @@ public class TransportLayer {
 			// Add it to the chatmessages map
 			if (!session.getChatMessages().containsKey(sender)) {
 				session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
+				System.out.println("      Added message to list/GUI");
 			} else {
 				ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
 				
@@ -278,6 +293,7 @@ public class TransportLayer {
 					}
 					session.getChatMessages().put(sender, currentMessageList);
 					GUIHandler.messagePutInMap(sender);
+					System.out.println("      Added message to list/GUI");
 				}			
 			}
 		}
@@ -361,13 +377,11 @@ public class TransportLayer {
 		
 		GlobalMessage payload = (GlobalMessage) receivedPacket.getPayload();
 		
-		// The person that sent the message
-		Person sender = session.getKnownPersons().get(receivedPacket.getSenderID());
-		
 		// Convert the packet to a message
 		Message receivedMessage = new Message(receivedPacket.getSenderID(), 
 				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getPlainText(), false);		
-		
+		System.out.println("      senderID: " + receivedMessage.getSenderID() + "  messageID: " + payload.getMessageID());
+		System.out.println("      messsage: '" + payload.getPlainText() + "'");
 		boolean addMessageToList = true;		
 		// Add it to the chatmessages map
 		ArrayList<Message> publicChatMessageList = session.getPublicChatMessages();		
@@ -380,7 +394,7 @@ public class TransportLayer {
 
 		// Update GUI
 		if (addMessageToList) {
-			
+			System.out.println("      Added message to list/GUI");
 			// Update experience bar
 			session.getExperienceTracker().receiveGlobalMessage();
 			GUIHandler.updateProgressBar();
@@ -407,14 +421,14 @@ public class TransportLayer {
 		
 		// Get the messageID
 		int messageID = payload.getMessageID();
-		
+		System.out.println("      senderID: " + sender.getID() + "  messageID: " + messageID);
 		// Create EncryptedMessage
 		EncryptionPair ep = session.getKnownPersons().get(sender.getID()).getPrivateChatPair();
 		int secretInteger = session.getSecretKeysForPerson().get(sender.getID());
 		String cipher = payload.getCipher();
 				
 		String decryptedMessage = Crypter.decrypt(Crypter.getKey(ep, secretInteger), cipher);		
-		
+		System.out.println("      message: '" + decryptedMessage + "'"); 
 		// Construct a message
 		Message message = new Message(sender.getID(), session.getID(), messageID, decryptedMessage, false);
 		
@@ -423,6 +437,7 @@ public class TransportLayer {
 		// Add it to the chatmessages map
 		if (!session.getChatMessages().containsKey(sender)) {
 			session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
+			System.out.println("      Added message to list/GUI");
 		} else {
 			ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
 			
@@ -456,6 +471,7 @@ public class TransportLayer {
 					currentMessageList.add(message);
 				}
 				session.getChatMessages().put(sender, currentMessageList);
+				System.out.println("      Added message to list/GUI");
 			}			
 		}
 		
@@ -483,7 +499,7 @@ public class TransportLayer {
 		Acknowledgement acknowledgement = (Acknowledgement) receivedPacket.getPayload();
 		int messageID = acknowledgement.getMessageID();
 		int senderID = receivedPacket.getSenderID();
-		
+		System.out.println("      senderID: " + senderID + "  messageID: " + messageID);
 		synchronized (this.unacknowledgedPackets) {
 			Packet removePacket = null;
 			for (Packet packet : unacknowledgedPackets) {
@@ -507,6 +523,9 @@ public class TransportLayer {
 			// To prevent ConcurrentModificationException
 			if (removePacket != null) {
 				unacknowledgedPackets.remove(removePacket);
+				System.out.println("      packet succesfully removed!");
+			} else {
+				System.out.println("      packet not found!");
 			}
 		}	
 			
@@ -516,23 +535,24 @@ public class TransportLayer {
 		EncryptionPairExchange epe = (EncryptionPairExchange) receivedPacket.getPayload();
 		
 		int senderID = receivedPacket.getSenderID();
-		
+		System.out.println("      senderID: " + senderID);
 		if (session.getKnownPersons().containsKey(senderID)) {
 			if (senderID >= session.getID()) {
-				
+				System.out.println("      calculating secret key");
 				// Add the EncryptionPair to the person// Set a secretInteger for messages with this person
 				session.getSecretKeysForPerson().put(senderID, DiffieHellman.produceSecretKey(epe.getPrime()));
 				int secretInteger = session.getSecretKeysForPerson().get(senderID);
-				
+				System.out.println("      prime: " + epe.getPrime() + "  generator: " + epe.getGenerator() + "  secretInt: " + secretInteger);
 				EncryptionPair ep = new EncryptionPair(epe.getPrime(), epe.getGenerator(), secretInteger, true);
 				ep.setRemoteHalfKey(epe.getLocalHalfKey());
 				session.getKnownPersons().get(senderID).setPrivateChatPair(ep);				
-				
+				System.out.println("      sending acknowledgement");
 				// Send the same EncryptionPairExchange packet back as acknowledgement
 				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator(), ep.getLocalHalfKey());
 				Packet packet = new Packet(session.getID(), senderID, session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epeResponse);
 				session.getConnection().getSender().send(packet);
 			} else {
+				System.out.println("      received acknowledgement of encryption pair");
 				// Set the PrivateChatPair to be acknowlegded
 				session.getKnownPersons().get(senderID).getPrivateChatPair().setAcknowledged(true);
 				session.getKnownPersons().get(senderID).getPrivateChatPair().setRemoteHalfKey(epe.getLocalHalfKey());
@@ -584,6 +604,7 @@ public class TransportLayer {
 		// Send an acknowledgement
 		Packet packet = new Packet(senderID, receiverID, sequenceNum, typeIdentifier, acknowledgement);
 		session.getConnection().getSender().send(packet);
+		System.out.println("      Sent acknowledgement: senderID: " + senderID + "  receiverID: " + receiverID + "  sequence number: " + sequenceNum);
 	}
 	
 	/**
@@ -1018,7 +1039,7 @@ public class TransportLayer {
 			}
 			seqNum++;
 			try {
-				Thread.sleep(100);
+				Thread.sleep(50);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
