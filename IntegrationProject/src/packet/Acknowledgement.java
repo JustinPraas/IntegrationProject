@@ -3,7 +3,7 @@ package packet;
 import java.util.ArrayList;
 
 /**
- * A class that stores properties of an acknowledgement payload-type.
+ * A class that stores properties of an <code>Acknowledgement</code> payload-type.
  * @author Justin Praas, Daan Kooij, Casper Plentinger, Tim van Brederode
  */
 public class Acknowledgement implements Payload {
