@@ -153,8 +153,7 @@ public class TransportLayer {
 		byte[] packetData = payload.getFileData();
 		int totalPackets = payload.getTotalPackets();
 		int fileID = payload.getFileID();
-		Message receivedMessage = new Message(senderID, session.getID(), fileID, FileMessage.FILE_INDICATOR, packetData, false);
-		sendAcknowledgement(receivedPacket, receivedMessage);
+		sendAcknowledgement(receivedPacket, new Message(fileID));
 		if (totalPackets > 1) {
 			if (!fileBuffer.containsKey(senderID)) {
 				HashMap<Integer, ArrayList<Packet>> files = new HashMap<>();

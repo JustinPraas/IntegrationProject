@@ -30,6 +30,10 @@ public class Message {
 		this.fileData = fileData;
 	}
 	
+	public Message(int messageID) {
+		this.messageID = messageID;
+	}
+	
 	public String getText() {
 		return text;
 	}
