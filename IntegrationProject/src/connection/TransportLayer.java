@@ -66,7 +66,8 @@ public class TransportLayer {
 			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.GLOBAL_MESSAGE);
 			break;
 		case Payload.ACKNOWLEDGEMENT:
-			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
+			length += Acknowledgement.MESSAGE_ID_LENGTH;
+			length += Acknowledgement.FILE_SEQUENCE_NUMBER;
 			break;
 		case Payload.ENCRYPTION_PAIR:
 			length += EncryptionPairExchange.PRIME_LENGTH;
@@ -510,6 +511,7 @@ public class TransportLayer {
 	public void handleAcknowledgement(Packet receivedPacket) {
 		Acknowledgement acknowledgement = (Acknowledgement) receivedPacket.getPayload();
 		int messageID = acknowledgement.getMessageID();
+		int fileSequenceNumber = acknowledgement.getFileSequenceNumber();
 		int senderID = receivedPacket.getSenderID();
 		System.out.println("      senderID: " + senderID + "  messageID: " + messageID);
 		synchronized (this.unacknowledgedPackets) {
@@ -527,7 +529,8 @@ public class TransportLayer {
 					}
 				} else if (packet.getTypeIdentifier() == Payload.FILE_MESSAGE) {
 					if (packet.getReceiverID() == senderID && 
-							((FileMessage) packet.getPayload()).getFileID() == messageID) {
+							((FileMessage) packet.getPayload()).getFileID() == messageID &&
+							((FileMessage) packet.getPayload()).getSequenceNumber() == fileSequenceNumber) {
 						removePacket = packet;
 					}
 				}
@@ -720,7 +723,8 @@ public class TransportLayer {
 			return new GlobalMessage(messageID, messageLength, message);
 		case Payload.ACKNOWLEDGEMENT:
 			int acknowledgeMessageID = getMessageID(payloadData, Payload.ACKNOWLEDGEMENT);
-			return new Acknowledgement(acknowledgeMessageID);
+			int fileSequenceNumber = getAckFileSequenceNumber(payloadData);
+			return new Acknowledgement(acknowledgeMessageID, fileSequenceNumber);
 		case Payload.ENCRYPTION_PAIR:
 			int prime = getPrime(payloadData);
 			int generator = getGenerator(payloadData);
@@ -743,6 +747,18 @@ public class TransportLayer {
 			System.err.println("Unknown type identifier at getPayload(): " + typeIdentifier);
 			return null;
 		}	
+	}
+
+	private static int getAckFileSequenceNumber(byte[] payloadData) {
+		int start = Acknowledgement.MESSAGE_ID_LENGTH;
+		int end = start + Acknowledgement.FILE_SEQUENCE_NUMBER;
+		
+		byte[] ackFileSequenceArray = Arrays.copyOfRange(payloadData, start, end);
+		ByteBuffer ackFileSequenceBytebuffer = ByteBuffer.wrap(ackFileSequenceArray);
+		
+		int ackFileSequency = ackFileSequenceBytebuffer.get();
+		
+		return ackFileSequency;
 	}
 
 	private static byte[] getFileData(byte[] payloadData) {
@@ -917,7 +933,7 @@ public class TransportLayer {
 			end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
 		} else if (typeIdentifier == Payload.ACKNOWLEDGEMENT) {
 			start = 0;
-			end = start + Acknowledgement.ACK_PAYLOAD_LENGHT;
+			end = start + Acknowledgement.MESSAGE_ID_LENGTH;
 		} else if (typeIdentifier == Payload.FILE_MESSAGE) {
 			start = 0;
 			end = start + FileMessage.FILE_ID_LENGTH;
