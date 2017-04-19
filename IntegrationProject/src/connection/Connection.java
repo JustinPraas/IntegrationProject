@@ -23,9 +23,9 @@ public class Connection {
 	public Connection(Session session) {
 		try {
 			this.sendSocket = new MulticastSocket(port);
-			sendSocket.setSendBufferSize(1024000);
+			sendSocket.setSendBufferSize(2048000);
 			this.receiveSocket = new MulticastSocket(port);
-			receiveSocket.setReceiveBufferSize(1024000);
+			receiveSocket.setReceiveBufferSize(2048000);
 			joinGroup(sendSocket, "default");
 			joinGroup(receiveSocket, "default");
 		} catch (IOException e) {
