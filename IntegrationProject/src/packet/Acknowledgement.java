@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class Acknowledgement implements Payload {
 	
 	/**
-	 * The total acknowledgement header length.
+	 * The total acknowledgement header length (bytes).
 	 */
 	public static final int ACK_HEADER_LENGTH = 2;
 	
