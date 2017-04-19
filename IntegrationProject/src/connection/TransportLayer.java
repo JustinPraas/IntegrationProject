@@ -1006,7 +1006,7 @@ public class TransportLayer {
 		for (byte[] dataSegment : result) {
 			FileMessage payload = new FileMessage(nextFileID, dataSegment.length, result.size(), seqNum, dataSegment);
 			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeqNumber(), Payload.FILE_MESSAGE, payload);
-			
+			session.getConnection().getSender().send(packet);
 			synchronized (this.unacknowledgedPackets) {
 				unacknowledgedPackets.add(packet);
 				new RetransmissionThread(this, packet);
