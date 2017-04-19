@@ -1012,6 +1012,12 @@ public class TransportLayer {
 				new RetransmissionThread(this, packet);
 			}
 			seqNum++;
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		Message message = new Message(session.getID(), receiver.getID(), nextFileID, FileMessage.FILE_INDICATOR, fileData, true);		
