@@ -178,9 +178,11 @@ public class TransportLayer {
 			} else if (fileBuffer.get(senderID).get(fileID).size() < totalPackets - 1) {
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
 				ArrayList<Packet> packets = files.get(fileID);
-				if (packets.contains(receivedPacket)) {
-					System.out.println("      Duplicate packet!");
-					return;
+				for (Packet packet : packets) {
+					if (((FileMessage) packet.getPayload()).getSequenceNumber() == payload.getSequenceNumber()) {
+						System.out.println("      Duplicate packet!");
+						return;
+					}
 				}
 				packets.add(receivedPacket);
 				files.put(fileID, packets);
@@ -189,9 +191,11 @@ public class TransportLayer {
 			} else if (fileBuffer.get(senderID).get(fileID).size() == totalPackets - 1) {
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
 				ArrayList<Packet> packets = files.get(fileID);
-				if (packets.contains(receivedPacket)) {
-					System.out.println("      Duplicate packet!");
-					return;
+				for (Packet packet : packets) {
+					if (((FileMessage) packet.getPayload()).getSequenceNumber() == payload.getSequenceNumber()) {
+						System.out.println("      Duplicate packet!");
+						return;
+					}
 				}
 				packets.add(receivedPacket);
 				System.out.println("      Added LAST packet to file buffer");
