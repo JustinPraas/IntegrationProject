@@ -2,8 +2,13 @@ package packet;
 
 import java.util.ArrayList;
 
+/**
+ * A class that stores properties of an acknowledgement payload-type.
+ * @author Justin Praas, Daan Kooij, Casper Plentinger, Tim van Brederode
+ */
 public class Acknowledgement implements Payload {
 	
+	public static final int ACK_HEADER_LENGTH = 2;
 	public static final int ACK_PAYLOAD_LENGHT = 2;
 
 	private int messageID;

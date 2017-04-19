@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class EncryptedMessage implements Payload {
 	
-
+	public static final int ENCRYPTED_MESSAGE_HEADER_LENGTH = 5;
 	public static final int MESSAGE_ID_LENGTH = 2;
 	public static final int MID_WAY_KEY_LENGTH = 1;
 	public static final int CIPHER_LENGTH_LENGTH = 2;

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class EncryptionPairExchange implements Payload {
 
+	public static final int ENCRYPTION_PAIR_HEADER_LENGTH = 3;
 	public static final int PRIME_LENGTH = 1;
 	public static final int GENERATOR_LENGTH = 1;
 	public static final int HALF_KEY_LENGTH = 1;

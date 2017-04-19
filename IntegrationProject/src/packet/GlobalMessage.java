@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class GlobalMessage implements Payload {
 	
+	public static final int GLOBAL_MESSAGE_HEADER_LENGTH = 4;
 	public static final int MESSAGE_ID_LENGTH = 2;
 	public static final int MESSAGE_LENGTH_LENGTH = 2;
 	

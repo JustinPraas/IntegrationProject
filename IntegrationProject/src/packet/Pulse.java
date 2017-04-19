@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class Pulse implements Payload {
 	
+	public static final int PULSE_HEADER_LENGTH = 2;
 	public static final int NAME_LENGTH_LENGTH = 1;
 	public static final int LEVEL_LENGTH = 1;
 	

@@ -51,27 +51,21 @@ public class TransportLayer {
 		int typeIdentifier = getTypeIdentifier(datagramArray);
 		switch (typeIdentifier) {
 		case Payload.PULSE:
-			length += Pulse.NAME_LENGTH_LENGTH;
-			length += Pulse.LEVEL_LENGTH;
+			length += Pulse.PULSE_HEADER_LENGTH;
 			length += getNameLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		case Payload.GLOBAL_MESSAGE:
-			length += GlobalMessage.MESSAGE_ID_LENGTH;
-			length += GlobalMessage.MESSAGE_LENGTH_LENGTH;
+			length += GlobalMessage.GLOBAL_MESSAGE_HEADER_LENGTH;
 			length += getMessageLength(getPayload(datagramArray, typeIdentifier).getPayloadData(), Payload.GLOBAL_MESSAGE);
 			break;
 		case Payload.ACKNOWLEDGEMENT:
-			length += Acknowledgement.ACK_PAYLOAD_LENGHT;
+			length += Acknowledgement.ACK_HEADER_LENGTH;
 			break;
 		case Payload.ENCRYPTION_PAIR:
-			length += EncryptionPairExchange.PRIME_LENGTH;
-			length += EncryptionPairExchange.GENERATOR_LENGTH;
-			length += EncryptionPairExchange.HALF_KEY_LENGTH;
+			length += EncryptionPairExchange.ENCRYPTION_PAIR_HEADER_LENGTH; //TODO TEST.
 			break;
 		case Payload.ENCRYPTED_MESSAGE:
-			length += EncryptedMessage.MESSAGE_ID_LENGTH;
-			length += EncryptedMessage.MID_WAY_KEY_LENGTH;
-			length += EncryptedMessage.CIPHER_LENGTH_LENGTH;
+			length += EncryptedMessage.ENCRYPTED_MESSAGE_HEADER_LENGTH;
 			length += getCipherLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		default: 
