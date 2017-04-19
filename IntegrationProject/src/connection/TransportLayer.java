@@ -26,7 +26,7 @@ public class TransportLayer {
 	public static final int PULSE_TTL = 5;
 	public static final int MAX_SEEN_PACKETS_SIZE = 300;
 	public static final int RETRANSMISSION_INTERVAL = 1000;
-	public static final int MAXIMUM_RETRANSMISSIONS = 5;
+	public static final int MAXIMUM_RETRANSMISSIONS = 10; //TODO
 
 	// Used objects
 	public Session session;
@@ -153,7 +153,8 @@ public class TransportLayer {
 		byte[] packetData = payload.getFileData();
 		int totalPackets = payload.getTotalPackets();
 		int fileID = payload.getFileID();
-		
+		Message receivedMessage = new Message(senderID, session.getID(), fileID, FileMessage.FILE_INDICATOR, packetData, false);
+		sendAcknowledgement(receivedPacket, receivedMessage);
 		if (totalPackets > 1) {
 			if (!fileBuffer.containsKey(senderID)) {
 				HashMap<Integer, ArrayList<Packet>> files = new HashMap<>();
@@ -995,7 +996,7 @@ public class TransportLayer {
 		byte[] fileData = Files.readAllBytes(file.toPath());
 		ArrayList<byte[]> result = new ArrayList<byte[]>();
 		int start = 0;
-		int chunksize = 62000;
+		int chunksize = 10000;
 		while (start < fileData.length) {
 			int end = Math.min(fileData.length, start + chunksize);
 		    result.add(Arrays.copyOfRange(fileData, start, end));

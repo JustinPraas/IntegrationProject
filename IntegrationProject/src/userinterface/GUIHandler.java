@@ -166,7 +166,7 @@ public class GUIHandler {
 		            Image image = SwingFXUtils.toFXImage(bufferedImage, null);
 		            imageView.setImage(image);
 		        } catch (IOException e) {
-		        	e.getStackTrace();
+		        	e.printStackTrace();
 		        }
 				HBox fileBox = new HBox();
 				fileBox.getChildren().addAll(senderText, timestampText, imageView);
