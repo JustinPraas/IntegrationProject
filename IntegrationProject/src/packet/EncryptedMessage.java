@@ -14,17 +14,17 @@ public class EncryptedMessage implements Payload {
 	public static final int ENCRYPTED_MESSAGE_HEADER_LENGTH = 5;
 	
 	/**
-	 * The length (bytes) of the messageID field of the encrypted message.
+	 * The length (bytes) of the messageID field in the encrypted message.
 	 */
 	public static final int MESSAGE_ID_LENGTH = 2;
 	
 	/**
-	 * The length (bytes) of the midWayKey field of the encrypted message.
+	 * The length (bytes) of the midWayKey field in the encrypted message.
 	 */
 	public static final int MID_WAY_KEY_LENGTH = 1;
 	
 	/**
-	 * The length (bytes) of the cipherLength field of the encrypted message. 
+	 * The length (bytes) of the cipherLength field in the encrypted message. 
 	 */
 	public static final int CIPHER_LENGTH_LENGTH = 2;
 	
