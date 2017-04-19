@@ -694,7 +694,7 @@ public class TransportLayer {
 			end = start + EncryptedMessage.MESSAGE_ID_LENGTH;
 		} else if (typeIdentifier == Payload.ACKNOWLEDGEMENT) {
 			start = 0;
-			end = start + Acknowledgement.ACK_PAYLOAD_LENGHT;
+			end = start + Acknowledgement.ACK_MESSAGE_ID_LENGHT;
 		}
 		
 		byte[] messageIdArray = Arrays.copyOfRange(payloadData, start, end);
