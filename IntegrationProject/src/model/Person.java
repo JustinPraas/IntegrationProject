@@ -1,22 +1,41 @@
 package model;
 
-import java.util.HashMap;
-import java.util.Map;
 import encryption.EncryptionPair;
 
+/**
+ * A class that stores properties of a contact person.
+ * @author Justin Praas, Daan Kooij, Casper Plentinger, Tim van Brederode
+ */
 public class Person {
 	
-	// Person data
+	/**
+	 * The name of the person.
+	 */
 	public String name;
-	public int ID;
-	private int timeToLive;
-	private int nextMessageID;
-	private int level;
 	
+	/**
+	 * The ID of the person's application. The ID that is used to send packets to this user.
+	 */
+	public int ID;
+	
+	/**
+	 * The number of seconds that specify how long this user is still reachable within our network.
+	 * Usually, resets to 5 every second. If no pulses are received, decreases by 1 every second.
+	 * At timeToLive = 0, this user will be shown as offline and messages that we send, won't 
+	 * reach this person anymore.
+	 */
+	private int timeToLive;
+	
+	/**
+	 * The ID of the message that we send to this person.
+	 */
+	private int nextMessageID;
+	
+	/**
+	 * The level of this person.
+	 */
+	private int level;
 
-
-	// Diffie-Hellman data
-	private int secretInteger;
 	private EncryptionPair privateChatPair;
 
 	/**
@@ -60,10 +79,6 @@ public class Person {
 	public int getNextMessageID() {
 		nextMessageID++;
 		return nextMessageID;
-	}
-
-	public int getSecretInteger() {
-		return secretInteger;
 	}
 
 	public EncryptionPair getPrivateChatPair() {
