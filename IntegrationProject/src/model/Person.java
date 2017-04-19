@@ -36,10 +36,13 @@ public class Person {
 	 */
 	private int level;
 
+	/**
+	 * The EncryptionPair that we have for this person.
+	 */
 	private EncryptionPair privateChatPair;
 
 	/**
-	 * Creates a <code>Person</code> object with a random ID 
+	 * Constructs a <code>Person</code> object with a random ID 
 	 * and the given name for this client session.
 	 * @param name the person's name
 	 */
@@ -50,9 +53,10 @@ public class Person {
 	}
 
 	/**
-	 * Creates a <code>Person</code> object for an outsider
-	 * @param name the outsider's name
-	 * @param ID the outsider's ID
+	 * Constructs a <code>Person</code> object for a new contact person from which we 
+	 * have received a <code>Pulse</code> packet.
+	 * @param name the contact's name
+	 * @param ID the contact's ID
 	 */
 	public Person(String name, int ID, int level) {
 		this.name = name;
@@ -76,6 +80,10 @@ public class Person {
 		return ID;
 	}
 	
+	/**
+	 * Increases and returns the next messageID for the contact person.
+	 * @return nextMessageID the messageID to send the next message with to this contact person
+	 */
 	public int getNextMessageID() {
 		nextMessageID++;
 		return nextMessageID;
@@ -89,6 +97,10 @@ public class Person {
 		return level;
 	}
 	
+	/**
+	 * Converts the level of this person to a String and return it
+	 * @return levelString the level String of this person
+	 */
 	public String getLevelString() {
 		return Integer.toString(level);
 	}
