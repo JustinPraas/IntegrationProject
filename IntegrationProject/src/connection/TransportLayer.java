@@ -16,17 +16,42 @@ import packet.*;
 import userinterface.GUIHandler;
 
 public class TransportLayer {
-	
-	//TODO JAVADOC
 	// Constants
+	
+	/**
+	 * The TTL to which the time-to-live of a person gets reset to when a Pulse from
+	 * that person is received.
+	 */
 	public static final int PULSE_TTL = 5;
+	
+	/**
+	 * The maximum number of packets that we store/keep track of in the 'seen packets' list.
+	 */
 	public static final int MAX_SEEN_PACKETS_SIZE = 300;
+	
+	/**
+	 * The interval (milliseconds) at which a retransmission/retransmissions are done.
+	 */
 	public static final int RETRANSMISSION_INTERVAL = 1000;
+	
+	/**
+	 * The maximum number of retransmission that we do.
+	 */
 	public static final int MAXIMUM_RETRANSMISSIONS = 5;
 
-	// Used objects
+	/**
+	 * The session that this transport layer acts on.
+	 */
 	public Session session;
+	
+	/**
+	 * The packets that we have received. Used to discard packets that we have seen before.
+	 */
 	public ArrayList<Packet> seenPackets = new ArrayList<>();
+	
+	/**
+	 * The packets that are not yet acknowledged by the receiver of the packet.
+	 */
 	public ArrayList<Packet> unacknowledgedPackets = new ArrayList<>();
 
 	/**
@@ -210,9 +235,6 @@ public class TransportLayer {
 		
 		GlobalMessage payload = (GlobalMessage) receivedPacket.getPayload();
 		
-		// The person that sent the message
-		Person sender = session.getKnownPersons().get(receivedPacket.getSenderID());
-		
 		// Convert the packet to a message
 		Message receivedMessage = new Message(receivedPacket.getSenderID(), 
 				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getPlainText(), false);		
@@ -357,6 +379,18 @@ public class TransportLayer {
 			
 	}
 	
+	/**
+	 * Processes an <code>EncryptionPairExchange</code> packet. If the sender of
+	 * the packet has a greater ID than this node's ID, then process the packet as if
+	 * the other node wants to exchange a pair with this node. In that case, sets the 
+	 * <code>EncryptionPair</code> that this node has with the other node TO the received
+	 * <code>EncryptionPair</code> in the packet. If our ID is greater than the other node's ID
+	 * then process the packet as an acknowledgement on an earlier 
+	 * <code>EncryptionPairExchange</code> from our side. In that case, from now on we can
+	 * send encrypted messages and be sure that the messages are secured and decrypted
+	 * correctly on the other side.
+	 * @param receivedPacket the packet that was received.
+	 */
 	public void handleEncryptionPair(Packet receivedPacket) {
 		EncryptionPairExchange epe = (EncryptionPairExchange) receivedPacket.getPayload();
 		
@@ -477,6 +511,11 @@ public class TransportLayer {
 		GUIHandler.messagePutInMap(receiver);
 	}
 	
+	/**
+	 * Sends a global message that comes straight from the public chat text
+	 * input.
+	 * @param msg the plain text message to be sent.
+	 */
 	public void sendMessageFromGUI(String msg) {
 		
 		session.getStatistics().increaseGlobalMessagesSent();
@@ -641,6 +680,11 @@ public class TransportLayer {
 		return name;
 	}
 	
+	/**
+	 * Returns the level of the sender from the sender of the <code>Pulse</code>.
+	 * @param pulsePayloadData the pulse data of the packet
+	 * @return
+	 */
 	public static int getLevel(byte[] pulsePayloadData) {
 		int position = Pulse.NAME_LENGTH_LENGTH;
 		
@@ -661,7 +705,6 @@ public class TransportLayer {
 	 * @param payloadData the payload data of the <code>EncryptedMessage</code> packet
 	 * @return message the (encrypted) message of an encrypted message packet
 	 */
-
 	public static String getPlainMessage(byte[] payloadData) {
 		int length = getMessageLength(payloadData, Payload.GLOBAL_MESSAGE);
 		int start = GlobalMessage.MESSAGE_ID_LENGTH + GlobalMessage.MESSAGE_LENGTH_LENGTH;
@@ -704,6 +747,12 @@ public class TransportLayer {
 		return messageID;
 	}
 
+	/**
+	 * Returns the message length of the plain message and the file message.
+	 * @param payloadData the payload data of the packet
+	 * @param payloadType the payload type of the payload
+	 * @return messageLength the length of the message.
+	 */
 	public static int getMessageLength(byte[] payloadData, int payloadType) {
 		int start = 0;
 		int end = 0;
@@ -722,6 +771,11 @@ public class TransportLayer {
 		}
 	}
 
+	/**
+	 * Returns the cipher length of the cipher in the <code>EncryptedMessage</code>.
+	 * @param payloadData the payload data (<code>EncryptedMessage</code>)
+	 * @return cipherLength the length of the cipher
+	 */
 	private static int getCipherLength(byte[] payloadData) {
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MID_WAY_KEY_LENGTH;
 		int end = start + EncryptedMessage.CIPHER_LENGTH_LENGTH;
@@ -733,6 +787,11 @@ public class TransportLayer {
 		return cipherLength;
 	}
 
+	/**
+	 * Extracts and returns the cipher from the payload (<code>EncryptedMessage</code>).
+	 * @param payloadData the payload data (<code>EncryptedMessage</code>)
+	 * @return cipher the cipher of the message
+	 */
 	private static String getCipher(byte[] payloadData) {
 		int length = getCipherLength(payloadData);
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH + EncryptedMessage.MID_WAY_KEY_LENGTH + EncryptedMessage.CIPHER_LENGTH_LENGTH;
@@ -749,6 +808,12 @@ public class TransportLayer {
 		return cipher;
 	}
 
+	/**
+	 * Extracts and returns the midWayKey from the payload 
+	 * (<code>EncryptedPairExchange</code>).
+	 * @param payloadData the payload data (<code>EncryptedPairExchange</code>)
+	 * @return
+	 */
 	private static int getMidWayKey(byte[] payloadData) {
 		int start = EncryptedMessage.MESSAGE_ID_LENGTH;
 		int end = start + EncryptedMessage.MID_WAY_KEY_LENGTH;
@@ -760,6 +825,11 @@ public class TransportLayer {
 		return midWayKey;
 	}
 
+	/**
+	 * Extract and return the prime from the payload (<code>EncryptedPairExchange</code>).
+	 * @param payloadData the payload data (<code>EncryptedPairExchange</code>)
+	 * @return prime the prime within the payload
+	 */
 	private static int getPrime(byte[] payloadData) {
 		int start = 0;
 		int end = start + EncryptionPairExchange.PRIME_LENGTH;
@@ -771,6 +841,11 @@ public class TransportLayer {
 		return prime;
 	}
 
+	/**
+	 * Extract and return the generator from the payload (<code>EncryptedPairExchange</code>).
+	 * @param payloadData the payload data (<code>EncryptedPairExchange</code>)
+	 * @return generator the generator within the payload
+	 */
 	private static int getGenerator(byte[] payloadData) {
 		int start = EncryptionPairExchange.PRIME_LENGTH;
 		int end = start + EncryptionPairExchange.GENERATOR_LENGTH;
@@ -782,6 +857,12 @@ public class TransportLayer {
 		return generator;
 	}
 	
+	/**
+	 * Extract and return the localHalfKey from the payload 
+	 * (<code>EncryptedPairExchange</code>).
+	 * @param payloadData the payload data (<code>EncryptedPairExchange</code>)
+	 * @return generator the generator within the payload
+	 */
 	private static int getLocalHalfKey(byte[] payloadData) {
 		int start = EncryptionPairExchange.PRIME_LENGTH + EncryptionPairExchange.GENERATOR_LENGTH;;
 		int end = start + EncryptionPairExchange.HALF_KEY_LENGTH;
