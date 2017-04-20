@@ -33,6 +33,7 @@ public class Message {
 	 * The text of the message.
 	 */
 	private String text;
+	private byte[] fileData;
 	
 	/**
 	 * Constructs a <code>Message</code> object. Assigns the time of the user's machine to
@@ -51,10 +52,27 @@ public class Message {
 		this.text = text;		
 	}
 	
+	public Message(int senderID, int receiverID, int messageID, String text, byte[] fileData, boolean myMessage) {
+		this.senderID = senderID;
+		this.receiverID = receiverID;
+		this.messageID = messageID;
+		timestamp = new Date().getTime();
+		this.text = text;		
+		this.fileData = fileData;
+	}
+	
+	public Message(int messageID) {
+		this.messageID = messageID;
+	}
+	
 	public String getText() {
 		return text;
 	}
 	
+	public byte[] getFileData() {
+		return fileData;
+	}
+
 	public int getMessageID() {
 		return messageID;
 	}

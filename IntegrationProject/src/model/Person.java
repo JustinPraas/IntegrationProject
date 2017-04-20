@@ -32,6 +32,11 @@ public class Person {
 	private int nextMessageID;
 	
 	/**
+	 * The ID of the file that we send to this person
+	 */
+	private int nextFileID;
+	
+	/**
 	 * The level of this person.
 	 */
 	private int level;
@@ -50,6 +55,7 @@ public class Person {
 		this.name = name;
 		this.ID = (int) (Math.random() * Integer.MAX_VALUE);
 		this.nextMessageID = 0;
+		this.nextFileID = 0;
 	}
 
 	/**
@@ -87,6 +93,15 @@ public class Person {
 	public int getNextMessageID() {
 		nextMessageID++;
 		return nextMessageID;
+	}
+
+	/**
+	 * Increases and returns the next fileID for the contact person.
+	 * @return nextFileID the fileID to send the next file with to this contact person
+	 */
+	public int getNextFileID() {
+		nextFileID++;
+		return nextFileID;
 	}
 
 	public EncryptionPair getPrivateChatPair() {

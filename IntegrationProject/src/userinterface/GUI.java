@@ -1,10 +1,16 @@
 package userinterface;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -32,6 +38,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import model.Statistics;
 
@@ -154,6 +163,7 @@ public class GUI extends Application {
 		bottomBox.setSpacing(10);
 		inputBox = new TextField();
 		inputBox.setMaxHeight(Double.MAX_VALUE);
+		Button fileButton = new Button("File");
 		Button sendButton = new Button("Send");
 		sendButton.setMaxHeight(Double.MAX_VALUE);
 		inputHBox.setBottom(bottomBox);
@@ -170,7 +180,7 @@ public class GUI extends Application {
 		Arrays.sort(directoryListing);
 		FlowPane topBox = new FlowPane();
 		topBox.setPadding(new Insets(0, 0, 15, 0));
-		Button emoticons = new Button("");
+		Button emoticonButton = new Button("");
 		if (directoryListing != null && directoryListing.length > 0) {
 			for (File child : directoryListing) {
 				ImageView ImgVwtemp = new ImageView(child.toURI().toString());
@@ -190,10 +200,10 @@ public class GUI extends Application {
 				});
 				topBox.getChildren().add(temp);
 				}
-			emoticons = new Button("", new ImageView(directoryListing[0].toURI().toString()));
-			bottomBox.getChildren().addAll(inputBox, emoticons, sendButton);
+			emoticonButton = new Button("", new ImageView(directoryListing[0].toURI().toString()));
+			bottomBox.getChildren().addAll(inputBox, fileButton, emoticonButton, sendButton);
 		} else {
-			bottomBox.getChildren().addAll(inputBox, sendButton);
+			bottomBox.getChildren().addAll(inputBox, fileButton, sendButton);
 		}
 
 		// Initialize elements of right VBox
@@ -255,11 +265,16 @@ public class GUI extends Application {
 		sendButton.setOnAction(e -> {
 			GUIHandler.sendMessage(inputBox.getText());
 			inputBox.clear();
-			inputHBox.setTop(null);
-			inputBox.requestFocus();
+		});
+		fileButton.setOnAction(e -> {
+			FileChooser fileChooser = new FileChooser();
+			fileChooser.setTitle("Open Resource File");
+			ExtensionFilter filter = new FileChooser.ExtensionFilter("Images", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.png", "*.wbmp");
+			fileChooser.getExtensionFilters().add(filter);
+			GUIHandler.sendFile(fileChooser.showOpenDialog(window));
 		});
 
-		emoticons.setOnAction(e -> Platform.runLater(() -> {
+		emoticonButton.setOnAction(e -> Platform.runLater(() -> {
 			if (inputHBox.getChildren().contains(topBox)) {
 				inputHBox.setTop(null);
 			} else {

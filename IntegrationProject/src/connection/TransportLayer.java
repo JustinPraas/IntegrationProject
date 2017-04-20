@@ -1,10 +1,15 @@
 package connection;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import encryption.Crypter;
 import encryption.DiffieHellman;
@@ -53,6 +58,7 @@ public class TransportLayer {
 	 * The packets that are not yet acknowledged by the receiver of the packet.
 	 */
 	public ArrayList<Packet> unacknowledgedPackets = new ArrayList<>();
+	public HashMap<Integer, HashMap<Integer, ArrayList<Packet>>> fileBuffer = new HashMap<>();
 
 	/**
 	 * Creates a <code>TransportLayer</code> object that acts on a session.
@@ -93,6 +99,10 @@ public class TransportLayer {
 			length += EncryptedMessage.ENCRYPTED_MESSAGE_HEADER_LENGTH;
 			length += getCipherLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
+		case Payload.FILE_MESSAGE:
+			length += FileMessage.FILE_MESSAGE_HEADER_LENGTH;
+			length += ((FileMessage) getPayload(datagramArray, typeIdentifier)).getMessageLength();
+			break;
 		default: 
 			System.err.println("Unknown type identifier at shortenDatagramContents(): " + typeIdentifier);
 		}
@@ -124,6 +134,7 @@ public class TransportLayer {
 		// Else, if it's NOT a Pulse AND we are NOT the destination, foward it
 		// Else process the packet accordingly
 		if (receivedPacket.getTypeIdentifier() == Payload.GLOBAL_MESSAGE) {
+			System.out.println("Received global message: ");
 			session.getStatistics().increaseGlobalMessagesReceived();
 			handleGlobalMessage(receivedPacket);
 			forwardPacket(receivedPacket);
@@ -138,16 +149,23 @@ public class TransportLayer {
 				handlePulse(receivedPacket);
 				break;
 			case Payload.ACKNOWLEDGEMENT:
+				System.out.println("Received acknowledgement: ");
 				session.getStatistics().increaseAcknowlegdementsReceived();
 				handleAcknowledgement(receivedPacket);
 				break;
 			case Payload.ENCRYPTION_PAIR:
+				System.out.println("Received encryption pair: ");
 				session.getStatistics().increaseSecurityMessagesReceived();
 				handleEncryptionPair(receivedPacket);
 				break;
 			case Payload.ENCRYPTED_MESSAGE:
-				handleEncryptedMessage(receivedPacket);
+				System.out.println("Received encrypted message: ");
 				session.getStatistics().increasePrivateMessagesReceived();
+				handleEncryptedMessage(receivedPacket);
+				break;
+			case Payload.FILE_MESSAGE:
+				System.out.println("Received file message: ");
+				handleFileMessage(receivedPacket);
 				break;
 			default: 
 				System.err.println("Unknown type identifier at handlePacket(): " + receivedPacket.getTypeIdentifier());
@@ -155,6 +173,165 @@ public class TransportLayer {
 		}
 		
 		addPacketToSeenPackets(receivedPacket);
+	}
+
+	private void handleFileMessage(Packet receivedPacket) {
+		int senderID = receivedPacket.getSenderID();
+		FileMessage payload = (FileMessage) receivedPacket.getPayload();
+		byte[] packetData = payload.getFileData();
+		int totalPackets = payload.getTotalPackets();
+		int fileID = payload.getFileID();
+		System.out.println("      senderID: " + senderID + "  fileID: " + fileID + "  totalPackets: " + totalPackets);
+		sendAcknowledgement(receivedPacket, new Message(fileID));
+		if (totalPackets > 1) {
+			if (!fileBuffer.containsKey(senderID)) {
+				System.out.println("      Added user, file and packet to file buffer");
+				HashMap<Integer, ArrayList<Packet>> files = new HashMap<>();
+				ArrayList<Packet> packets = new ArrayList<>();
+				packets.add(receivedPacket);
+				files.put(fileID, packets);
+				fileBuffer.put(senderID, files);
+			} else if (!fileBuffer.get(senderID).containsKey(fileID)) {
+				System.out.println("      Added file and packet to file buffer");
+				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
+				ArrayList<Packet> packets = new ArrayList<>();
+				packets.add(receivedPacket);
+				files.put(fileID, packets);
+				fileBuffer.put(senderID, files);
+			} else if (fileBuffer.get(senderID).get(fileID).size() < totalPackets - 1) {
+				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
+				ArrayList<Packet> packets = files.get(fileID);
+				for (Packet packet : packets) {
+					if (((FileMessage) packet.getPayload()).getSequenceNumber() == payload.getSequenceNumber()) {
+						System.out.println("      Duplicate packet!");
+						return;
+					}
+				}
+				packets.add(receivedPacket);
+				files.put(fileID, packets);
+				fileBuffer.put(senderID, files);
+				System.out.println("      Added packet to file buffer");
+			} else if (fileBuffer.get(senderID).get(fileID).size() == totalPackets - 1) {
+				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
+				ArrayList<Packet> packets = files.get(fileID);
+				for (Packet packet : packets) {
+					if (((FileMessage) packet.getPayload()).getSequenceNumber() == payload.getSequenceNumber()) {
+						System.out.println("      Duplicate packet!");
+						return;
+					}
+				}
+				packets.add(receivedPacket);
+				System.out.println("      Added LAST packet to file buffer");
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream(1000000);
+				int targetSequence = 0;
+				while(targetSequence != totalPackets) {
+					for (Packet packet : packets) {
+						FileMessage packetPayload = (FileMessage) packet.getPayload();
+						if (packetPayload.getSequenceNumber() == targetSequence) {
+							try {
+								System.out.println("      Added " + packetPayload.getSequenceNumber() + " to result");
+								outputStream.write(packetPayload.getFileData());
+								targetSequence++;
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+				byte[] fileData = outputStream.toByteArray();
+				Message message = new Message(senderID, session.getID(), fileID, FileMessage.FILE_INDICATOR, fileData, false);
+				Person sender = session.getKnownPersons().get(senderID);
+				boolean addMessageToList = true;		
+				// Add it to the chatmessages map
+				if (!session.getChatMessages().containsKey(sender)) {
+					session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
+					GUIHandler.messagePutInMap(sender);
+					System.out.println("      Added message to list/GUI");
+				} else {
+					ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
+					
+					for (Message msg : currentMessageList) {
+						if (msg.getMessageID() == message.getMessageID() && message.getSenderID() == msg.getSenderID()) {
+							addMessageToList = false;
+							break;
+						}
+					}
+					
+					if (addMessageToList) {
+						int insertPosition = currentMessageList.size();
+						int receivedMessageID = message.getMessageID();
+						boolean continues = true;
+						for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
+							if (currentMessageList.get(i).getSenderID() != session.getID()) {
+								if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
+									insertPosition = i;
+								} else {
+									if (insertPosition == currentMessageList.size()) {
+										currentMessageList.add(message);
+										continues = false;
+									} else {
+										currentMessageList.add(insertPosition, message);
+										continues = false;
+									}
+								}
+							}
+						}
+						if (continues) {
+							currentMessageList.add(message);
+						}
+						session.getChatMessages().put(sender, currentMessageList);
+						GUIHandler.messagePutInMap(sender);
+						System.out.println("      Added message to list/GUI");
+					}			
+				}
+			}
+		} else {
+			Message message = new Message(senderID, session.getID(), fileID, FileMessage.FILE_INDICATOR, packetData, false);
+			Person sender = session.getKnownPersons().get(senderID);
+			boolean addMessageToList = true;		
+			// Add it to the chatmessages map
+			if (!session.getChatMessages().containsKey(sender)) {
+				session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
+				System.out.println("      Added message to list/GUI");
+			} else {
+				ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
+				
+				for (Message msg : currentMessageList) {
+					if (msg.getMessageID() == message.getMessageID() && message.getSenderID() == msg.getSenderID()) {
+						addMessageToList = false;
+						break;
+					}
+				}
+				
+				if (addMessageToList) {
+					int insertPosition = currentMessageList.size();
+					int receivedMessageID = message.getMessageID();
+					boolean continues = true;
+					for (int i = currentMessageList.size() - 1; i >= 0 && continues; i--) {
+						if (currentMessageList.get(i).getSenderID() != session.getID()) {
+							if (currentMessageList.get(i).getMessageID() > receivedMessageID) {
+								insertPosition = i;
+							} else {
+								if (insertPosition == currentMessageList.size()) {
+									currentMessageList.add(message);
+									continues = false;
+								} else {
+									currentMessageList.add(insertPosition, message);
+									continues = false;
+								}
+							}
+						}
+					}
+					if (continues) {
+						currentMessageList.add(message);
+					}
+					session.getChatMessages().put(sender, currentMessageList);
+					GUIHandler.messagePutInMap(sender);
+					System.out.println("      Added message to list/GUI");
+				}			
+			}
+		}
 	}
 
 	/**
@@ -238,7 +415,8 @@ public class TransportLayer {
 		// Convert the packet to a message
 		Message receivedMessage = new Message(receivedPacket.getSenderID(), 
 				receivedPacket.getReceiverID(), payload.getMessageID(), payload.getPlainText(), false);		
-		
+		System.out.println("      senderID: " + receivedMessage.getSenderID() + "  messageID: " + payload.getMessageID());
+		System.out.println("      messsage: '" + payload.getPlainText() + "'");
 		boolean addMessageToList = true;		
 		// Add it to the chatmessages map
 		ArrayList<Message> publicChatMessageList = session.getPublicChatMessages();		
@@ -251,7 +429,7 @@ public class TransportLayer {
 
 		// Update GUI
 		if (addMessageToList) {
-			
+			System.out.println("      Added message to list/GUI");
 			// Update experience bar
 			session.getExperienceTracker().receiveGlobalMessage();
 			GUIHandler.updateProgressBar();
@@ -278,14 +456,14 @@ public class TransportLayer {
 		
 		// Get the messageID
 		int messageID = payload.getMessageID();
-		
+		System.out.println("      senderID: " + sender.getID() + "  messageID: " + messageID);
 		// Create EncryptedMessage
 		EncryptionPair ep = session.getKnownPersons().get(sender.getID()).getPrivateChatPair();
 		int secretInteger = session.getSecretKeysForPerson().get(sender.getID());
 		String cipher = payload.getCipher();
 				
 		String decryptedMessage = Crypter.decrypt(Crypter.getKey(ep, secretInteger), cipher);		
-		
+		System.out.println("      message: '" + decryptedMessage + "'"); 
 		// Construct a message
 		Message message = new Message(sender.getID(), session.getID(), messageID, decryptedMessage, false);
 		
@@ -294,6 +472,7 @@ public class TransportLayer {
 		// Add it to the chatmessages map
 		if (!session.getChatMessages().containsKey(sender)) {
 			session.getChatMessages().put(sender, new ArrayList<>(Arrays.asList(new Message[]{message})));
+			System.out.println("      Added message to list/GUI");
 		} else {
 			ArrayList<Message> currentMessageList = session.getChatMessages().get(sender);
 			
@@ -327,6 +506,7 @@ public class TransportLayer {
 					currentMessageList.add(message);
 				}
 				session.getChatMessages().put(sender, currentMessageList);
+				System.out.println("      Added message to list/GUI");
 			}			
 		}
 		
@@ -354,8 +534,9 @@ public class TransportLayer {
 	public void handleAcknowledgement(Packet receivedPacket) {
 		Acknowledgement acknowledgement = (Acknowledgement) receivedPacket.getPayload();
 		int messageID = acknowledgement.getMessageID();
+		int fileSequenceNumber = acknowledgement.getFileSequenceNumber();
 		int senderID = receivedPacket.getSenderID();
-		
+		System.out.println("      senderID: " + senderID + "  messageID: " + messageID);
 		synchronized (this.unacknowledgedPackets) {
 			Packet removePacket = null;
 			for (Packet packet : unacknowledgedPackets) {
@@ -369,11 +550,20 @@ public class TransportLayer {
 							((EncryptedMessage) packet.getPayload()).getMessageID() == messageID) {
 						removePacket = packet;
 					}
+				} else if (packet.getTypeIdentifier() == Payload.FILE_MESSAGE) {
+					if (packet.getReceiverID() == senderID && 
+							((FileMessage) packet.getPayload()).getFileID() == messageID &&
+							((FileMessage) packet.getPayload()).getSequenceNumber() == fileSequenceNumber) {
+						removePacket = packet;
+					}
 				}
 			}
 			// To prevent ConcurrentModificationException
 			if (removePacket != null) {
 				unacknowledgedPackets.remove(removePacket);
+				System.out.println("      packet succesfully removed!");
+			} else {
+				System.out.println("      packet not found!");
 			}
 		}	
 			
@@ -395,24 +585,25 @@ public class TransportLayer {
 		EncryptionPairExchange epe = (EncryptionPairExchange) receivedPacket.getPayload();
 		
 		int senderID = receivedPacket.getSenderID();
-		
+		System.out.println("      senderID: " + senderID);
 		if (session.getKnownPersons().containsKey(senderID)) {
 			if (senderID >= session.getID()) {
-				
+				System.out.println("      calculating secret key");
 				// Add the EncryptionPair to the person// Set a secretInteger for messages with this person
 				session.getSecretKeysForPerson().put(senderID, DiffieHellman.produceSecretKey(epe.getPrime()));
 				int secretInteger = session.getSecretKeysForPerson().get(senderID);
-				
+				System.out.println("      prime: " + epe.getPrime() + "  generator: " + epe.getGenerator() + "  secretInt: " + secretInteger);
 				EncryptionPair ep = new EncryptionPair(epe.getPrime(), epe.getGenerator(), secretInteger, true);
 				ep.setRemoteHalfKey(epe.getLocalHalfKey());
 				session.getKnownPersons().get(senderID).setPrivateChatPair(ep);				
-				
+				System.out.println("      sending acknowledgement");
 				// Send the same EncryptionPairExchange packet back as acknowledgement
 				EncryptionPairExchange epeResponse = new EncryptionPairExchange(epe.getPrime(), epe.getGenerator(), ep.getLocalHalfKey());
 				session.getStatistics().increaseSecurityMessagesSent();
 				Packet packet = new Packet(session.getID(), senderID, session.getNextSeqNumber(), Payload.ENCRYPTION_PAIR, epeResponse);
 				session.getConnection().getSender().send(packet);
 			} else {
+				System.out.println("      received acknowledgement of encryption pair");
 				// Set the PrivateChatPair to be acknowlegded
 				session.getKnownPersons().get(senderID).getPrivateChatPair().setAcknowledged(true);
 				session.getKnownPersons().get(senderID).getPrivateChatPair().setRemoteHalfKey(epe.getLocalHalfKey());
@@ -455,7 +646,13 @@ public class TransportLayer {
 	 */
 	public void sendAcknowledgement(Packet receivedPacket, Message message) {
 		// Prepare an acknowledgement
-		Acknowledgement acknowledgement = new Acknowledgement(message.getMessageID());
+		Acknowledgement acknowledgement;
+		if (receivedPacket.getTypeIdentifier() == Payload.FILE_MESSAGE) {
+			FileMessage payload = ((FileMessage) receivedPacket.getPayload());
+			acknowledgement = new Acknowledgement(message.getMessageID(), payload.getSequenceNumber());
+		} else {
+			acknowledgement = new Acknowledgement(message.getMessageID());
+		}
 		
 		int senderID = receivedPacket.getReceiverID();
 		int receiverID = receivedPacket.getSenderID();
@@ -465,6 +662,7 @@ public class TransportLayer {
 		// Send an acknowledgement
 		Packet packet = new Packet(senderID, receiverID, sequenceNum, typeIdentifier, acknowledgement);
 		session.getConnection().getSender().send(packet);
+		System.out.println("      Sent acknowledgement: senderID: " + senderID + "  receiverID: " + receiverID + "  sequence number: " + sequenceNum);
 	}
 	
 	/**
@@ -576,7 +774,8 @@ public class TransportLayer {
 			return new GlobalMessage(messageID, messageLength, message);
 		case Payload.ACKNOWLEDGEMENT:
 			int acknowledgeMessageID = getMessageID(payloadData, Payload.ACKNOWLEDGEMENT);
-			return new Acknowledgement(acknowledgeMessageID);
+			int fileSequenceNumber = getAckFileSequenceNumber(payloadData);
+			return new Acknowledgement(acknowledgeMessageID, fileSequenceNumber);
 		case Payload.ENCRYPTION_PAIR:
 			int prime = getPrime(payloadData);
 			int generator = getGenerator(payloadData);
@@ -588,10 +787,63 @@ public class TransportLayer {
 			int cipherLength = getCipherLength(payloadData);
 			String cipher = getCipher(payloadData);
 			return new EncryptedMessage(MessageID, midWayKey, cipherLength, cipher);
+		case Payload.FILE_MESSAGE:
+			int fileID = getMessageID(payloadData, Payload.FILE_MESSAGE);
+			int fileMessageLength = getMessageLength(payloadData, Payload.FILE_MESSAGE);
+			int totalPackets = getTotalPackets(payloadData);
+			int sequenceNumber = getFileSequenceNumber(payloadData);
+			byte[] fileData = getFileData(payloadData);
+			return new FileMessage(fileID, fileMessageLength, totalPackets, sequenceNumber, fileData);
 		default: 
 			System.err.println("Unknown type identifier at getPayload(): " + typeIdentifier);
 			return null;
 		}	
+	}
+
+	private static int getAckFileSequenceNumber(byte[] payloadData) {
+		int start = Acknowledgement.ACK_MESSAGE_ID_LENGHT;
+		int end = start + Acknowledgement.FILE_SEQUENCE_NUMBER;
+		
+		byte[] ackFileSequenceArray = Arrays.copyOfRange(payloadData, start, end);
+		ByteBuffer ackFileSequenceBytebuffer = ByteBuffer.wrap(ackFileSequenceArray);
+		
+		int ackFileSequency = ackFileSequenceBytebuffer.get();
+		
+		return ackFileSequency;
+	}
+
+	private static byte[] getFileData(byte[] payloadData) {
+		int start = FileMessage.FILE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + 
+				FileMessage.TOTAL_PACKETS_LENGTH + FileMessage.SEQUENCE_NUMBER_LENGTH;
+		int end = start + getMessageLength(payloadData, Payload.FILE_MESSAGE);
+		
+		byte[] fileData = Arrays.copyOfRange(payloadData, start, end);
+		
+		return fileData;
+	}
+
+	private static int getFileSequenceNumber(byte[] payloadData) {
+		int start = FileMessage.FILE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + FileMessage.TOTAL_PACKETS_LENGTH;
+		int end = start + FileMessage.SEQUENCE_NUMBER_LENGTH;
+		
+		byte[] fileSequenceArray = Arrays.copyOfRange(payloadData, start, end);
+		ByteBuffer fileSequenceBytebuffer = ByteBuffer.wrap(fileSequenceArray);
+		
+		int fileSequency = fileSequenceBytebuffer.get();
+		
+		return fileSequency;
+	}
+
+	private static int getTotalPackets(byte[] payloadData) {
+		int start = FileMessage.FILE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH;
+		int end = start + FileMessage.TOTAL_PACKETS_LENGTH;
+		
+		byte[] totalPacketsArray = Arrays.copyOfRange(payloadData, start, end);
+		ByteBuffer totalPacketsBytebuffer = ByteBuffer.wrap(totalPacketsArray);
+		
+		int totalPackets = totalPacketsBytebuffer.get();
+		
+		return totalPackets;
 	}
 
 	/**
@@ -634,7 +886,6 @@ public class TransportLayer {
 	public static int getSequenceNumber(byte[] datagramContents) {
 		int start = Packet.SENDER_LENGTH + Packet.RECEIVER_LENGTH;
 		int end = start + Packet.SEQUENCE_NUM_LENGTH;
-		
 		byte[] seqNumArray = Arrays.copyOfRange(datagramContents, start, end);
 		ByteBuffer seqNumByteBuffer = ByteBuffer.wrap(seqNumArray);
 		
@@ -738,6 +989,9 @@ public class TransportLayer {
 		} else if (typeIdentifier == Payload.ACKNOWLEDGEMENT) {
 			start = 0;
 			end = start + Acknowledgement.ACK_MESSAGE_ID_LENGHT;
+		} else if (typeIdentifier == Payload.FILE_MESSAGE) {
+			start = 0;
+			end = start + FileMessage.FILE_ID_LENGTH;
 		}
 		
 		byte[] messageIdArray = Arrays.copyOfRange(payloadData, start, end);
@@ -767,6 +1021,16 @@ public class TransportLayer {
 				int messageLength = encryptedMessageLengthBytebuffer.getShort();
 				
 				return messageLength;
+			case Payload.FILE_MESSAGE:
+				start = FileMessage.FILE_ID_LENGTH;
+				end = start + FileMessage.MESSAGE_LENGTH_LENGTH;
+				
+				byte[] fileMessageLengthArray = Arrays.copyOfRange(payloadData, start, end);
+				ByteBuffer fileMessageLengthBytebuffer = ByteBuffer.wrap(fileMessageLengthArray);
+				
+				int fileMessageLength = fileMessageLengthBytebuffer.getInt();
+				
+				return fileMessageLength;
 			default: return 0;
 		}
 	}
@@ -872,6 +1136,52 @@ public class TransportLayer {
 		
 		int halfKey = halfKeyBytebuffer.get();
 		return halfKey;
+	}
+
+	public void sendFile(File file, Person receiver) throws IOException {
+		byte[] fileData = Files.readAllBytes(file.toPath());
+		ArrayList<byte[]> result = new ArrayList<byte[]>();
+		int start = 0;
+		int chunksize = 22500;
+		while (start < fileData.length) {
+			int end = Math.min(fileData.length, start + chunksize);
+		    result.add(Arrays.copyOfRange(fileData, start, end));
+		    start += chunksize;
+		}
+		int nextFileID = receiver.getNextFileID();
+		int seqNum = 0; 
+		for (byte[] dataSegment : result) {
+			FileMessage payload = new FileMessage(nextFileID, dataSegment.length, result.size(), seqNum, dataSegment);
+			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeqNumber(), Payload.FILE_MESSAGE, payload);
+			System.out.println("      receiverID: " + receiver.getID() + "  file size: " + fileData.length + " bytes");
+			session.getConnection().getSender().send(packet);
+			System.out.println("      sequence number: " + seqNum + "  total packets: " + result.size());
+			synchronized (this.unacknowledgedPackets) {
+				unacknowledgedPackets.add(packet);
+				new RetransmissionThread(this, packet);
+			}
+			seqNum++;
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		Message message = new Message(session.getID(), receiver.getID(), nextFileID, FileMessage.FILE_INDICATOR, fileData, true);		
+
+		// Add it to the chatmessages map
+		if (!session.getChatMessages().containsKey(receiver)) {
+			session.getChatMessages().put(receiver, new ArrayList<>(Arrays.asList(new Message[]{message})));
+		} else {
+			ArrayList<Message> currentMessageList = session.getChatMessages().get(receiver);
+			currentMessageList.add(message);
+			session.getChatMessages().put(receiver, currentMessageList);
+		}
+		// Update the GUI
+		GUIHandler.messagePutInMap(receiver);
+		System.out.println("      Added message to list/GUI");
 	}
 
 }

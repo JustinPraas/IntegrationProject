@@ -26,6 +26,7 @@ public interface Payload {
 	 * The typeIdentifier of a <code>EncryptedMessage</code> payload.
 	 */
 	public static final int ENCRYPTED_MESSAGE = 4;
+	public static final int FILE_MESSAGE = 5;
 	
 	/**
 	 * Returns a byte array of the data of the <code>Payload</code>.

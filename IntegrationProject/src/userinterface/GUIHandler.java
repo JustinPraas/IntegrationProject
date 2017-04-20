@@ -1,13 +1,25 @@
 package userinterface;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
+
 import javafx.application.Platform;
+
+import javafx.embed.swing.SwingFXUtils;
+import javafx.scene.control.Alert;
+
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -22,6 +34,7 @@ import javafx.scene.text.TextFlow;
 import model.Message;
 import model.Person;
 import model.Session;
+import packet.FileMessage;
 
 public class GUIHandler {
 
@@ -132,43 +145,73 @@ public class GUIHandler {
 			Text senderText = new Text(messageSender);
 			senderText.getStyleClass().add("sender");
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
-			if (messageText.contains("::")) {				
-				String[] splittedText = messageText.split("::");
-				HBox emoticonBox = new HBox();
-				emoticonBox.getChildren().addAll(senderText, timestampText);
-				for (String s : splittedText) {
-					if (GUI.myEmoticons.containsKey(s)) {
-						File emoticon = GUI.myEmoticons.get(s);
-						ImageView view = new ImageView(new Image(emoticon.toURI().toString()));
-						emoticonBox.getChildren().add(view);
-					} else {
-						emoticonBox.getChildren().add(new Text(s));
-					}
-				}
+			// Handle message as file message if it contains the file indicator
+			if (messageText.contains(FileMessage.FILE_INDICATOR)) {
+				byte[] fileData = message.getFileData();
+				// create a view for the image
+				ImageView imageView = new ImageView();
+				imageView.maxWidth(200);
+				imageView.setPreserveRatio(true);
+				imageView.setSmooth(true);
+				imageView.setCache(true);
+		        try {
+		        	// Create image from the byte array representing the file data
+		            InputStream inputStream = new ByteArrayInputStream(fileData);
+		            BufferedImage bufferedImage = ImageIO.read(inputStream);
+		            Image image = SwingFXUtils.toFXImage(bufferedImage, null);
+		            imageView.setImage(image);
+		        } catch (IOException e) {
+		        	e.printStackTrace();
+		        }
+				HBox fileBox = new HBox();
+				fileBox.getChildren().addAll(senderText, timestampText, imageView);
 				if (message.getSenderID() == session.getID()) {
-					emoticonBox.getStyleClass().add("local");
+					fileBox.getStyleClass().add("local");
 				} else {
-					emoticonBox.getStyleClass().add("remote");
+					fileBox.getStyleClass().add("remote");
 				}
-				total.add(emoticonBox);
+				total.add(fileBox);
 			} else {
-				TextFlow flow;
-				
-				// Append this message to ChatBox String
-				Text messageTextBox = new Text(message.getText());
-				
-				flow = new TextFlow();
-				flow.getChildren().addAll(senderText, timestampText, messageTextBox);
-				
-				HBox chatBoxEntry = new HBox();
-				if (message.getSenderID() == session.getID()) {
-					flow.getStyleClass().add("local");
+				// Check if the message text contains an emoticon indicator
+				if (messageText.contains("::")) {
+					String[] splittedText = messageText.split("::");
+					HBox emoticonBox = new HBox();
+					emoticonBox.getChildren().addAll(senderText, timestampText);
+					// check if text between indicators contains an emoticon on this system
+					for (String s : splittedText) {
+						if (GUI.myEmoticons.containsKey(s)) {
+							File emoticon = GUI.myEmoticons.get(s);
+							ImageView view = new ImageView(new Image(emoticon.toURI().toString()));
+							emoticonBox.getChildren().add(view);
+						} else {
+							emoticonBox.getChildren().add(new Text(s));
+						}
+					}
+					if (message.getSenderID() == session.getID()) {
+						emoticonBox.getStyleClass().add("local");
+					} else {
+						emoticonBox.getStyleClass().add("remote");
+					}
+					total.add(emoticonBox);
 				} else {
-					flow.getStyleClass().add("remote");
+					TextFlow flow;
+					
+					// Append this message to ChatBox String
+					Text messageTextBox = new Text(message.getText());
+					
+					flow = new TextFlow();
+					flow.getChildren().addAll(senderText, timestampText, messageTextBox);
+					
+					HBox chatBoxEntry = new HBox();
+					if (message.getSenderID() == session.getID()) {
+						flow.getStyleClass().add("local");
+					} else {
+						flow.getStyleClass().add("remote");
+					}
+					chatBoxEntry.getChildren().add(flow);
+					
+					total.add(chatBoxEntry);
 				}
-				chatBoxEntry.getChildren().add(flow);
-				
-				total.add(chatBoxEntry);
 			}
 		}
 		
@@ -248,11 +291,12 @@ public class GUIHandler {
 			Text senderText = new Text(messageSenderName);
 			senderText.getStyleClass().add("sender");
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
-			
+			// Check if the message text contains an emoticon indicator
 			if (messageText.contains("::")) {				
 				String[] splittedText = messageText.split("::");
 				HBox emoticonBox = new HBox();
 				emoticonBox.getChildren().addAll(senderText, timestampText);
+				// check if text between indicators contains an emoticon on this system
 				for (String s : splittedText) {
 					if (GUI.myEmoticons.containsKey(s)) {
 						File emoticon = GUI.myEmoticons.get(s);
@@ -481,6 +525,27 @@ public class GUIHandler {
 			GUI.levelLabel.setText(levelString);
 			GUI.experienceProgressBar.setProgress(levelProgress);
 		});
+	}
+
+
+	public static void sendFile(File file) {
+		// check if a file is selected and if it's readable
+		if (file != null && file.exists() && file.canRead() && currentPerson != null) {
+			// restrict files larger than 500 Kb
+			if (file.length() > 500000) {
+				Alert alert = new Alert(AlertType.WARNING);
+				alert.setTitle("File size too large");
+				alert.setHeaderText("File size too large");
+				alert.setContentText("Please choose a file smaller than 500 Kb.");
+				alert.showAndWait();
+				return;
+			}
+			try {
+				session.getConnection().getTransportLayer().sendFile(file, currentPerson);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 }

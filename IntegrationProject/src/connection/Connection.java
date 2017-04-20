@@ -16,7 +16,7 @@ public class Connection {
 	/**
 	 * The maximum acceptable size of the data of a <code>DatagramPacket</code>.
 	 */
-	public static final int BUFFER_SIZE = 1024000;
+	public static final int BUFFER_SIZE = 2048000;
 	
 	/**
 	 * The socket from which <code>DatagramPackets</code> will be sent.
@@ -67,10 +67,8 @@ public class Connection {
 		try {
 			this.sendSocket = new MulticastSocket(port);
 			sendSocket.setSendBufferSize(BUFFER_SIZE);
-			
 			this.receiveSocket = new MulticastSocket(port);
 			receiveSocket.setReceiveBufferSize(BUFFER_SIZE);
-			
 			joinGroup(sendSocket, "default");
 			joinGroup(receiveSocket, "default");
 		} catch (IOException e) {

@@ -48,6 +48,7 @@ public class RetransmissionThread extends Thread {
 	@Override
 	public void run() {
 		while (retransmissionsDone < TransportLayer.MAXIMUM_RETRANSMISSIONS && !finished) {
+			System.out.println("      Waiting for acknowledgement");
 			try {
 				Thread.sleep(TransportLayer.RETRANSMISSION_INTERVAL);
 				retransmit();
@@ -66,9 +67,11 @@ public class RetransmissionThread extends Thread {
 		if (isUnacknowledged()) {
 			transportLayer.session.getStatistics().increaseRetransmissionsDone();
 			packet.setSequenceNum(transportLayer.session.getNextSeqNumber());
+			System.out.println("      RETRANSMISSON: seqNum: " + packet.getSequenceNumber());
 			transportLayer.session.getConnection().getSender().send(packet);
 			retransmissionsDone++;
 		} else {
+			System.out.println("      Received acknowledgement");
 			finished = true;
 		}
 	}
