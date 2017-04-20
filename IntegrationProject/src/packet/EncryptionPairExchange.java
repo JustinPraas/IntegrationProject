@@ -73,7 +73,7 @@ public class EncryptionPairExchange implements Payload {
 		}
 		
 		// LocalHalfKey to binary
-		for (int i = (localHalfKey - 1) * 8; i >= 0; i -= 8) {
+		for (int i = (HALF_KEY_LENGTH - 1) * 8; i >= 0; i -= 8) {
 			resultList.add((byte) (localHalfKey >> i));
 		}
 		
