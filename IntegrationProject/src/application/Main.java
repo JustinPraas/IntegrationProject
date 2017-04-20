@@ -1,9 +1,5 @@
 package application;
 
-import java.util.Arrays;
-
-import javax.imageio.ImageIO;
-
 import model.Session;
 import userinterface.GUIHandler;
 

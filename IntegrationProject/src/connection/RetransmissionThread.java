@@ -53,7 +53,6 @@ public class RetransmissionThread extends Thread {
 				Thread.sleep(TransportLayer.RETRANSMISSION_INTERVAL);
 				retransmit();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}		

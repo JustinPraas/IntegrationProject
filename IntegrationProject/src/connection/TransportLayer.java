@@ -93,7 +93,7 @@ public class TransportLayer {
 			length += Acknowledgement.ACK_HEADER_LENGTH;
 			break;
 		case Payload.ENCRYPTION_PAIR:
-			length += EncryptionPairExchange.ENCRYPTION_PAIR_HEADER_LENGTH; //TODO TEST.
+			length += EncryptionPairExchange.ENCRYPTION_PAIR_HEADER_LENGTH;
 			break;
 		case Payload.ENCRYPTED_MESSAGE:
 			length += EncryptedMessage.ENCRYPTED_MESSAGE_HEADER_LENGTH;
@@ -182,8 +182,10 @@ public class TransportLayer {
 		int totalPackets = payload.getTotalPackets();
 		int fileID = payload.getFileID();
 		System.out.println("      senderID: " + senderID + "  fileID: " + fileID + "  totalPackets: " + totalPackets);
+		// Send acknowledgement for this packet
 		sendAcknowledgement(receivedPacket, new Message(fileID));
 		if (totalPackets > 1) {
+			// Add user, file and packet to the file buffer
 			if (!fileBuffer.containsKey(senderID)) {
 				System.out.println("      Added user, file and packet to file buffer");
 				HashMap<Integer, ArrayList<Packet>> files = new HashMap<>();
@@ -191,6 +193,7 @@ public class TransportLayer {
 				packets.add(receivedPacket);
 				files.put(fileID, packets);
 				fileBuffer.put(senderID, files);
+			// Add file and packet to file buffer
 			} else if (!fileBuffer.get(senderID).containsKey(fileID)) {
 				System.out.println("      Added file and packet to file buffer");
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
@@ -198,9 +201,11 @@ public class TransportLayer {
 				packets.add(receivedPacket);
 				files.put(fileID, packets);
 				fileBuffer.put(senderID, files);
+			// Add packet to file buffer
 			} else if (fileBuffer.get(senderID).get(fileID).size() < totalPackets - 1) {
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
 				ArrayList<Packet> packets = files.get(fileID);
+				// Ignore if duplicate packet
 				for (Packet packet : packets) {
 					if (((FileMessage) packet.getPayload()).getSequenceNumber() == payload.getSequenceNumber()) {
 						System.out.println("      Duplicate packet!");
@@ -211,9 +216,11 @@ public class TransportLayer {
 				files.put(fileID, packets);
 				fileBuffer.put(senderID, files);
 				System.out.println("      Added packet to file buffer");
+			// Add last packet to file buffer
 			} else if (fileBuffer.get(senderID).get(fileID).size() == totalPackets - 1) {
 				HashMap<Integer, ArrayList<Packet>> files = fileBuffer.get(senderID);
 				ArrayList<Packet> packets = files.get(fileID);
+				// Ignore if duplicate packet
 				for (Packet packet : packets) {
 					if (((FileMessage) packet.getPayload()).getSequenceNumber() == payload.getSequenceNumber()) {
 						System.out.println("      Duplicate packet!");
@@ -224,6 +231,7 @@ public class TransportLayer {
 				System.out.println("      Added LAST packet to file buffer");
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream(1000000);
 				int targetSequence = 0;
+				// Add all byte arrays together in correct order
 				while(targetSequence != totalPackets) {
 					for (Packet packet : packets) {
 						FileMessage packetPayload = (FileMessage) packet.getPayload();
@@ -233,7 +241,6 @@ public class TransportLayer {
 								outputStream.write(packetPayload.getFileData());
 								targetSequence++;
 							} catch (IOException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 						}
@@ -1139,36 +1146,40 @@ public class TransportLayer {
 	}
 
 	public void sendFile(File file, Person receiver) throws IOException {
+		// file gets converted to a byte array
 		byte[] fileData = Files.readAllBytes(file.toPath());
 		ArrayList<byte[]> result = new ArrayList<byte[]>();
 		int start = 0;
 		int chunksize = 22500;
+		// split array up in multiple arrays of 22.5 KB
 		while (start < fileData.length) {
 			int end = Math.min(fileData.length, start + chunksize);
 		    result.add(Arrays.copyOfRange(fileData, start, end));
 		    start += chunksize;
 		}
 		int nextFileID = receiver.getNextFileID();
-		int seqNum = 0; 
+		int seqNum = 0;
+		// create packets for every array and send them into the network
 		for (byte[] dataSegment : result) {
 			FileMessage payload = new FileMessage(nextFileID, dataSegment.length, result.size(), seqNum, dataSegment);
 			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeqNumber(), Payload.FILE_MESSAGE, payload);
 			System.out.println("      receiverID: " + receiver.getID() + "  file size: " + fileData.length + " bytes");
 			session.getConnection().getSender().send(packet);
 			System.out.println("      sequence number: " + seqNum + "  total packets: " + result.size());
+			// start a retransmission thread and handle acknowledgements
 			synchronized (this.unacknowledgedPackets) {
 				unacknowledgedPackets.add(packet);
 				new RetransmissionThread(this, packet);
 			}
 			seqNum++;
 			try {
+				// interval between sending file segments
 				Thread.sleep(200);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		
+		// create a message to show in own chat
 		Message message = new Message(session.getID(), receiver.getID(), nextFileID, FileMessage.FILE_INDICATOR, fileData, true);		
 
 		// Add it to the chatmessages map
