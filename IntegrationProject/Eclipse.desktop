@@ -1,0 +1,12 @@
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Name=Eclipse
+Type=Application
+Exec=env UBUNTU_MENUPROXY= /home/casper/eclipse/java-neon/eclipse/eclipse
+Terminal=false
+Icon=/home/casper/eclipse/java-neon/eclipse/icon.xpm
+Comment=Integrated Development Environment
+NoDisplay=false
+Categories=Development;IDE;
+Name[en]=Eclipse

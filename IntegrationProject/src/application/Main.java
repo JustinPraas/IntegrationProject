@@ -20,7 +20,6 @@ public class Main {
 	 */
 	@SuppressWarnings("unused")
 	public static void main(String[] args) {
-		System.out.println(Arrays.toString(ImageIO.getReaderFileSuffixes()));
 		GUIHandler GuiHandler = new GUIHandler("Come Tjetten");
 		Session session = new Session(GUIHandler.getUsername());
 		System.out.println("You are " + session.getName() + " (ID = " + session.getID()+ ")");

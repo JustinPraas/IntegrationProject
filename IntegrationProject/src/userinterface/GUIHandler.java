@@ -150,7 +150,7 @@ public class GUIHandler {
 				byte[] fileData = message.getFileData();
 				// create a view for the image
 				ImageView imageView = new ImageView();
-				imageView.maxWidth(200);
+				imageView.setFitHeight(300);
 				imageView.setPreserveRatio(true);
 				imageView.setSmooth(true);
 				imageView.setCache(true);
