@@ -159,6 +159,7 @@ public class GUI extends Application {
 		Button fileButton = new Button("File");
 		Button sendButton = new Button("Send");
 		sendButton.setMaxHeight(Double.MAX_VALUE);
+		fileButton.setMaxHeight(Double.MAX_VALUE);
 		inputHBox.setBottom(bottomBox);
 		leftVBox.getChildren().addAll(headerArea, scrollingChatBox, inputHBox);
 		leftVBox.setSpacing(15);
