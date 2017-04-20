@@ -24,9 +24,11 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -153,14 +155,17 @@ public class GUIHandler {
 			Text senderText = new Text(messageSender);
 			senderText.getStyleClass().add("sender");
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
+			// Handle message as file message if it contains the file indicator
 			if (messageText.contains(FileMessage.FILE_INDICATOR)) {
 				byte[] fileData = message.getFileData();
+				// create a view for the image
 				ImageView imageView = new ImageView();
-				imageView.setFitWidth(200);
+				imageView.maxWidth(200);
 				imageView.setPreserveRatio(true);
 				imageView.setSmooth(true);
 				imageView.setCache(true);
 		        try {
+		        	// Create image from the byte array representing the file data
 		            InputStream inputStream = new ByteArrayInputStream(fileData);
 		            BufferedImage bufferedImage = ImageIO.read(inputStream);
 		            Image image = SwingFXUtils.toFXImage(bufferedImage, null);
@@ -177,10 +182,12 @@ public class GUIHandler {
 				}
 				total.add(fileBox);
 			} else {
-				if (messageText.contains("::")) {				
+				// Check if the message text contains an emoticon indicator
+				if (messageText.contains("::")) {
 					String[] splittedText = messageText.split("::");
 					HBox emoticonBox = new HBox();
 					emoticonBox.getChildren().addAll(senderText, timestampText);
+					// check if text between indicators contains an emoticon on this system
 					for (String s : splittedText) {
 						if (GUI.myEmoticons.containsKey(s)) {
 							File emoticon = GUI.myEmoticons.get(s);
@@ -294,11 +301,12 @@ public class GUIHandler {
 			Text senderText = new Text(messageSenderName);
 			senderText.getStyleClass().add("sender");
 			Text timestampText = new Text(" (" + message.getTimestampString() + "): ");
-			
+			// Check if the message text contains an emoticon indicator
 			if (messageText.contains("::")) {				
 				String[] splittedText = messageText.split("::");
 				HBox emoticonBox = new HBox();
 				emoticonBox.getChildren().addAll(senderText, timestampText);
+				// check if text between indicators contains an emoticon on this system
 				for (String s : splittedText) {
 					if (GUI.myEmoticons.containsKey(s)) {
 						File emoticon = GUI.myEmoticons.get(s);
@@ -531,7 +539,17 @@ public class GUIHandler {
 
 
 	public static void sendFile(File file) {
+		// check if a file is selected and if it's readable
 		if (file != null && file.exists() && file.canRead() && currentPerson != null) {
+			// restrict files larger than 500 Kb
+			if (file.length() > 500000) {
+				Alert alert = new Alert(AlertType.WARNING);
+				alert.setTitle("File size too large");
+				alert.setHeaderText("File size too large");
+				alert.setContentText("Please choose a file smaller than 500 Kb.");
+				alert.showAndWait();
+				return;
+			}
 			try {
 				session.getConnection().getTransportLayer().sendFile(file, currentPerson);
 			} catch (IOException e) {

@@ -27,7 +27,7 @@ public class TransportLayer {
 	public static final int PULSE_TTL = 5;
 	public static final int MAX_SEEN_PACKETS_SIZE = 300;
 	public static final int RETRANSMISSION_INTERVAL = 1000;
-	public static final int MAXIMUM_RETRANSMISSIONS = 10; //TODO
+	public static final int MAXIMUM_RETRANSMISSIONS = 5;
 
 	// Used objects
 	public Session session;
@@ -75,10 +75,7 @@ public class TransportLayer {
 			length += getCipherLength(getPayload(datagramArray, typeIdentifier).getPayloadData());
 			break;
 		case Payload.FILE_MESSAGE:
-			length += FileMessage.FILE_ID_LENGTH;
-			length += FileMessage.MESSAGE_LENGTH_LENGTH;
-			length += FileMessage.TOTAL_PACKETS;
-			length += FileMessage.SEQUENCE_NUMBER;
+			length += FileMessage.FILE_MESSAGE_HEADER_LENGTH;
 			length += ((FileMessage) getPayload(datagramArray, typeIdentifier)).getMessageLength();
 			break;
 		default: 
@@ -775,7 +772,7 @@ public class TransportLayer {
 
 	private static byte[] getFileData(byte[] payloadData) {
 		int start = FileMessage.FILE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + 
-				FileMessage.TOTAL_PACKETS + FileMessage.SEQUENCE_NUMBER;
+				FileMessage.TOTAL_PACKETS_LENGTH + FileMessage.SEQUENCE_NUMBER_LENGTH;
 		int end = start + getMessageLength(payloadData, Payload.FILE_MESSAGE);
 		
 		byte[] fileData = Arrays.copyOfRange(payloadData, start, end);
@@ -784,8 +781,8 @@ public class TransportLayer {
 	}
 
 	private static int getFileSequenceNumber(byte[] payloadData) {
-		int start = FileMessage.FILE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + FileMessage.TOTAL_PACKETS;
-		int end = start + FileMessage.SEQUENCE_NUMBER;
+		int start = FileMessage.FILE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH + FileMessage.TOTAL_PACKETS_LENGTH;
+		int end = start + FileMessage.SEQUENCE_NUMBER_LENGTH;
 		
 		byte[] fileSequenceArray = Arrays.copyOfRange(payloadData, start, end);
 		ByteBuffer fileSequenceBytebuffer = ByteBuffer.wrap(fileSequenceArray);
@@ -797,7 +794,7 @@ public class TransportLayer {
 
 	private static int getTotalPackets(byte[] payloadData) {
 		int start = FileMessage.FILE_ID_LENGTH + FileMessage.MESSAGE_LENGTH_LENGTH;
-		int end = start + FileMessage.TOTAL_PACKETS;
+		int end = start + FileMessage.TOTAL_PACKETS_LENGTH;
 		
 		byte[] totalPacketsArray = Arrays.copyOfRange(payloadData, start, end);
 		ByteBuffer totalPacketsBytebuffer = ByteBuffer.wrap(totalPacketsArray);
@@ -1061,7 +1058,7 @@ public class TransportLayer {
 		byte[] fileData = Files.readAllBytes(file.toPath());
 		ArrayList<byte[]> result = new ArrayList<byte[]>();
 		int start = 0;
-		int chunksize = 10000;
+		int chunksize = 22500;
 		while (start < fileData.length) {
 			int end = Math.min(fileData.length, start + chunksize);
 		    result.add(Arrays.copyOfRange(fileData, start, end));
@@ -1072,14 +1069,16 @@ public class TransportLayer {
 		for (byte[] dataSegment : result) {
 			FileMessage payload = new FileMessage(nextFileID, dataSegment.length, result.size(), seqNum, dataSegment);
 			Packet packet = new Packet(session.getID(), receiver.getID(), session.getNextSeqNumber(), Payload.FILE_MESSAGE, payload);
+			System.out.println("      receiverID: " + receiver.getID() + "  file size: " + fileData.length + " bytes");
 			session.getConnection().getSender().send(packet);
+			System.out.println("      sequence number: " + seqNum + "  total packets: " + result.size());
 			synchronized (this.unacknowledgedPackets) {
 				unacknowledgedPackets.add(packet);
 				new RetransmissionThread(this, packet);
 			}
 			seqNum++;
 			try {
-				Thread.sleep(100);
+				Thread.sleep(200);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -1098,6 +1097,7 @@ public class TransportLayer {
 		}
 		// Update the GUI
 		GUIHandler.messagePutInMap(receiver);
+		System.out.println("      Added message to list/GUI");
 	}
 
 }

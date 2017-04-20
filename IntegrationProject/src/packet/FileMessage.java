@@ -4,19 +4,68 @@ import java.util.ArrayList;
 
 public class FileMessage implements Payload {
 	
-	public static final String FILE_INDICATOR = "FILE_";
+	/**
+	 * Indicator used to separate normal chat messages from file messages.
+	 */
+	public static final String FILE_INDICATOR = "FILE_MESSAGE";
 	
+	/**
+	 * The total header length (bytes) of the file message (excluding file data).
+	 */
+	public static final int FILE_MESSAGE_HEADER_LENGTH = 8;
+	
+	/**
+	 * The length (bytes) of the fileID field in the file message.
+	 */
 	public static final int FILE_ID_LENGTH = 2;
-	public static final int MESSAGE_LENGTH_LENGTH = 4;
-	public static final int TOTAL_PACKETS = 1;
-	public static final int SEQUENCE_NUMBER = 1;
 	
+	/**
+	 * The length (bytes) of the messageLength field in the file message.
+	 */
+	public static final int MESSAGE_LENGTH_LENGTH = 4;
+	
+	/**
+	 * The length (bytes) of the totalPackets field in the file message.
+	 */
+	public static final int TOTAL_PACKETS_LENGTH = 1;
+	/**
+	 * The length (bytes) of the sequenceNumber field in the file message.
+	 */
+	public static final int SEQUENCE_NUMBER_LENGTH = 1;
+	
+	/**
+	 * The fileID of the <code>FileMessage</code> that is encapsulated by this payload.
+	 */
 	private int fileID;
+	
+	/**
+	 * The messageLength of the <code>FileMessage</code>'s data that is encapsulated by this payload.
+	 */
 	private int messageLength;
+	
+	/**
+	 * The total packets that is needed to send the <code>File</code> that is (partly) encapsulated by this payload.
+	 */
 	private int totalPackets;
+	
+	/**
+	 * The sequence number of this <code>FileMessage</code> that is encapsulated by this payload.
+	 */
 	private int sequenceNumber;
+	
+	/**
+	 * The data of the <code>FileMessage</code> that is encapsulated by this payload.
+	 */
 	private byte[] fileData;
 	
+	/**
+	 * Constructs a file message <code>Payload</code>.
+	 * @param fileID
+	 * @param messageLength
+	 * @param totalPackets
+	 * @param sequenceNumber
+	 * @param fileData
+	 */
 	public FileMessage(int fileID, int messageLength, int totalPackets, int sequenceNumber, byte[] fileData) {
 		this.fileID = fileID;
 		this.messageLength = messageLength;
@@ -25,22 +74,32 @@ public class FileMessage implements Payload {
 		this.fileData = fileData;
 	}
 
+	/**
+	 * Returns the byte array of this <code>FileMessage</code> payload.
+	 */
 	@Override
 	public byte[] getPayloadData() {
 		ArrayList<Byte> resultList = new ArrayList<>();
 		
-		// Message ID to binary
-		resultList.add((byte) (fileID >> 8));
-		resultList.add((byte) fileID);
+		// FileID to binary
+		for (int i = (FILE_ID_LENGTH - 1) * 8; i >= 0; i -= 8) {
+			resultList.add((byte) (fileID >> i));
+		}
 		
-		resultList.add((byte) (messageLength >> 24));
-		resultList.add((byte) (messageLength >> 16));
-		resultList.add((byte) (messageLength >> 8));
-		resultList.add((byte) messageLength);
+		// messageLength to binary
+		for (int i = (MESSAGE_LENGTH_LENGTH - 1) * 8; i >= 0; i -= 8) {
+			resultList.add((byte) (messageLength >> i));
+		}
 		
-		resultList.add((byte) totalPackets);
+		// totalPackets to binary
+		for (int i = (TOTAL_PACKETS_LENGTH - 1) * 8; i >= 0; i -= 8) {
+			resultList.add((byte) (totalPackets >> i));
+		}
 		
-		resultList.add((byte) sequenceNumber);
+		// sequenceNumber to binary
+		for (int i = (SEQUENCE_NUMBER_LENGTH - 1) * 8; i >= 0; i -= 8) {
+			resultList.add((byte) (sequenceNumber >> i));
+		}
 		
 		// fileData added to the list
 		for (int i = 0; i < fileData.length; i++) {

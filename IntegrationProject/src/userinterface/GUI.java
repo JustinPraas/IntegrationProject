@@ -1,6 +1,7 @@
 package userinterface;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -8,6 +9,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -266,8 +269,8 @@ public class GUI extends Application {
 		fileButton.setOnAction(e -> {
 			FileChooser fileChooser = new FileChooser();
 			fileChooser.setTitle("Open Resource File");
-			fileChooser.getExtensionFilters().add(
-			         new ExtensionFilter("Image Files", "*.png"));
+			ExtensionFilter filter = new FileChooser.ExtensionFilter("Images", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.png", "*.wbmp");
+			fileChooser.getExtensionFilters().add(filter);
 			GUIHandler.sendFile(fileChooser.showOpenDialog(window));
 		});
 
